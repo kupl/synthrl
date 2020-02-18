@@ -1,2 +1,1 @@
-# SynthRL
-SynthRL [ˈsɪnθrɪl]
+# SynthRL [ˈsɪnθrɪl]
