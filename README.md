@@ -1,4 +1,5 @@
 # SynthRL [ˈsɪnθrɪl]
+Program Synthesizer based on OGIS using learning-based agents trained with reinforcement learning 
 
 ## Requirements
 Currently, there are no required libraries and programs.
