@@ -2,10 +2,10 @@
 # Abstract class that all environment classes should inherit
 class Environment:
   def __init__(self):
-    pass
+    raise NotImplementedError
 
   def step(self, action=None):
-    pass
+    raise NotImplementedError
   
   def rest(self):
-    pass
+    raise NotImplementedError
