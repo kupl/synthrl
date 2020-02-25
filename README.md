@@ -9,7 +9,7 @@ Clone this repository via SSH
 ```
 $ git clone git@github.com:kupl/SynthRL-dev.git
 ```
-Or via HTTPS
+Or, via HTTPS
 ```
 $ git clone https://github.com/kupl/SynthRL-dev.git
 ```
