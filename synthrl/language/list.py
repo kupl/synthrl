@@ -41,25 +41,25 @@ INTINTINT: "(+)"
     |"MIN"     
     |"MAX"    
 
-highfunc: "MAP" INTINT VAR      ->map
-    | "FILTER"   INTBOOL  VAR      ->filter
-    | "COUNT"   INTBOOL VAR      ->count
-    | "ZIPWITH" INTINTINT VAR VAR   ->zipwith
+highfunc: "MAP" INTINT VAR        ->map
+    | "FILTER"   INTBOOL  VAR     ->filter
+    | "COUNT"   INTBOOL VAR       ->count
+    | "ZIPWITH" INTINTINT VAR VAR ->zipwith
     | "SCANL1" INTINTINT VAR VAR  ->scanl1
 
-func: "HEAD" VAR    -> head
-    | "LAST" VAR    -> last
-    | "TAKE" VAR VAR  -> take
-    | "DROP" VAR VAR  -> drop
+func: "HEAD" VAR        -> head
+    | "LAST" VAR        -> last
+    | "TAKE" VAR VAR    -> take
+    | "DROP" VAR VAR    -> drop
     | "ACCESS" VAR VAR  -> access
-    | "MINIMUM" VAR    -> minimum
-    | "MAXIMUM" VAR    -> maximum
-    | "REVERSE" VAR    -> reverse
-    | "SORT" VAR    -> sort
-    | "SUM" VAR      -> sum
+    | "MINIMUM" VAR     -> minimum
+    | "MAXIMUM" VAR     -> maximum
+    | "REVERSE" VAR     -> reverse
+    | "SORT" VAR        -> sort
+    | "SUM" VAR         -> sum
     | "APPEND" VAR VAR  -> append
-    | "CONS" VAR    -> cons
-    | "INIT_BLANK"    ->init_blank
+    | "CONS" VAR        -> cons
+    | "INIT_BLANK"      ->init_blank
 %import common.WS
 %import common.LETTER
 %ignore WS
