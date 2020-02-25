@@ -9,7 +9,7 @@ inst: VAR "<-" func ";"                     ->assign
     |VAR "<-" "FIRST_INPUT" ";"             ->assign_first_input
     |VAR "<-" "SECOND_INPUT" ";"            ->assign_second_input
     | "if" bool "then" inst "else" inst ";" ->if_else
-    | "end"                  ->end            
+    | "end"                                 ->end            
 
 bool: "true" | "false" 
     | VAR "(>0)" | VAR "(<0)"
