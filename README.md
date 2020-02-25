@@ -4,7 +4,7 @@ Program **Synth**esizer based on OGIS using learning-based agents trained with *
 ## Requirements
 Currently, there are no required libraries and programs.
 
-## Install SyntrhRL
+## Install SynthRL
 Clone this repository via SSH
 ```
 $ git clone git@github.com:kupl/SynthRL-dev.git
