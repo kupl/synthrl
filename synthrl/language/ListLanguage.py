@@ -6,14 +6,14 @@ start: inst+
 
 inst: VAR "<-" func ";"                     ->assign
     |VAR "<-" highfunc ";"                  ->assign_high
-    |VAR "<-" "FIRST_INPUT" ";"             ->assign_first_input
-    |VAR "<-" "SECOND_INPUT" ";"            ->assign_second_input
-    | "if" bool "then" inst "else" inst ";" ->if_else
+    |VAR "<-" "x" ";"             ->assign_first_input
+    |VAR "<-" "y" ";"            ->assign_second_input
+    | "if" bool "then" inst "else" inst ";" ->if_else     //will change in future
     | "end"                                 ->end            
 
-bool: "true" | "false" 
+bool: "true" | "false"                      //will change in future
     | VAR "(>0)" | VAR "(<0)"
-    | VAR "(%2==0)" | VAR "(%2==1)" 
+    | VAR "(%2==0)" | VAR "(%2==1)"       
 
 VAR: "a" | "b" | "c" | "d" | "e" | "f" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "p"            
     | "x" | "y"                  
@@ -57,9 +57,9 @@ func: "HEAD" VAR        -> head
     | "REVERSE" VAR     -> reverse
     | "SORT" VAR        -> sort
     | "SUM" VAR         -> sum
-    | "APPEND" VAR VAR  -> append
-    | "CONS" VAR        -> cons
-    | "INIT_BLANK"      ->init_blank
+    | "APPEND" VAR VAR  -> append           //added in our research
+    | "CONS" VAR        -> cons             //added in our research
+    | "INIT_BLANK"      ->init_blank        //added in our research 
 %import common.WS
 %import common.LETTER
 %ignore WS
@@ -76,7 +76,6 @@ def run_lips(program,lips_grammar,inputs): ##input should be more at maximum 2.
     env['y']=inputs[1]
   elif len(inputs)==1:
     env['x']=inputs[0]
-  
   ## Setting Dict Just for Unit Test##
   #env['a']= 100
   #env['c']=[1,2,3,4,5]
@@ -173,16 +172,22 @@ def run_high_function(func,env):
 
 ##Examples##
 example_program="""
-k<- FIRST_INPUT;
-b<- SECOND_INPUT;
+k<- x;
+b<- y;
 c<- SORT b;
 d<- TAKE k c;
 o<- SUM d;
 end
 """
+parser = Lark(lips_grammar)
+
+
 
 print(run_lips(example_program,lips_grammar,[2,[3,5,4,7,5] ]))
+
+print(type(parser.parse(example_program)))
 ##Desired Output is 7
+
 
 #class ListDSL(DSL):
 #  def __init__(self):
