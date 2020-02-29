@@ -1,7 +1,7 @@
 from typing import NewType
 from lark import Lark
 
-lips_grammar ="""
+list_grammar ="""
 start: inst+
 
 inst: VAR "<-" func ";"                     ->assign
@@ -66,8 +66,8 @@ func: "HEAD" VAR        -> head
 """
 
 
-def run_lips(program,lips_grammar,inputs): ##input should be more at maximum 2.
-  parser = Lark(lips_grammar)
+def run_lips(program,list_grammar,inputs): ##input should be more at maximum 2.
+  parser = Lark(list_grammar)
   env=dict() #init environment
 
   ## bring in inputs onto envrionment##
@@ -179,15 +179,14 @@ d<- TAKE k c;
 o<- SUM d;
 end
 """
-parser = Lark(lips_grammar)
+parser = Lark(list_grammar)
 
 
 
-print(run_lips(example_program,lips_grammar,[2,[3,5,4,7,5] ]))
+print(run_lips(example_program,list_grammar,[2,[3,5,4,7,5] ]))
 
 print(type(parser.parse(example_program)))
 ##Desired Output is 7
-
 
 #class ListDSL(DSL):
 #  def __init__(self):
