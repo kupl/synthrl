@@ -8,12 +8,7 @@ inst: VAR "<-" func ";"                     ->assign
     |VAR "<-" highfunc ";"                  ->assign_high
     |VAR "<-" "x" ";"             ->assign_first_input
     |VAR "<-" "y" ";"            ->assign_second_input
-    | "if" bool "then" inst "else" inst ";" ->if_else     //will change in future
     | "end"                                 ->end            
-
-bool: "true" | "false"                      //will change in future
-    | VAR "(>0)" | VAR "(<0)"
-    | VAR "(%2==0)" | VAR "(%2==1)"       
 
 VAR: "a" | "b" | "c" | "d" | "e" | "f" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "p"            
     | "x" | "y"                  
@@ -31,7 +26,7 @@ INTINT: "(+1)"
     | "(/4)"    
 
 INTBOOL: "(>0)" 
-    | "(<0)"  
+    | "(<0)"    
     | "(%2==0)"  
     | "(%2==1)"  
 
@@ -45,48 +40,45 @@ highfunc: "MAP" INTINT VAR        ->map
     | "FILTER"   INTBOOL  VAR     ->filter
     | "COUNT"   INTBOOL VAR       ->count
     | "ZIPWITH" INTINTINT VAR VAR ->zipwith
-    | "SCANL1" INTINTINT VAR VAR  ->scanl1
+    | "SCANL1" INTINTINT VAR VAR  ->scanl
 
 func: "HEAD" VAR        -> head
     | "LAST" VAR        -> last
     | "TAKE" VAR VAR    -> take
-    | "DROP" VAR VAR    -> drop
+    | "DROP" VAR VAR    -> drop   
     | "ACCESS" VAR VAR  -> access
     | "MINIMUM" VAR     -> minimum
     | "MAXIMUM" VAR     -> maximum
     | "REVERSE" VAR     -> reverse
     | "SORT" VAR        -> sort
     | "SUM" VAR         -> sum
-    | "APPEND" VAR VAR  -> append           //added in our research
-    | "CONS" VAR        -> cons             //added in our research
-    | "INIT_BLANK"      ->init_blank        //added in our research 
 %import common.WS
 %import common.LETTER
 %ignore WS
 """
 
+'''
+We may cosider to add following command in our DSL in later time
+    | "APPEND" VAR VAR  -> append           //added in our research
+    | "CONS" VAR        -> cons             //added in our research
+    | "INIT_BLANK"      ->init_blank        //added in our research 
+'''
 
 def run_lips(program,list_grammar,inputs): ##input should be more at maximum 2.
   parser = Lark(list_grammar)
-  env=dict() #init environment
-
+  env=dict() #initialize environment
   ## bring in inputs onto envrionment##
   if len(inputs)==2:
     env['x']=inputs[0]
     env['y']=inputs[1]
   elif len(inputs)==1:
     env['x']=inputs[0]
-  ## Setting Dict Just for Unit Test##
-  #env['a']= 100
-  #env['c']=[1,2,3,4,5]
-  #env['d'] = 1
-  #Desired Output is env['a']=1
+
   for inst in (parser.parse(program).children):
     if inst.data=="end":
       return env['o']
     else:
       env = run_insts(inst,env)   ##run each instructions
-
 def run_insts(inst,env):
   if inst.data=="assign":
     [var,func] = inst.children
