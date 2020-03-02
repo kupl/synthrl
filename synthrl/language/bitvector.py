@@ -1,5 +1,5 @@
-from synthrl.language.dsl import DSL
+from synthrl.language.dsl import Tree
 
-class BitVector(DSL):
+class BitVector(Tree):
   def __init__(self):
     pass
