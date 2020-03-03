@@ -77,7 +77,9 @@ class InstNode(Tree):
       print(' <- ', end='')
       self.children['FUNC'].pretty_print()
 
-# V -> v1 | v2 | ... | v20
+# V -> v0 | v1        # inputs
+#    | v2 | ... | v18 # bounded variables
+#    | v19            # output
 class VarNode(Tree):
   var_space = ['v{}'.format(i) for i in range(20)]
 
