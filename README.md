@@ -22,7 +22,7 @@ $ docker build -t synthrl .
 ```
 
 ### Run
-Mounth the volume that contains excution scripts and run the container.
+Mount the volume that contains excution scripts and run the container.
 ```
 $ docker run -it -v "$(pwd)/example:/example" synthrl python /example/list_language_test.py
 ```
