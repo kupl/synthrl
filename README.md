@@ -12,7 +12,7 @@ $ git clone https://github.com/kupl/SynthRL-dev.git
 ```
 
 ## Run SynthRL using Docker
-We provide docker image to execute the program.
+We provide a docker image to execute the program.
 
 ### Build
 Move to project directory and build the image.
