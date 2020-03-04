@@ -7,4 +7,4 @@ class RandomAgent(Agent):
     pass
 
   def take(self, action_space):
-    return np.random.choice[action_space]
+    return np.random.choice(action_space)
