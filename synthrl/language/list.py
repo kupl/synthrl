@@ -351,5 +351,12 @@ class ABOPNode(Tree):
   def pretty_print(self):
     print('({})'.format(self.data), end='')
 
-def ListLanguage():
-  return ProgramNode()
+def parse_program(prog):
+  raise NotImplementedError
+
+def ListLanguage(prog=None):
+  if prog is not None:
+    prog = parse_program(prog)
+  else:
+    prog = ProgramNode()
+  return prog
