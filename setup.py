@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup_params = dict(
   name='SynthRL',
-  version='0.0',
+  version='0.0.0',
   description='Program Synthesizer using Reinforcement Learning',
   url='https://github.com/kupl/SynthRL-dev',
   author='Software Analysis Labrotory at Korea University',
