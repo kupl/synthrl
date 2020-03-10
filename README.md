@@ -31,7 +31,8 @@ $ docker run -it -v "$(pwd)/example:/example" synthrl python /example/list_langu
 If you prefer to install SynthRL to your own system, loot at the following instructions.
 
 ### Requirements
-Currently, there are no required libraries and programs.
+Install [PyTorch](https://pytorch.org) that suits your system.
+Other required libraries will be installed automatically.
 
 ### Install SynthRL
 Move to project directory and install using pip.
