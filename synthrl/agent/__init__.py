@@ -1,3 +1,2 @@
-def make(name=None, **kwargs):
-  raise NotImplementedError
+from synthrl.agent.random import RandomAgent
   
