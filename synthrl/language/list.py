@@ -81,7 +81,10 @@ class InstNode(Tree):
 #    | v2 | ... | v18 # bounded variables
 #    | v19            # output
 class VarNode(Tree):
-  var_space = ['v{}'.format(i) for i in range(20)]
+  VARIABLE_RANGE = 20
+  var_space = ['v{}'.format(i) for i in range(VarNode.VARIABLE_RANGE)]
+  input_vars = ['v0', 'v1']
+  output_var = 'v{}'.format(VarNode.VARIABLE_RANGE - 1)
 
   def production_space(self):
     if self.data == 'hole':
@@ -354,9 +357,15 @@ class ABOPNode(Tree):
 def parse_program(prog):
   raise NotImplementedError
 
-def ListLanguage(prog=None):
+def ListLanguageProgram(prog=None):
   if prog is not None:
     prog = parse_program(prog)
   else:
     prog = ProgramNode()
   return prog
+
+def interprete(prog=None, inputs=None):
+  mem = {v: [] for v in VarNode.var_space}
+  for v, i in zip(VarNode.input_vars, inputs):
+    mem[v] = i
+  return prog.interprete(mem=mem)[VarNode.output_var]
