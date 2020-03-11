@@ -374,6 +374,3 @@ class ABOPNode(Tree):
 
   def pretty_print(self):
     print('({})'.format(self.data), end='')
-
-def parse_program(prog):
-  raise NotImplementedError
