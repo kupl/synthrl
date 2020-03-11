@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-# Abstract class that all DSL must inherit
+# Abstract class that all DSLs must inherit
 class Tree:
   def __init__(self, data='hole', children={}, parent=None):
     self.data = data
