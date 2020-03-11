@@ -1,5 +1,28 @@
 from synthrl.language.dsl import Tree
 
+# wrapper class for program
+# L -> P  # root
+class ListLanguage(Tree):
+  def __init__(self, *args, **kwargs):
+    self.data = 'root'
+    self.children = {'PGM': ProgramNode(parent=self)}
+    self.parent = None
+
+  def production_space(self):
+    return self.children['PGM'].production_space()
+  
+  def production(self, rule=None):
+    raise ValueError('ListLanguage should not have any hole.')
+
+  def interprete(self, inputs=[]):
+    mem = {v: [] for v in VarNode.var_space}
+    for v, i in zip(VarNode.input_vars, inputs):
+      mem[v] = i
+    return self.children['PGM'].interprete(mem=mem)[VarNode.output_var]
+  
+  def pretty_print(self):
+    self.children['PGM'].pretty_print()
+
 # P -> I; P # seq
 #    | eof  # eof
 class ProgramNode(Tree):
@@ -45,23 +68,24 @@ class ProgramNode(Tree):
 
 # I -> V <- F # assign
 class InstNode(Tree):
+  def __init__(self, *args, **kwargs):
+    super(InstNode, self).__init__(*args, **kwargs)
+    # InstNode has only one production rule
+    self.data = 'assign'
+    self.children = {
+      'VAR': VarNode(parent=self),
+      'FUNC': FuncNode(parent=self)
+    }
+
   def production_space(self):
-    if self.data == 'hole':
-      return self, ['assign']
-    if self.data == 'assign':
-      for key in ['FUNC', 'VAR']:
-        node, space = self.children[key].production_space()
-        if len(space) > 0:
-          return node, space
-      return self, []
+    for key in ['FUNC', 'VAR']:
+      node, space = self.children[key].production_space()
+      if len(space) > 0:
+        return node, space
+    return self, []
 
   def production(self, rule=None):
-    if rule == 'assign':
-      self.data = 'assign'
-      self.children = {
-        'VAR': VarNode(parent=self),
-        'FUNC': FuncNode(parent=self)
-      }
+    raise ValueError('InstNode should not have any hole.')
   
   def interprete(self, mem={}):
     if self.data == 'assign':
@@ -70,21 +94,18 @@ class InstNode(Tree):
       return mem
 
   def pretty_print(self):
-    if self.data == 'hole':
-      print('(HOLE)', end='')
-    elif self.data == 'assign':
-      self.children['VAR'].pretty_print()
-      print(' <- ', end='')
-      self.children['FUNC'].pretty_print()
+    self.children['VAR'].pretty_print()
+    print(' <- ', end='')
+    self.children['FUNC'].pretty_print()
 
 # V -> v0 | v1        # inputs
 #    | v2 | ... | v18 # bounded variables
 #    | v19            # output
 class VarNode(Tree):
   VARIABLE_RANGE = 20
-  var_space = ['v{}'.format(i) for i in range(VarNode.VARIABLE_RANGE)]
+  var_space = ['v{}'.format(i) for i in range(20)]
   input_vars = ['v0', 'v1']
-  output_var = 'v{}'.format(VarNode.VARIABLE_RANGE - 1)
+  output_var = 'v{}'.format(19)
 
   def production_space(self):
     if self.data == 'hole':
@@ -233,7 +254,7 @@ class FuncNode(Tree):
 
   def pretty_print(self):
     if self.data == 'hole':
-      print('(HOLE)')
+      print('(HOLE)', end='')
     elif self.data in self.auop_func:
       print(self.data.upper(), end=' ')
       self.children['AUOP'].pretty_print()
@@ -356,16 +377,3 @@ class ABOPNode(Tree):
 
 def parse_program(prog):
   raise NotImplementedError
-
-def ListLanguageProgram(prog=None):
-  if prog is not None:
-    prog = parse_program(prog)
-  else:
-    prog = ProgramNode()
-  return prog
-
-def interprete(prog=None, inputs=None):
-  mem = {v: [] for v in VarNode.var_space}
-  for v, i in zip(VarNode.input_vars, inputs):
-    mem[v] = i
-  return prog.interprete(mem=mem)[VarNode.output_var]
