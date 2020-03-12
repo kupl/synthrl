@@ -14,5 +14,11 @@ class Value:
     # randomly generate value
     raise NotImplementedError
 
+  def __str__(self):
+    return str(self.get_value())
+
   def __call__(self):
     return self.get_value()
+
+  def __repr__(self):
+    return str(self)
