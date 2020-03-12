@@ -26,3 +26,35 @@ class Integer(Value):
   @classmethod
   def sample(cls):
     return cls(np.random.randint(cls.MIN, cls.MAX + 1))
+
+  def __neg__(self):
+    return Integer(-self.get_value())
+
+  def __binary_op(self, other=None, op=None):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator + is not supported between Integer and {}'.format(other.__class__.__name__))
+    return Integer(op(self.get_value(), other.get_value()))
+
+  def __add__(self, other=None):
+    return self.__binary_op(other, lambda x, y: x + y)
+
+  def __sub__(self, other=None):
+    return self.__binary_op(other, lambda x, y: x - y)
+
+  def __mul__(self, other=None):
+    return self.__binary_op(other, lambda x, y: x * y)
+
+  def __div__(self, other=None):
+    return self.__binary_op(other, lambda x, y: x / y)
+
+  def __truediv__(self, other=None):
+    return self.__div__(other)
+
+  def __floordiv__(self, other=None):
+    return self.__div__(other)
+
+# constants
+ONE = Integer(1)
+TWO = Integer(2)
+THREE = Integer(3)
+FOUR = Integer(4)
