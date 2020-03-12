@@ -8,8 +8,11 @@ logger = logging.getLogger(__name__)
 class Integer(Value):
   MIN = -255
   MAX = 255
+
   def __init__(self, value=0):
-    if isinstance(value, str):
+    if isinstance(value, Integer):
+      value = value.get_value()
+    elif isinstance(value, str):
       value = int(value)
     elif isinstance(value, float):
       value = int(value)
@@ -30,28 +33,66 @@ class Integer(Value):
   def __neg__(self):
     return Integer(-self.get_value())
 
-  def __binary_op(self, other=None, op=None):
+  def __add__(self, other):
     if not isinstance(other, Integer):
       raise ValueError('Operator + is not supported between Integer and {}'.format(other.__class__.__name__))
-    return Integer(op(self.get_value(), other.get_value()))
+    return Integer(self.get_value() + other.get_value())
 
-  def __add__(self, other=None):
-    return self.__binary_op(other, lambda x, y: x + y)
+  def __sub__(self, other):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator - is not supported between Integer and {}'.format(other.__class__.__name__))
+    return Integer(self.get_value() - other.get_value())
 
-  def __sub__(self, other=None):
-    return self.__binary_op(other, lambda x, y: x - y)
+  def __mul__(self, other):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator * is not supported between Integer and {}'.format(other.__class__.__name__))
+    return Integer(self.get_value() * other.get_value())
 
-  def __mul__(self, other=None):
-    return self.__binary_op(other, lambda x, y: x * y)
+  def __pow__(self, other):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator ** is not supported between Integer and {}'.format(other.__class__.__name__))
+    return Integer(self.get_value() ** other.get_value())
 
-  def __div__(self, other=None):
-    return self.__binary_op(other, lambda x, y: x / y)
+  def __truediv__(self, other):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator / is not supported between Integer and {}'.format(other.__class__.__name__))
+    return Integer(self.get_value() // other.get_value())
 
-  def __truediv__(self, other=None):
-    return self.__div__(other)
+  def __floordiv__(self, other):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator // is not supported between Integer and {}'.format(other.__class__.__name__))
+    return Integer(self.get_value() // other.get_value())
 
-  def __floordiv__(self, other=None):
-    return self.__div__(other)
+  def __eq__(self, other):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator == is not supported between Integer and {}'.format(other.__class__.__name__))
+    return self.get_value() == other.get_value()
+
+  def __ne__(self, other):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator != is not supported between Integer and {}'.format(other.__class__.__name__))
+    return self.get_value() != other.get_value()
+
+  def __lt__(self, other):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator < is not supported between Integer and {}'.format(other.__class__.__name__))
+    return self.get_value() < other.get_value()
+
+  def __le__(self, other):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator <= is not supported between Integer and {}'.format(other.__class__.__name__))
+    return self.get_value() <= other.get_value()
+
+  def __gt__(self, other):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator > is not supported between Integer and {}'.format(other.__class__.__name__))
+    return self.get_value() > other.get_value()
+
+  def __ge__(self, other):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator >= is not supported between Integer and {}'.format(other.__class__.__name__))
+    return self.get_value() >= other.get_value()
+
 
 # constants
 ONE = Integer(1)

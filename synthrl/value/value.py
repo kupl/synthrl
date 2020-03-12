@@ -15,10 +15,10 @@ class Value:
     raise NotImplementedError
 
   def __str__(self):
-    return str(self.get_value())
+    return self.__repr__()
 
   def __call__(self):
     return self.get_value()
 
   def __repr__(self):
-    return str(self)
+    return str(self.get_value())
