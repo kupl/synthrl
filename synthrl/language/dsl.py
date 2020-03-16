@@ -25,7 +25,12 @@ class Tree:
     raise NotImplementedError
 
   def copy(self):
-    return deepcopy(self)
+    node = self.__class__(data=self.data)
+    children = {key: child.copy() for key, child in self.children.items()}
+    for key in children.keys():
+      children[key].parent = node
+    node.children = children
+    return node
 
   def __str__(self):
     return '{}({}, {})'.format(self.__class__.__name__, self.data, self.children)
