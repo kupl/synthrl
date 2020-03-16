@@ -5,6 +5,12 @@ class Environment:
     # gets needed objects to create environment
     raise NotImplementedError
   
+  @property
+  def state(self):
+    # returns state of the environment
+    raise NotImplementedError
+
+  @property
   def action_space(self):
     # returns possible action space
     raise NotImplementedError

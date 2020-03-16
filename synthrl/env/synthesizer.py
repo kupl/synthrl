@@ -21,6 +21,7 @@ class SynthesizerEnvironment(Environment):
   def state(self):
     return self.program.copy(), self.ioset
 
+  @property
   def action_space(self):
     return self.space
 
