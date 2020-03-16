@@ -1,4 +1,7 @@
 from synthrl.language.dsl import Tree
+from synthrl.value import Integer
+from synthrl.value import IntList
+from synthrl.value.integer import ONE, TWO, THREE, FOUR
 
 # wrapper class for program
 # L -> P  # root
@@ -17,8 +20,8 @@ class ListLanguage(Tree):
   def interprete(self, inputs=[]):
     mem = {v: [] for v in VarNode.var_space}
     for v, i in zip(VarNode.input_vars, inputs):
-      mem[v] = i
-    return self.children['PGM'].interprete(mem=mem)[VarNode.output_var]
+      mem[v] = Integer(i) if isinstance(i, int) else IntList(i)
+    return self.children['PGM'].interprete(mem=mem)[VarNode.output_var].get_value()
   
   def pretty_print(self):
     self.children['PGM'].pretty_print()
