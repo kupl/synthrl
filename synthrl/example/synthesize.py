@@ -27,7 +27,10 @@ def synthesize_from_oracle(dsl=None, synthesizer=None, verifier=None, oracle=Non
       action = verifier.take(state, env.action_space)
       state, _, (_, t_ver) = env.step(action)
 
-    # update ioset
+    distingusing_input = env.distingusing_input
+    ioset.append((distingusing_input, oracle(distingusing_input)))
+
+  return env.candidate.copy()
 
 def synthesize_interactively(dsl=None, synthesizer=None, verifier=None):
   raise NotImplementedError
