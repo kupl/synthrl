@@ -1,19 +1,15 @@
 from synthrl.env.environment import Environment
+from synthrl.utils import IOSet
 
 class MAEnvironment(Environment):
   def __init__(self, ioset=[], dsl=None, testing=None):
-    self.ioset = []
-    self.candidate = dsl()
-    self.alternative = dsl()
+    self.ioset = IOSet(ioset)
+    self.dsl = dsl
     self.testing = testing
-    self.candidate_terminate = False
-    self.alternative_terminate = False
-
-    self.update_space()
 
   @property
   def state(self):
-    return self.ioset, self.candidate.copy(), self.alternative.copy()
+    return self.ioset.copy(), self.candidate.copy(), self.alternative.copy()
 
   def update_space(self):
     if not self.candidate_terminate:
@@ -67,4 +63,9 @@ class MAEnvironment(Environment):
     return self.state, self.reward, self.termination
 
   def reset(self):
-    pass
+    self.candidate = self.dsl()
+    self.alternative = self.dsl()
+    self.candidate_terminate = False
+    self.alternative_terminate = False
+    self.update_space()
+    return self.state, self.reward, self.termination

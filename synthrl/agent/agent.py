@@ -5,7 +5,7 @@ class Agent:
     # initialize required components
     raise NotImplementedError
     
-  def take(self, action_space=[]):
+  def take(self, state=None, action_space=[]):
     # takes action space
     # and returns the proper action
     raise NotImplementedError
