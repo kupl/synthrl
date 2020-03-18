@@ -12,25 +12,36 @@ def synthesize_from_oracle(dsl=None, synthesizer=None, verifier=None, oracle=Non
   #      time budget
   # and returns synthesized program
   trail = 0
+  program = None
   for t in Timer(budget):
     trail += 1
     logger.info('[{:.2f}s] {} trails'.format(t.total_seconds(), trail))
 
     env = MAEnvironment(ioset=ioset, dsl=dsl, testing=lambda pgm1, pgm2: testing(pgm1, pgm2, **testing_opt))
-    state, _, (t_syn, t_ver) = env.reset()
+    state, (r_syn, r_ver), (t_syn, t_ver) = env.reset()
 
     while not t_syn:
       action = synthesizer.take(state, env.action_space)
-      state, _, (t_syn, t_ver) = env.step(action)
+      state, (r_syn, r_ver), (t_syn, t_ver) = env.step(action)
+    
+    if r_syn <= 0:
+      logger.warning('Fail to synthesize the program.')
+      break
+
+    program = env.program
 
     while not t_ver:
       action = verifier.take(state, env.action_space)
-      state, _, (_, t_ver) = env.step(action)
+      state, (r_syn, r_ver), (_, t_ver) = env.step(action)
+
+    if r_ver <= 0:
+      logger.info('Fail to generate distinguishing input.')
+      break
 
     distingusing_input = env.distingusing_input
     ioset.append((distingusing_input, oracle(distingusing_input)))
 
-  return env.candidate.copy()
-
+  return program
+  
 def synthesize_interactively(dsl=None, synthesizer=None, verifier=None):
   raise NotImplementedError

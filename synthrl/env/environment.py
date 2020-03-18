@@ -24,3 +24,8 @@ class Environment:
     # reset all the variables to initial state
     # and returns a tuple of initial state, reward(0), and terminal(False)
     raise NotImplementedError
+
+  @property
+  def program(self):
+    # returns the current program
+    raise NotImplementedError
