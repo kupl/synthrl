@@ -43,5 +43,18 @@ class List(Value):
   def __reversed__(self):
     return self.__class__(list(reversed(self.get_value())))
 
+  def __eq__(self, other):
+    if not isinstance(other, self.__class__):
+      raise ValueError('Cannot compare {} with {}.'.format(self.__class__.__name__, other.__class__.__name__))
+    if len(self) != len(other):
+      return False
+    for i, j in zip(self, other):
+      if i != j:
+        return False
+    return True
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class IntList(List):
   TYPE = Integer
