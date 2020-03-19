@@ -51,7 +51,7 @@ class ExprNode(Tree):
   expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
   def production_space(self):
     if self.data =='hole':
-      return self, [expr_productions]
+      return self, self.expr_productions
     else:
       if self.data=="var":
         children=["VAR_Z"]
@@ -72,12 +72,12 @@ class ExprNode(Tree):
     if rule =="var":
       self.data="var"
       self.children = {
-          'VAR_Z' : ParamNode(paraent=self)
+          'VAR_Z' : ParamNode(parent=self)
       }
     if rule=="const":
       self.data="const"
       self.children ={
-          'CONST_Z' : ConstNode(paraent=self)
+          'CONST_Z' : ConstNode(parent=self)
       }
     if rule=="bop":
       self.data="bop"
@@ -97,18 +97,18 @@ class ExprNode(Tree):
         "ELSE_EXPR" : ExprNode(parent=self)
       }
 
-    def interprete(self, inputs):
-      if self.data =="var":
-        return self.children['VAR_Z'].interprete(inputs)
-      if self.data =="const":
-        pass
-      if self.data =="bop":
-        pass
-      if self.data =="neg":
-        sub=self.children['NEG'].interprete(inputs)
-        return sub.negate()
-      if self.data =="ite":
-        pass
+  def interprete(self, inputs):
+    if self.data =="var":
+      return self.children['VAR_Z'].interprete(inputs)
+    if self.data =="const":
+      pass
+    if self.data =="bop":
+      pass
+    if self.data =="neg":
+      sub=self.children['NEG'].interprete(inputs)
+      return sub.negate()
+    if self.data =="ite":
+      pass
 
 #N_B -> true|false
 #         | Nz=Nz | N_B land N_B |N_B lor N_B| N_B lnot N_B
@@ -121,7 +121,7 @@ class BOPNode(Tree):
 
   def production_space(self):
     if self.data=='hole':
-      return self, binary_operations
+      return self, self.binary_operations
     else:
       for key in ['LeftEXPR','RightEXPR']:
         node, space = self.children[key].production_space()
@@ -132,8 +132,8 @@ class BOPNode(Tree):
   def production(self, rule=None): #rules should be one of in binary_operations
     self.data=rule
     self.children={
-      'LeftEXPR'  :  ExprNode(paraent=self),
-      'RightEXPR' :  ExprNode(paraent=self)
+      'LeftEXPR'  :  ExprNode(parent=self),
+      'RightEXPR' :  ExprNode(parent=self)
     }
 
   def interprete(self, inputs):
