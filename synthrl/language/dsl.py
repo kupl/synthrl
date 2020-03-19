@@ -26,9 +26,11 @@ class Tree:
 
   def copy(self):
     node = self.__class__(data=self.data)
-    children = {key: child.copy() for key, child in self.children.items()}
-    for key in children.keys():
-      children[key].parent = node
+    children = {}
+    for key, child in self.children.items():
+      child = child.copy()
+      child.parent = node
+      children[key] = child
     node.children = children
     return node
 
