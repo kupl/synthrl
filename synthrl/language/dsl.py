@@ -37,3 +37,16 @@ class Tree:
 
   def __repr__(self):
     return str(self)
+
+  def __eq__(self, other):
+    if self.data != other.data:
+      return False
+    for key_self, key_other in zip(self.children.keys(), other.children.keys()):
+      c_self = self.children[key_self]
+      c_other = other.children[key_other]
+      if c_self != c_other:
+        return False
+    return True
+
+  def __ne__(self, other):
+    return not (self == other)
