@@ -17,7 +17,7 @@ class Integer(Value):
     elif isinstance(value, float):
       value = int(value)
     elif not isinstance(value, int):
-      raise ValueError('{} is not integer.'.format(value))
+      raise ValueError('{} is not an integer.'.format(value))
     elif value < Integer.MIN or value > Integer.MAX:
       logger.warning('The given value {} is not in between {} and {}. The value will be clipped.'.format(value, Integer.MIN, Integer.MAX))
       value = max(Integer.MIN, min(value, Integer.MAX))
