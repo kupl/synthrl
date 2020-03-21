@@ -45,7 +45,7 @@ class List(Value):
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
-      raise ValueError('Cannot compare {} with {}.'.format(self.__class__.__name__, other.__class__.__name__))
+      raise ValueError('Cannot compare {} and {}.'.format(self.__class__.__name__, other.__class__.__name__))
     if len(self) != len(other):
       return False
     for i, j in zip(self, other):
