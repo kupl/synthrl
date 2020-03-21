@@ -132,7 +132,7 @@ class ConstNode(Tree):
 
 #Var_z -> param1 | param2 ...
 class ParamNode(Tree):
-  param_space = ["param".format(i) for i in range(2)]
+  param_space = ["param{}".format(i) for i in range(2)]
 
   def production_space(self):
     if self.data == 'hole':
