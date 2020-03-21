@@ -15,6 +15,14 @@ class Value:
     # randomly generate value
     raise NotImplementedError
 
+  def __eq__(self, other):
+    # returns whether two are same
+    raise NotImplementedError
+
+  def __ne__(self, other):
+    # returns whether two are not same
+    raise NotImplementedError
+
   def copy(self):
     return self.__class__(self)
 
