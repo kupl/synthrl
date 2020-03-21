@@ -74,7 +74,61 @@ class ExprNode(Tree):
 #         | Nz=Nz | N_B land N_B |N_B lor N_B| N_B lnot N_B
 class BOOLNode(Tree):
   bool_operations = ["true", "false", "equal","land","lor","lnot"]
-  
+  def production_space(self):
+    if self.data=="hole":
+      return self, self.bool_operations
+    else:
+      for child in self.children:
+        pass
+  def prooduction(self,rule=None):
+    if rule == "true" or rule == "false":
+      self.data==rule
+    if rule == "equal":
+      self.data=="rule"
+      self.children={
+        "LeftExpr"  : ExprNode(paraent=self) ,
+        "RightExpr" : ExprNode(paraent=self) 
+      }
+    if rule =="land" or rule =="lor":
+      self.data=rule
+      self.children={
+        "LeftBool"  : BOOLNode(paraent=self) ,
+        "RightBool" : BOOLNode(paraent=self) 
+      }
+    if rule=="lnot":
+      self.data=rule
+      self.children={
+        "BOOL" : BOOLNode(paraent=self)
+      }
+
+  def interprete(self, inputs):
+    if self.data=="true" :
+      return True
+    if self.data=="false":
+      return False 
+    if self.data=="equal":
+      left  =  self.children["LeftExpr"].interprete(inputs)
+      right = self.children["RightExpr"].interprete(inputs)
+      return left==right
+    if self.data=="land" :
+      left  =  self.children["LeftBool"].interprete(inputs)
+      right = self.children["RightBool"].interprete(inputs)
+      return left and right
+    if self.data=="lor" :
+      left  =  self.children["LeftBool"].interprete(inputs)
+      right = self.children["RightBool"].interprete(inputs)
+      return left or right
+    if self.data=="lor" :
+      left  =  self.children["LeftBool"].interprete(inputs)
+      right = self.children["RightBool"].interprete(inputs)
+      return left or right
+    if self.data=="lnot":
+      return not self.children["BOOL"].interprete(inputs)
+
+
+
+
+
 # Bop -> + | − | & | ∥ | × | / |<< | >> | mod
 class BOPNode(Tree):
   binary_operations = ["+", "-","&", "||", "x", "/", "<<", ">>","mod"]
