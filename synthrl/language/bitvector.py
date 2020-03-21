@@ -1,45 +1,5 @@
 from synthrl.language.dsl import Tree
-
-
-##############################################################
-##############################################################
-
-class BitVector(object):
-  __slots__ = ['value', 'size', 'mask', 'sign_mask']
-  def __init__(self, value, size):
-    if (isinstance(value, int)):
-      self.value = value
-    elif (isinstance(value, str)):
-      self.value = int(value)
-    else:
-      raise ValueError('Invalid value for BitVector')
-    self.size = size
-    if (size <= 0):
-      raise ValueError('Size of BitVector must be greater than 1')
-    self.mask = (1 << size) - 1
-    self.sign_mask = (1 << (size - 1))
-    self.value &= self.mask
-    if self.value < 0:
-      self.value = self._to_unsigned(self.value) 
-  def _to_unsigned(self, x):
-    return x if x >= 0 else (self.mask + 1 + x)
-  def __add__(self, other):
-    return BitVector(self.value + other.value, self.size)
-  def __sub__(self, other):
-    return BitVector(self._to_unsigned(self.value - other.value), self.size)  
-  def __mul__(self, other):
-    val = self.value * other.value
-    return BitVector(val, self.size)
-  def __and__(self, other):
-    return BitVector(self.value & other.value, self.size)
-  def __or__(self, other):
-    return BitVector(self.value | other.value, self.size)
-  def negate(self):
-      return BitVector((1 << self.size) - self.value, self.size)
-
-
-##############################################################
-##############################################################
+from synthrl.value import BitVector32
 
 #N_z -> Var_z            => var
 #     | Const_z          => const
