@@ -20,7 +20,8 @@ class BitVector(Value):
 
   @classmethod
   def sample(cls):
-    return cls()
+    iinfo = np.iinfo(cls.TYPE)
+    return cls(np.random.randint(iinfo.min, iinfo.max + 1, dtype=cls.TYPE))
 
   def __neg__(self):
     return self.__class__(-self.value)
