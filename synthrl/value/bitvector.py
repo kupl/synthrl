@@ -58,12 +58,12 @@ class BitVector(Value):
   def __lshift__(self, n):
     if not isinstance(Integer):
       raise ValueError('{} is not a value of synthrl.value.Integer.'.format(n))
-    return self.__class__(np.left_shift(self.value, n))
+    return self.__class__(np.left_shift(self.value, n.get_value()))
 
   def __rshift__(self, n):
     if not isinstance(Integer):
       raise ValueError('{} is not a value of synthrl.value.Integer.'.format(n))
-    return self.__class__(np.right_shift(self.value, n))
+    return self.__class__(np.right_shift(self.value, n.get_value()))
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
