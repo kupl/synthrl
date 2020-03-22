@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 
-from synthrl.value import Integer
+from synthrl.value.integer import Integer
 from synthrl.value.value import Value
 
 class List(Value):
