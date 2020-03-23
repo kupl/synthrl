@@ -18,9 +18,9 @@ class ListLanguage(Tree):
     raise ValueError('ListLanguage should not have any hole.')
 
   def interprete(self, inputs=[]):
-    mem = {v: [] for v in VarNode.var_space}
+    mem = {v: IntList() for v in VarNode.var_space}
     for v, i in zip(VarNode.input_vars, inputs):
-      mem[v] = Integer(i) if isinstance(i, int) else IntList(i)
+      mem[v] = Integer(i) if isinstance(i, Integer) or isinstance(i, int) else IntList(i)
     return self.children['PGM'].interprete(mem=mem)[VarNode.output_var].get_value()
   
   def pretty_print(self):
@@ -207,11 +207,11 @@ class FuncNode(Tree):
       xs = self.children['VAR'].interprete(mem)
       return [f(x) for x in xs]
     if self.data == 'filter':
-      f = self.children['AUOP'].interprete()
+      f = self.children['BUOP'].interprete()
       xs = self.children['VAR'].interprete(mem)
       return [x for x in xs if f(x)]
     if self.data == 'count':
-      f = self.children['AUOP'].interprete()
+      f = self.children['BUOP'].interprete()
       xs = self.children['VAR'].interprete(mem)
       return len([x for x in xs if f(x)])
     if self.data == 'zipwith':

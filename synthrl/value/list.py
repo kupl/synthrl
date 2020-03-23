@@ -8,7 +8,9 @@ class List(Value):
   MAX_LENGTH = 256
   TYPE = Value
   def __init__(self, value=[]):
-    if not isinstance(value, list):
+    if isinstance(value, List):
+      value = value.get_value()
+    elif not isinstance(value, list):
       raise ValueError('{} is not list.'.format(value))
     value = [self.TYPE(v) for v in value]
     self.value = value
