@@ -7,7 +7,7 @@ class Tree:
     self.children = children
     self.parent = parent
 
-  def production_space(self):
+  def production_space(self, *args, **kwargs):
     # returns a tuple of target hole node and possible rule to fill the hole
     raise NotImplementedError
 

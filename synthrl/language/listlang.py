@@ -12,34 +12,38 @@ class ListLanguage(Tree):
     self.parent = None
 
   def production_space(self):
-    return self.children['PGM'].production_space()
+    node, space, _ = self.children['PGM'].production_space(used_vars=set(VarNode.INPUT_VARS))
+    return node, space
   
   def production(self, rule=None):
     raise ValueError('ListLanguage should not have any hole.')
 
   def interprete(self, inputs=[]):
-    mem = {v: IntList() for v in VarNode.var_space}
-    for v, i in zip(VarNode.input_vars, inputs):
+    mem = {v: IntList() for v in VarNode.VAR_SPACE}
+    for v, i in zip(VarNode.INPUT_VARS, inputs):
       mem[v] = Integer(i) if isinstance(i, Integer) or isinstance(i, int) else IntList(i)
-    return self.children['PGM'].interprete(mem=mem)[VarNode.output_var].get_value()
+    return self.children['PGM'].interprete(mem=mem).get_value()
   
   def pretty_print(self):
     self.children['PGM'].pretty_print()
 
-# P -> I; P # seq
-#    | eof  # eof
+# P -> I; P       # seq
+#    | return V;  # return
 class ProgramNode(Tree):
-  def production_space(self):
+  def production_space(self, used_vars=set()):
     if self.data == 'hole':
-      return self, ['seq', 'eof']
+      return self, ['seq', 'return'], used_vars
     if self.data == 'seq':
       for key in ['INST', 'PGM']:
-        node, space = self.children[key].production_space()
+        node, space, used_vars = self.children[key].production_space(used_vars)
         if len(space) > 0:
-          return node, space
-      return self, []
-    if self.data == 'eof':
-      return self, []
+          return node, space, used_vars
+      return self, [], used_vars
+    if self.data == 'return':
+      node, space, used_vars = self.children['VAR'].production_space(used_vars)
+      if len(space) > 0:
+        return node, space, used_vars
+      return self, [], used_vars
 
   def production(self, rule=None):
     if rule == 'seq':
@@ -48,16 +52,19 @@ class ProgramNode(Tree):
         'INST': InstNode(parent=self),
         'PGM': ProgramNode(parent=self)
       }
-    elif rule == 'eof':
-      self.data = 'eof'
+    elif rule == 'return':
+      self.data = 'return'
+      self.children = {
+        'VAR': VarNode(parent=self)
+      }
 
   def interprete(self, mem={}):
     if self.data == 'seq':
       mem = self.children['INST'].interprete(mem)
       mem = self.children['PGM'].interprete(mem)
       return mem
-    if self.data == 'eof':
-      return mem
+    if self.data == 'return':
+      return mem[self.children['VAR'].interprete(mem)]
 
   def pretty_print(self):
     if self.data == 'hole':
@@ -66,8 +73,10 @@ class ProgramNode(Tree):
       self.children['INST'].pretty_print()
       print(';')
       self.children['PGM'].pretty_print()
-    elif self.data == 'eof':
-      pass
+    elif self.data == 'return':
+      print('return', end=' ')
+      self.children['VAR'].pretty_print()
+      print(';')
 
 # I -> V <- F # assign
 class InstNode(Tree):
@@ -76,16 +85,16 @@ class InstNode(Tree):
     # InstNode has only one production rule
     self.data = 'assign'
     self.children = {
-      'VAR': VarNode(parent=self),
+      'VAR': VarNode(parent=self, assignment=True),
       'FUNC': FuncNode(parent=self)
     }
 
-  def production_space(self):
+  def production_space(self, used_vars=set()):
     for key in ['FUNC', 'VAR']:
-      node, space = self.children[key].production_space()
+      node, space, used_vars = self.children[key].production_space(used_vars=used_vars)
       if len(space) > 0:
-        return node, space
-    return self, []
+        return node, space, used_vars
+    return self, [], used_vars
 
   def production(self, rule=None):
     raise ValueError('InstNode should not have any hole.')
@@ -102,27 +111,36 @@ class InstNode(Tree):
     self.children['FUNC'].pretty_print()
 
 # V -> v0 | v1        # inputs
-#    | v2 | ... | v18 # bounded variables
-#    | v19            # output
+#    | v2 | ... | v19 # variables
 class VarNode(Tree):
   VARIABLE_RANGE = 20
-  var_space = ['v{}'.format(i) for i in range(20)]
-  input_vars = ['v0', 'v1']
-  output_var = 'v{}'.format(19)
+  VAR_SPACE = ['v{}'.format(i) for i in range(20)]
+  INPUT_VARS = ['v0', 'v1']
 
-  def production_space(self):
-    if self.data == 'hole':
-      return self, self.var_space
+  def __init__(self, assignment=False, *args, **kwargs):
+    super(VarNode, self).__init__(*args, **kwargs)
+    self.assignment = assignment
+
+  def production_space(self, used_vars=set()):
+    if self.data == 'hole' and self.assignment:
+      return self, self.VAR_SPACE, used_vars
+    elif self.data == 'hole' and not self.assignment:
+      self.used_vars = list(used_vars)
+      return self, list(used_vars), used_vars
+    elif self.assignment:
+      used_vars.add(self.data)
+      return self, [], used_vars
     else:
-      return self, []
+      return self, [], used_vars
     
   def production(self, rule=None):
-    if rule in self.var_space:
+    if self.assignment and rule in self.VAR_SPACE:
+      self.data = rule
+    elif not self.assignment and rule in self.used_vars:
       self.data = rule
 
   def interprete(self, mem):
-    if self.data in self.var_space:
-      return mem[self.data]
+    return mem[self.data]
     
   def pretty_print(self):
     print(self.data, end='')
@@ -149,9 +167,9 @@ class FuncNode(Tree):
   one_var_func = ['head', 'last', 'minimum', 'maximum', 'reverse', 'sort', 'sum']
   two_var_func = ['take', 'drop', 'access']
 
-  def production_space(self):
+  def production_space(self, used_vars=set()):
     if self.data == 'hole':
-      return self, self.auop_func + self.buop_func + self.abop_func + self.one_var_func + self.two_var_func
+      return self, self.auop_func + self.buop_func + self.abop_func + self.one_var_func + self.two_var_func, used_vars
     keys = []
     if self.data in self.auop_func:
       keys = ['AUOP', 'VAR']
@@ -164,10 +182,10 @@ class FuncNode(Tree):
     if self.data in self.two_var_func:
       keys = ['VAR1', 'VAR2']
     for key in keys:
-      node, space = self.children[key].production_space()
+      node, space, used_vars = self.children[key].production_space(used_vars=used_vars)
       if len(space) > 0:
-        return node, space
-    return self, []
+        return node, space, used_vars
+    return self, [], used_vars
 
   def production(self, rule=None):
     if rule in self.auop_func:
@@ -288,11 +306,11 @@ class FuncNode(Tree):
 class AUOPNode(Tree):
   auop_space = ['+1', '-1', '*2', '/2', '*(-1)', '**2', '*3', '/3', '*4', '/4']
 
-  def production_space(self):
+  def production_space(self, used_vars=set()):
     if self.data == 'hole':
-      return self, self.auop_space
+      return self, self.auop_space, used_vars
     else:
-      return self, []
+      return self, [], used_vars
 
   def production(self, rule=None):
     if rule in self.auop_space:
@@ -328,11 +346,11 @@ class AUOPNode(Tree):
 class BUOPNode(Tree):
   buop_space = ['>0', '<0', '%2==0', '%2==1']
 
-  def production_space(self):
+  def production_space(self, used_vars=set()):
     if self.data == 'hole':
-      return self, self.buop_space
+      return self, self.buop_space, used_vars
     else:
-      return self, []
+      return self, [], used_vars
     
   def production(self, rule=None):
     if rule in self.buop_space:
@@ -355,11 +373,11 @@ class BUOPNode(Tree):
 class ABOPNode(Tree):
   abop_space = '+', '*', 'MIN', 'MAX'
 
-  def production_space(self):
+  def production_space(self, used_vars=set()):
     if self.data == 'hole':
-      return self, self.abop_space
+      return self, self.abop_space, used_vars
     else:
-      return self, []
+      return self, [], used_vars
 
   def production(self, rule=None):
     if rule in self.abop_space:
