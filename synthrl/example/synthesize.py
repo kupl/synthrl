@@ -25,15 +25,28 @@ def synthesize_from_oracle(dsl=None, synthesizer=None, verifier=None, oracle=Non
       action = synthesizer.take(state, env.action_space)
       state, _, (t_syn, t_ver) = env.step(action)
     
-    logger.debug('{} trails: program synthesized.')
+    logger.debug('{} trails: program synthesized.'.format(trail))
     program = env.program
+    ## logging ##
+    print('--candidate--')
+    program.pretty_print()
+    ## logging ##
 
     while not t_ver:
       action = verifier.take(state, env.action_space)
       state, _, (_, t_ver) = env.step(action)
 
-    distingusing_input = env.distingusing_input
-    ioset.append((distingusing_input, oracle(distingusing_input)))
+    distinguishing_input = env.distinguishing_input
+    ## logging ##
+    print('--alternative--')
+    env.alternative.pretty_print()
+    print('--distingushing--')
+    print(distinguishing_input)
+    ## logging ##
+    try:
+      ioset.append((distinguishing_input, oracle(*distinguishing_input)))
+    except:
+      pass
   
   return program
   
