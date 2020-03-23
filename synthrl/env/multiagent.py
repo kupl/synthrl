@@ -11,6 +11,8 @@ class MAEnvironment(Environment):
   def reset(self):
     self.candidate = self.dsl()
     self.alternative = self.dsl()
+    self.candidate_reward = 0
+    self.alternative_reward = 0
     self.candidate_terminate = False
     self.alternative_terminate = False
     self.update()
@@ -56,7 +58,6 @@ class MAEnvironment(Environment):
             return
         self.candidate_reward = 1
         self.candidate_terminate = True
-      return
 
     if not self.alternative_terminate:
       self.node, self.space = self.alternative.production_space()
