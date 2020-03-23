@@ -14,12 +14,22 @@ def parse_time(time='0h-0m-0s'):
       raise ValueError('Unknown indecator: {}.'.format(t[-1]))
   return parsed
 
-def Timer(budget='0s'):
-  budget = timedelta(**parse_time(budget))
-  start_time = datetime.now()
-  while True:
-    delta = datetime.now() - start_time
-    if delta > budget:
-      break
-    yield delta
-  return delta
+class Timer:
+  def __init__(self, budget='0s'):
+    self.budget = timedelta(**parse_time(budget))
+    self.start_time = datetime.now()
+
+  def __iter__(self):
+    while True:
+      delta = datetime.now() - self.start_time
+      if delta > self.budget:
+        break
+      yield delta
+    return delta
+
+  def timeout(self):
+    delta = datetime.now() - self.start_time
+    if delta > self.budget:
+      return True
+    else:
+      return False
