@@ -38,8 +38,6 @@ def synthesize_from_oracle(dsl=None, synthesizer=None, verifier=None, oracle=Non
 
     distinguishing_input = env.distinguishing_input
     ## logging ##
-    print('--alternative--')
-    env.alternative.pretty_print()
     print('--distingushing--')
     print(distinguishing_input)
     ## logging ##

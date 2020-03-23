@@ -85,13 +85,11 @@ class MAEnvironment(Environment):
             self.alternative = self.dsl()
             self.node, self.space = self.alternative.production_space()
             return
-        try:
-          self.distinguishing_input = self.testing(self.candidate, self.alternative)
-        except:
-          self.alternative_reward = -1
-          self.alternative = self.dsl()
-          self.node, self.space = self.alternative.production_space()
-          return
+        ## logging ##
+        print('--alternative--')
+        self.alternative.pretty_print()
+        ## logging ##
+        self.distinguishing_input = self.testing(self.candidate, self.alternative)
         if self.distinguishing_input is None:
           self.alternative_reward = -1
           self.alternative = self.dsl()
