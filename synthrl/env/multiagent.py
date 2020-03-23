@@ -45,7 +45,7 @@ class MAEnvironment(Environment):
 
   def update(self):
     if not self.candidate_terminate:
-      self.node, self.space = self.candidate.production_rule()
+      self.node, self.space = self.candidate.production_space()
       if len(self.space) > 0:
         self.candidate_reward = 0
         return
@@ -59,7 +59,7 @@ class MAEnvironment(Environment):
       return
 
     if not self.alternative_terminate:
-      self.node, self.space = self.alternative.production_rule()
+      self.node, self.space = self.alternative.production_space()
       if len(self.space) > 0:
         self.alternative_reward = 0
         return
@@ -75,9 +75,5 @@ class MAEnvironment(Environment):
         self.alternative_reward = 1
         self.alternative_terminate = True  
 
-    if not self.alternative_terminate:
-      self.node, self.space = self.alternative.production_rule()
-      if len(self.space) > 0:
-        return
     self.alternative_terminate = True
     self.node, self.space = None, []
