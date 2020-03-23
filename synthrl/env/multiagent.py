@@ -53,8 +53,16 @@ class MAEnvironment(Environment):
         return
       else:
         for i, o in self.ioset:
-          if o != self.candidate.interprete(i):
+          try:
+            if o != self.candidate.interprete(i):
+              self.candidate_reward = -1
+              self.candidate = self.dsl()
+              self.node, self.space = self.candidate.production_space()
+              return
+          except Exception:
             self.candidate_reward = -1
+            self.candidate = self.dsl()
+            self.node, self.space = self.candidate.production_space()
             return
         self.candidate_reward = 1
         self.candidate_terminate = True
@@ -66,12 +74,28 @@ class MAEnvironment(Environment):
         return
       else:
         for i, o in self.ioset:
-          if o != self.candidate.interprete(i):
+          try:
+            if o != self.alternative.interprete(i):
+              self.alternative_reward = -1
+              self.alternative = self.dsl()
+              self.node, self.space = self.alternative.production_space()
+              return
+          except Exception:
             self.alternative_reward = -1
+            self.alternative = self.dsl()
+            self.node, self.space = self.alternative.production_space()
             return
-        self.distingusing_input = self.testing(self.candidate, self.alternative)
-        if self.distingusing_input is None:
+        try:
+          self.distinguishing_input = self.testing(self.candidate, self.alternative)
+        except:
           self.alternative_reward = -1
+          self.alternative = self.dsl()
+          self.node, self.space = self.alternative.production_space()
+          return
+        if self.distinguishing_input is None:
+          self.alternative_reward = -1
+          self.alternative = self.dsl()
+          self.node, self.space = self.alternative.production_space()
           return
         self.alternative_reward = 1
         self.alternative_terminate = True  
