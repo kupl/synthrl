@@ -30,6 +30,9 @@ class Integer(Value):
   def sample(cls):
     return cls(np.random.randint(cls.MIN, cls.MAX + 1))
 
+  def __index__(self):
+    return self.value
+
   def __neg__(self):
     return Integer(-self.get_value())
 
