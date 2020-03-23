@@ -66,6 +66,12 @@ class MAEnvironment(Environment):
             return
         self.candidate_reward = 1
         self.candidate_terminate = True
+        ## logging ##
+        print('--candidate--')
+        self.candidate.pretty_print()
+        ## logging ##
+    if not self.candidate_terminate:
+      return
 
     if not self.alternative_terminate:
       self.node, self.space = self.alternative.production_space()
@@ -96,7 +102,9 @@ class MAEnvironment(Environment):
           self.node, self.space = self.alternative.production_space()
           return
         self.alternative_reward = 1
-        self.alternative_terminate = True  
+        self.alternative_terminate = True
+    if not self.alternative_terminate:
+      return
 
     self.alternative_terminate = True
     self.node, self.space = None, []

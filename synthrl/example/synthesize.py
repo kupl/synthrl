@@ -27,10 +27,6 @@ def synthesize_from_oracle(dsl=None, synthesizer=None, verifier=None, oracle=Non
     
     logger.debug('{} trails: program synthesized.'.format(trail))
     program = env.program
-    ## logging ##
-    print('--candidate--')
-    program.pretty_print()
-    ## logging ##
 
     while not t_ver:
       action = verifier.take(state, env.action_space)
