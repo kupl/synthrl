@@ -17,6 +17,8 @@ def synthesize_from_oracle(dsl=None, synthesizer=None, verifier=None, oracle=Non
   for t in timer:
     trail += 1
     logger.info('[{:.2f}s] {} trails'.format(t.total_seconds(), trail))
+    synthesizer.reset()
+    verifier.reset()
 
     env = MAEnvironment(ioset=ioset, dsl=dsl, testing=lambda pgm1, pgm2: testing(pgm1, pgm2, **testing_opt))
     state, _, (t_syn, t_ver) = env.reset()

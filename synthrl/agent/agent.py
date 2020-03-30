@@ -9,3 +9,6 @@ class Agent:
     # takes action space
     # and returns the proper action
     raise NotImplementedError
+
+  def reset(self):
+    raise NotImplementedError

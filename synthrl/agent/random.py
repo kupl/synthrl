@@ -8,3 +8,6 @@ class RandomAgent(Agent):
 
   def take(self, state=None, action_space=[]):
     return np.random.choice(action_space)
+
+  def reset(self):
+    pass
