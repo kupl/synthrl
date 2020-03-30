@@ -1,6 +1,8 @@
 from synthrl.env.environment import Environment
 from synthrl.utils import IOSet
 
+f = open('syntesized.txt', 'w')
+
 class MAEnvironment(Environment):
   def __init__(self, ioset=[], dsl=None, testing=None):
     self.ioset = IOSet(ioset)
@@ -52,6 +54,8 @@ class MAEnvironment(Environment):
         self.candidate_reward = 0
         return
       else:
+        print('', file=f)
+        self.candidate.pretty_print(f)
         for i, o in self.ioset:
           try:
             if o != self.candidate.interprete(i):
