@@ -67,7 +67,7 @@ class ProgramNode(Tree):
       mem = self.children['PGM'].interprete(mem)
       return mem
     if self.data == 'return':
-      return mem[self.children['VAR'].interprete(mem)]
+      return self.children['VAR'].interprete(mem)
 
   def pretty_print(self, file=None):
     if self.data == 'hole':
