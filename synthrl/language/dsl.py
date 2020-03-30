@@ -20,7 +20,7 @@ class Tree:
     # and returns executed result of program
     raise NotImplementedError
 
-  def pretty_print(self, *args, **kwargs):
+  def pretty_print(self, file=None, *args, **kwargs):
     # print the program tree into program
     raise NotImplementedError
 

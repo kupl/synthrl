@@ -24,8 +24,11 @@ class ListLanguage(Tree):
       mem[v] = Integer(i) if isinstance(i, Integer) or isinstance(i, int) else IntList(i)
     return self.children['PGM'].interprete(mem=mem).get_value()
   
-  def pretty_print(self):
-    self.children['PGM'].pretty_print()
+  def pretty_print(self, file=None):
+    self.children['PGM'].pretty_print(file=file)
+
+  def is_hole(self):
+    return self.children['PGM'].is_hole()
 
 # P -> I; P       # seq
 #    | return V;  # return
@@ -66,16 +69,16 @@ class ProgramNode(Tree):
     if self.data == 'return':
       return mem[self.children['VAR'].interprete(mem)]
 
-  def pretty_print(self):
+  def pretty_print(self, file=None):
     if self.data == 'hole':
       print('(HOLE)')
     elif self.data == 'seq':
-      self.children['INST'].pretty_print()
+      self.children['INST'].pretty_print(file=file)
       print(';')
-      self.children['PGM'].pretty_print()
+      self.children['PGM'].pretty_print(file=file)
     elif self.data == 'return':
       print('return', end=' ')
-      self.children['VAR'].pretty_print()
+      self.children['VAR'].pretty_print(file=file)
       print(';')
 
 # I -> V <- F # assign
@@ -105,10 +108,10 @@ class InstNode(Tree):
       mem[self.children['VAR'].data] = value
       return mem
 
-  def pretty_print(self):
-    self.children['VAR'].pretty_print()
+  def pretty_print(self, file=None):
+    self.children['VAR'].pretty_print(file=file)
     print(' <- ', end='')
-    self.children['FUNC'].pretty_print()
+    self.children['FUNC'].pretty_print(file=file)
 
 # V -> v0 | v1        # inputs
 #    | v2 | ... | v19 # variables
@@ -142,7 +145,7 @@ class VarNode(Tree):
   def interprete(self, mem):
     return mem[self.data]
     
-  def pretty_print(self):
+  def pretty_print(self, file=None):
     print(self.data, end='')
 
 # F -> MAP AUOP V       # map
@@ -273,34 +276,34 @@ class FuncNode(Tree):
       xs = self.children['VAR2'].interprete(mem)
       return xs[n]
 
-  def pretty_print(self):
+  def pretty_print(self, file=None):
     if self.data == 'hole':
       print('(HOLE)', end='')
     elif self.data in self.auop_func:
       print(self.data.upper(), end=' ')
-      self.children['AUOP'].pretty_print()
+      self.children['AUOP'].pretty_print(file=file)
       print(end=' ')
-      self.children['VAR'].pretty_print()
+      self.children['VAR'].pretty_print(file=file)
     elif self.data in self.buop_func:
       print(self.data.upper(), end=' ')
-      self.children['BUOP'].pretty_print()
+      self.children['BUOP'].pretty_print(file=file)
       print(end=' ')
-      self.children['VAR'].pretty_print()
+      self.children['VAR'].pretty_print(file=file)
     elif self.data in self.abop_func:
       print(self.data.upper(), end=' ')
-      self.children['ABOP'].pretty_print()
+      self.children['ABOP'].pretty_print(file=file)
       print(end=' ')
-      self.children['VAR1'].pretty_print()
+      self.children['VAR1'].pretty_print(file=file)
       print(end=' ')
-      self.children['VAR2'].pretty_print()
+      self.children['VAR2'].pretty_print(file=file)
     elif self.data in self.one_var_func:
       print(self.data.upper(), end=' ')
-      self.children['VAR'].pretty_print()
+      self.children['VAR'].pretty_print(file=file)
     elif self.data in self.two_var_func:
       print(self.data.upper(), end=' ')
-      self.children['VAR1'].pretty_print()
+      self.children['VAR1'].pretty_print(file=file)
       print(end=' ')
-      self.children['VAR2'].pretty_print()
+      self.children['VAR2'].pretty_print(file=file)
 
 # AUOP -> +1 | -1 | *2 | /2 | *(-1) | **2 | *3 | /3 | *4 | /4
 class AUOPNode(Tree):
@@ -338,7 +341,7 @@ class AUOPNode(Tree):
     if self.data == '/4':
       return lambda x: x / 4
   
-  def pretty_print(self):
+  def pretty_print(self, file=None):
     print('({})'.format(self.data), end='')
 
 
@@ -366,7 +369,7 @@ class BUOPNode(Tree):
     if self.data == '%2==1':
       return lambda x: (x % 2) == 1
     
-  def pretty_print(self):
+  def pretty_print(self, file=None):
     print('({})'.format(self.data), end='')
 
 # ABOP -> + | * | MIN | MAX
@@ -393,5 +396,5 @@ class ABOPNode(Tree):
     if self.data == 'MAX':
       return lambda x, y: x if x > y else y
 
-  def pretty_print(self):
+  def pretty_print(self, file=None):
     print('({})'.format(self.data), end='')
