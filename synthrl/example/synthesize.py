@@ -15,8 +15,8 @@ def synthesize_from_oracle(dsl=None, synthesizer=None, verifier=None, oracle=Non
   program = None
   timer = Timer(budget)
   for t in timer:
-    trail += 1
     logger.info('[{:.2f}s] {} trails'.format(t.total_seconds(), trail))
+    trail += 1
     synthesizer.reset()
     verifier.reset()
 
