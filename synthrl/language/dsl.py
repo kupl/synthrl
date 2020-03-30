@@ -24,6 +24,9 @@ class Tree:
     # print the program tree into program
     raise NotImplementedError
 
+  def is_hole(self):
+    return self.data == 'hole'
+
   def copy(self):
     node = self.__class__(data=self.data)
     children = {}
