@@ -333,8 +333,8 @@ class FuncNode(Tree):
       xs = self.children['VAR2'].interprete(mem)
       if not isinstance(xs, IntList):
         raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
-      if len(xs) >= n.get_value():
-        raise UndefinedSemantics('len(xs) >= n: {} >= {}'.format(len(xs), n))
+      if len(xs) <= n.get_value():
+        raise UndefinedSemantics('len(xs) <= n: {} <= {}'.format(len(xs), n))
       if len(xs) < -(n.get_value()):
         raise UndefinedSemantics('len(xs) < n: {} < {}'.format(len(xs), -n))
       return xs[n]
