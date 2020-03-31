@@ -1,5 +1,10 @@
 from copy import deepcopy
 
+# Exception to handle when semantic is not defined
+class UndefinedSemantics(Exception):
+  def __init__(self, *args, **kwargs):
+    super(UndefinedSemantics, self).__init__(*args, **kwargs)
+
 # Abstract class that all DSLs must inherit
 class Tree:
   def __init__(self, data='hole', children={}, parent=None):

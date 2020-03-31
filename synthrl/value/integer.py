@@ -98,6 +98,7 @@ class Integer(Value):
 
 
 # constants
+ZERO = Integer(0)
 ONE = Integer(1)
 TWO = Integer(2)
 THREE = Integer(3)

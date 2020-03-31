@@ -1,7 +1,8 @@
 from synthrl.language.dsl import Tree
+from synthrl.language.dsl import UndefinedSemantics
 from synthrl.value import Integer
 from synthrl.value import IntList
-from synthrl.value.integer import ONE, TWO, THREE, FOUR
+from synthrl.value.integer import ZERO, ONE, TWO, THREE, FOUR
 
 # wrapper class for program
 # L -> P  # root
@@ -226,54 +227,84 @@ class FuncNode(Tree):
     if self.data == 'map':
       f = self.children['AUOP'].interprete()
       xs = self.children['VAR'].interprete(mem)
-      return [f(x) for x in xs]
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
+      return IntList([f(x) for x in xs])
     if self.data == 'filter':
       f = self.children['BUOP'].interprete()
       xs = self.children['VAR'].interprete(mem)
-      return [x for x in xs if f(x)]
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
+      return IntList([x for x in xs if f(x)])
     if self.data == 'count':
       f = self.children['BUOP'].interprete()
       xs = self.children['VAR'].interprete(mem)
-      return len([x for x in xs if f(x)])
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
+      return Integer(len([x for x in xs if f(x)]))
     if self.data == 'zipwith':
       f = self.children['ABOP'].interprete()
       xs = self.children['VAR1'].interprete(mem)
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       ys = self.children['VAR2'].interprete(mem)
-      return [f(x, y) for x, y in zip(xs, ys)]
+      if not isinstance(ys, IntList):
+        raise UndefinedSemantics('type(ys): {}'.format(type(ys)))
+      return IntList([f(x, y) for x, y in zip(xs, ys)])
     if self.data == 'scanl':
       raise NotImplementedError
     if self.data == 'head':
       xs = self.children['VAR'].interprete(mem)
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return xs[0]
     if self.data == 'last':
       xs = self.children['VAR'].interprete(mem)
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return xs[-1]
     if self.data == 'minimum':
       xs = self.children['VAR'].interprete(mem)
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return min(xs)
     if self.data == 'maximum':
       xs = self.children['VAR'].interprete(mem)
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return max(xs)
     if self.data == 'reverse':
       xs = self.children['VAR'].interprete(mem)
-      return list(reversed(xs))
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
+      return reversed(xs)
     if self.data == 'sort':
       xs = self.children['VAR'].interprete(mem)
-      return sorted(xs)
+      return IntList(sorted(xs))
     if self.data == 'sum':
       xs = self.children['VAR'].interprete(mem)
-      return sum(xs)
+      return sum(xs, ZERO)
     if self.data == 'take':
       n = self.children['VAR1'].interprete(mem)
+      if not isinstance(n, Integer):
+        raise UndefinedSemantics('type(n): {}'.format(type(n)))
       xs = self.children['VAR2'].interprete(mem)
-      return xs[:n]
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
+      return IntList(xs[:n])
     if self.data == 'drop':
       n = self.children['VAR1'].interprete(mem)
+      if not isinstance(n, Integer):
+        raise UndefinedSemantics('type(n): {}'.format(type(n)))
       xs = self.children['VAR2'].interprete(mem)
-      return xs[n:]
+      return IntList(xs[n:])
     if self.data == 'access':
       n = self.children['VAR1'].interprete(mem)
+      if not isinstance(n, Integer):
+        raise UndefinedSemantics('type(n): {}'.format(type(n)))
       xs = self.children['VAR2'].interprete(mem)
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return xs[n]
 
   def pretty_print(self, file=None):
@@ -321,25 +352,25 @@ class AUOPNode(Tree):
 
   def interprete(self):
     if self.data == '+1':
-      return lambda x: x + 1
+      return lambda x: x + ONE
     if self.data == '-1':
-      return lambda x: x - 1
+      return lambda x: x - ONE
     if self.data == '*2':
-      return lambda x: x * 2
+      return lambda x: x * TWO
     if self.data == '/2':
-      return lambda x: x // 2
+      return lambda x: x // TWO
     if self.data == '*(-1)':
       return lambda x: -x
     if self.data == '**2':
       return lambda x: x * x
     if self.data == '*3':
-      return lambda x: x * 3
+      return lambda x: x * THREE
     if self.data == '/3':
-      return lambda x: x / 3
+      return lambda x: x / THREE
     if self.data == '*4':
-      return lambda x: x * 4
+      return lambda x: x * FOUR
     if self.data == '/4':
-      return lambda x: x / 4
+      return lambda x: x / FOUR
   
   def pretty_print(self, file=None):
     print('({})'.format(self.data), end='', file=file)
@@ -361,13 +392,13 @@ class BUOPNode(Tree):
 
   def interprete(self):
     if self.data == '>0':
-      return lambda x: x > 0
+      return lambda x: x > ZERO
     if self.data == '<0':
-      return lambda x: x < 0
+      return lambda x: x < ZERO
     if self.data == '%2==0':
-      return lambda x: (x % 2) == 0
+      return lambda x: (x % TWO) == ZERO
     if self.data == '%2==1':
-      return lambda x: (x % 2) == 1
+      return lambda x: (x % TWO) == ONE
     
   def pretty_print(self, file=None):
     print('({})'.format(self.data), end='', file=file)
