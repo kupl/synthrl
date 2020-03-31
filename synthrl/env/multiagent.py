@@ -1,5 +1,14 @@
 from synthrl.env.environment import Environment
+from synthrl.language import UndefinedSemantics
 from synthrl.utils import IOSet
+
+class ComparisonFailed(Exception):
+  def __init__(self, *args, **kwargs):
+    super(ComparisonFailed, self).__init__(*args, **kwargs)
+
+class DistinguishingNotFound(Exception):
+  def __init__(self, *args, **kwargs):
+    super(DistinguishingNotFound, self).__init__(*args, **kwargs)
 
 class MAEnvironment(Environment):
   def __init__(self, ioset=[], dsl=None, testing=None):
@@ -52,24 +61,22 @@ class MAEnvironment(Environment):
         self.candidate_reward = 0
         return
       else:
-        for i, o in self.ioset:
-          try:
-            if o != self.candidate.interprete(i):
-              self.candidate_reward = -1
-              self.candidate = self.dsl()
-              self.node, self.space = self.candidate.production_space()
-              return
-          except Exception:
-            self.candidate_reward = -1
-            self.candidate = self.dsl()
-            self.node, self.space = self.candidate.production_space()
-            return
-        self.candidate_reward = 1
-        self.candidate_terminate = True
-        ## logging ##
-        print('--candidate--')
-        self.candidate.pretty_print()
-        ## logging ##
+        try:
+          for i, o in self.ioset:
+            result = self.candidate.interprete(i)
+            if o != result:
+              raise ComparisonFailed()
+          self.candidate_reward = 1
+          self.candidate_terminate = True
+          ## logging ##
+          print('--candidate--')
+          self.candidate.pretty_print()
+          ## logging ##
+        except (UndefinedSemantics, ComparisonFailed):
+          self.candidate_reward = -1
+          self.candidate = self.dsl()
+          self.node, self.space = self.candidate.production_space()
+          return
     if not self.candidate_terminate:
       return
 
@@ -79,30 +86,25 @@ class MAEnvironment(Environment):
         self.alternative_reward = 0
         return
       else:
-        for i, o in self.ioset:
-          try:
-            if o != self.alternative.interprete(i):
-              self.alternative_reward = -1
-              self.alternative = self.dsl()
-              self.node, self.space = self.alternative.production_space()
-              return
-          except Exception:
-            self.alternative_reward = -1
-            self.alternative = self.dsl()
-            self.node, self.space = self.alternative.production_space()
-            return
-        ## logging ##
-        print('--alternative--')
-        self.alternative.pretty_print()
-        ## logging ##
-        self.distinguishing_input = self.testing(self.candidate, self.alternative)
-        if self.distinguishing_input is None:
+        try:
+          for i, o in self.ioset:
+            result = self.alternative.interprete(i)
+            if o != result:
+              raise ComparisonFailed()
+          ## logging ##
+          print('--alternative--')
+          self.alternative.pretty_print()
+          ## logging ##
+          self.distinguishing_input = self.testing(self.candidate, self.alternative)
+          if self.distinguishing_input is None:
+            raise DistinguishingNotFound()
+          self.alternative_reward = 1
+          self.alternative_terminate = True
+        except (UndefinedSemantics, ComparisonFailed, DistinguishingNotFound):
           self.alternative_reward = -1
           self.alternative = self.dsl()
           self.node, self.space = self.alternative.production_space()
           return
-        self.alternative_reward = 1
-        self.alternative_terminate = True
     if not self.alternative_terminate:
       return
 
