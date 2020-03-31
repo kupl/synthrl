@@ -73,11 +73,15 @@ class Integer(Value):
 
   def __eq__(self, other):
     if not isinstance(other, Integer):
+      if isinstance(other, Value):
+        return False
       raise ValueError('Operator == is not supported between Integer and {}'.format(other.__class__.__name__))
     return self.get_value() == other.get_value()
 
   def __ne__(self, other):
     if not isinstance(other, Integer):
+      if isinstance(other, Value):
+        return True
       raise ValueError('Operator != is not supported between Integer and {}'.format(other.__class__.__name__))
     return self.get_value() != other.get_value()
 
