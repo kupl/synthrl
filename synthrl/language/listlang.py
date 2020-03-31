@@ -129,9 +129,9 @@ class VarNode(Tree):
     if self.data == 'hole' and self.assignment:
       space = [e for e in self.VAR_SPACE if e not in used_vars]
       if len(space) > 0:
-        space = list(used_vars) + space[:1]
+        space = list(used_vars - set(self.INPUT_VARS)) + space[:1]
       else:
-        space = list(used_vars)
+        space = list(used_vars - set(self.INPUT_VARS))
       return self, space, used_vars
     elif self.data == 'hole' and not self.assignment:
       self.used_vars = list(used_vars)
