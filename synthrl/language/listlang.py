@@ -127,7 +127,12 @@ class VarNode(Tree):
 
   def production_space(self, used_vars=set()):
     if self.data == 'hole' and self.assignment:
-      return self, self.VAR_SPACE, used_vars
+      space = [e for e in self.VAR_SPACE if e not in used_vars]
+      if len(space) > 0:
+        space = list(used_vars) + space[:1]
+      else:
+        space = list(used_vars)
+      return self, space, used_vars
     elif self.data == 'hole' and not self.assignment:
       self.used_vars = list(used_vars)
       return self, list(used_vars), used_vars
