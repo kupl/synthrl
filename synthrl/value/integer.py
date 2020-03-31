@@ -66,6 +66,11 @@ class Integer(Value):
       raise ValueError('Operator // is not supported between Integer and {}'.format(other.__class__.__name__))
     return Integer(self.get_value() // other.get_value())
 
+  def __mod__(self, other):
+    if not isinstance(other, Integer):
+      raise ValueError('Operator % is not supported between Integer and {}'.format(other.__class__.__name__))
+    return Integer(self.get_value() % other.get_value())
+
   def __eq__(self, other):
     if not isinstance(other, Integer):
       raise ValueError('Operator == is not supported between Integer and {}'.format(other.__class__.__name__))
