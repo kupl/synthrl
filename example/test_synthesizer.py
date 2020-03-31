@@ -11,8 +11,8 @@ from synthrl.value.integer import ONE
 
 oracle = lambda l, i: sorted(l)[i - ONE]
 ioset = [
-  (([1, 2, 3], 3), 3),
-  (([5, 1, 2], 3), 5)
+  ((IntList([1, 2, 3]), Integer(3)), Integer(3)),
+  ((IntList([5, 1, 2]), Integer(3)), Integer(5))
 ]
 
 program = synthesize_from_oracle(

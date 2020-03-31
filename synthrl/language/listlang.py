@@ -23,7 +23,7 @@ class ListLanguage(Tree):
     mem = {v: IntList() for v in VarNode.VAR_SPACE}
     for v, i in zip(VarNode.INPUT_VARS, inputs):
       mem[v] = Integer(i) if isinstance(i, Integer) or isinstance(i, int) else IntList(i)
-    return self.children['PGM'].interprete(mem=mem).get_value()
+    return self.children['PGM'].interprete(mem=mem)
   
   def pretty_print(self, file=None):
     self.children['PGM'].pretty_print(file=file)
@@ -230,18 +230,21 @@ class FuncNode(Tree):
       if not isinstance(xs, IntList):
         raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return IntList([f(x) for x in xs])
+
     if self.data == 'filter':
       f = self.children['BUOP'].interprete()
       xs = self.children['VAR'].interprete(mem)
       if not isinstance(xs, IntList):
         raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return IntList([x for x in xs if f(x)])
+
     if self.data == 'count':
       f = self.children['BUOP'].interprete()
       xs = self.children['VAR'].interprete(mem)
       if not isinstance(xs, IntList):
         raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return Integer(len([x for x in xs if f(x)]))
+
     if self.data == 'zipwith':
       f = self.children['ABOP'].interprete()
       xs = self.children['VAR1'].interprete(mem)
@@ -251,39 +254,60 @@ class FuncNode(Tree):
       if not isinstance(ys, IntList):
         raise UndefinedSemantics('type(ys): {}'.format(type(ys)))
       return IntList([f(x, y) for x, y in zip(xs, ys)])
+
     if self.data == 'scanl':
-      raise NotImplementedError
+      raise UndefinedSemantics()
+
     if self.data == 'head':
       xs = self.children['VAR'].interprete(mem)
       if not isinstance(xs, IntList):
         raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
+      if len(xs) == 0:
+        raise UndefinedSemantics('len(xs) == 0')
       return xs[0]
+
     if self.data == 'last':
       xs = self.children['VAR'].interprete(mem)
       if not isinstance(xs, IntList):
         raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
+      if len(xs) == 0:
+        raise UndefinedSemantics('len(xs) == 0')
       return xs[-1]
+
     if self.data == 'minimum':
       xs = self.children['VAR'].interprete(mem)
       if not isinstance(xs, IntList):
         raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
+      if len(xs) == 0:
+        raise UndefinedSemantics('len(xs) == 0')
       return min(xs)
+
     if self.data == 'maximum':
       xs = self.children['VAR'].interprete(mem)
       if not isinstance(xs, IntList):
         raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
+      if len(xs) == 0:
+        raise UndefinedSemantics('len(xs) == 0')
       return max(xs)
+
     if self.data == 'reverse':
       xs = self.children['VAR'].interprete(mem)
       if not isinstance(xs, IntList):
         raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return reversed(xs)
+
     if self.data == 'sort':
       xs = self.children['VAR'].interprete(mem)
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return IntList(sorted(xs))
+
     if self.data == 'sum':
       xs = self.children['VAR'].interprete(mem)
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return sum(xs, ZERO)
+
     if self.data == 'take':
       n = self.children['VAR1'].interprete(mem)
       if not isinstance(n, Integer):
@@ -292,12 +316,16 @@ class FuncNode(Tree):
       if not isinstance(xs, IntList):
         raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return IntList(xs[:n])
+
     if self.data == 'drop':
       n = self.children['VAR1'].interprete(mem)
       if not isinstance(n, Integer):
         raise UndefinedSemantics('type(n): {}'.format(type(n)))
       xs = self.children['VAR2'].interprete(mem)
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return IntList(xs[n:])
+      
     if self.data == 'access':
       n = self.children['VAR1'].interprete(mem)
       if not isinstance(n, Integer):
@@ -305,6 +333,10 @@ class FuncNode(Tree):
       xs = self.children['VAR2'].interprete(mem)
       if not isinstance(xs, IntList):
         raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
+      if len(xs) >= n.get_value():
+        raise UndefinedSemantics('len(xs) >= n: {} >= {}'.format(len(xs), n))
+      if len(xs) < -(n.get_value()):
+        raise UndefinedSemantics('len(xs) < n: {} < {}'.format(len(xs), -n))
       return xs[n]
 
   def pretty_print(self, file=None):
