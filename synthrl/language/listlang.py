@@ -1,5 +1,6 @@
 from synthrl.language.dsl import Tree
 from synthrl.language.dsl import UndefinedSemantics
+from synthrl.utils import classproperty
 from synthrl.value import Integer
 from synthrl.value import IntList
 from synthrl.value.integer import ZERO, ONE, TWO, THREE, FOUR
@@ -30,6 +31,11 @@ class ListLanguage(Tree):
 
   def is_hole(self):
     return self.children['PGM'].is_hole()
+
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return ProgramNode.tokens + InstNode.tokens + VarNode.tokens + FuncNode.tokens + AUOPNode.tokens + BUOPNode.tokens + ABOPNode.tokens
 
 # P -> I; P       # seq
 #    | return V;  # return
@@ -82,6 +88,11 @@ class ProgramNode(Tree):
       self.children['VAR'].pretty_print(file=file)
       print(';', file=file)
 
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return ['seq', 'return']
+
 # I -> V <- F # assign
 class InstNode(Tree):
   def __init__(self, *args, **kwargs):
@@ -113,6 +124,11 @@ class InstNode(Tree):
     self.children['VAR'].pretty_print(file=file)
     print(' <- ', end='', file=file)
     self.children['FUNC'].pretty_print(file=file)
+
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return ['assign']
 
 # V -> v0 | v1        # inputs
 #    | v2 | ... | v19 # variables
@@ -154,6 +170,11 @@ class VarNode(Tree):
   def pretty_print(self, file=None):
     print(self.data, end='', file=file)
 
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return cls.VAR_SPACE
+
 # F -> MAP AUOP V       # map
 #    | FILTER BUOP V    # filter
 #    | COUNT BUOP V     # count
@@ -170,25 +191,25 @@ class VarNode(Tree):
 #    | DROP V V         # drop
 #    | ACCESS V V       # access
 class FuncNode(Tree):
-  auop_func = ['map']
-  buop_func = ['filter', 'count']
-  abop_func = ['zipwith', 'scanl']
-  one_var_func = ['head', 'last', 'minimum', 'maximum', 'reverse', 'sort', 'sum']
-  two_var_func = ['take', 'drop', 'access']
+  AUOP_FUNC = ['map']
+  BUOP_FUNC = ['filter', 'count']
+  ABOP_FUNC = ['zipwith', 'scanl']
+  ONE_VAR_FUNC = ['head', 'last', 'minimum', 'maximum', 'reverse', 'sort', 'sum']
+  TWO_VAR_FUNC = ['take', 'drop', 'access']
 
   def production_space(self, used_vars=set()):
     if self.data == 'hole':
-      return self, self.auop_func + self.buop_func + self.abop_func + self.one_var_func + self.two_var_func, used_vars
+      return self, self.AUOP_FUNC + self.BUOP_FUNC + self.ABOP_FUNC + self.ONE_VAR_FUNC + self.TWO_VAR_FUNC, used_vars
     keys = []
-    if self.data in self.auop_func:
+    if self.data in self.AUOP_FUNC:
       keys = ['AUOP', 'VAR']
-    if self.data in self.buop_func:
+    if self.data in self.BUOP_FUNC:
       keys = ['BUOP', 'VAR']
-    if self.data in self.abop_func:
+    if self.data in self.ABOP_FUNC:
       keys = ['ABOP', 'VAR1', 'VAR2']
-    if self.data in self.one_var_func:
+    if self.data in self.ONE_VAR_FUNC:
       keys = ['VAR']
-    if self.data in self.two_var_func:
+    if self.data in self.TWO_VAR_FUNC:
       keys = ['VAR1', 'VAR2']
     for key in keys:
       node, space, used_vars = self.children[key].production_space(used_vars=used_vars)
@@ -197,31 +218,31 @@ class FuncNode(Tree):
     return self, [], used_vars
 
   def production(self, rule=None):
-    if rule in self.auop_func:
+    if rule in self.AUOP_FUNC:
       self.data = rule
       self.children = {
         'AUOP': AUOPNode(parent=self),
         'VAR': VarNode(parent=self)
       }
-    elif rule in self.buop_func:
+    elif rule in self.BUOP_FUNC:
       self.data = rule
       self.children = {
         'BUOP': BUOPNode(parent=self),
         'VAR': VarNode(parent=self)
       }
-    elif rule in self.abop_func:
+    elif rule in self.ABOP_FUNC:
       self.data = rule
       self.children = {
         'ABOP': ABOPNode(parent=self),
         'VAR1': VarNode(parent=self),
         'VAR2': VarNode(parent=self)
       }
-    elif rule in self.one_var_func:
+    elif rule in self.ONE_VAR_FUNC:
       self.data = rule
       self.children = {
         'VAR': VarNode(parent=self)
       }
-    elif rule in self.two_var_func:
+    elif rule in self.TWO_VAR_FUNC:
       self.data = rule
       self.children = {
         'VAR1': VarNode(parent=self),
@@ -347,44 +368,49 @@ class FuncNode(Tree):
   def pretty_print(self, file=None):
     if self.data == 'hole':
       print('(HOLE)', end='', file=file)
-    elif self.data in self.auop_func:
+    elif self.data in self.AUOP_FUNC:
       print(self.data.upper(), end=' ', file=file)
       self.children['AUOP'].pretty_print(file=file)
       print(end=' ', file=file)
       self.children['VAR'].pretty_print(file=file)
-    elif self.data in self.buop_func:
+    elif self.data in self.BUOP_FUNC:
       print(self.data.upper(), end=' ', file=file)
       self.children['BUOP'].pretty_print(file=file)
       print(end=' ', file=file)
       self.children['VAR'].pretty_print(file=file)
-    elif self.data in self.abop_func:
+    elif self.data in self.ABOP_FUNC:
       print(self.data.upper(), end=' ', file=file)
       self.children['ABOP'].pretty_print(file=file)
       print(end=' ', file=file)
       self.children['VAR1'].pretty_print(file=file)
       print(end=' ', file=file)
       self.children['VAR2'].pretty_print(file=file)
-    elif self.data in self.one_var_func:
+    elif self.data in self.ONE_VAR_FUNC:
       print(self.data.upper(), end=' ', file=file)
       self.children['VAR'].pretty_print(file=file)
-    elif self.data in self.two_var_func:
+    elif self.data in self.TWO_VAR_FUNC:
       print(self.data.upper(), end=' ', file=file)
       self.children['VAR1'].pretty_print(file=file)
       print(end=' ', file=file)
       self.children['VAR2'].pretty_print(file=file)
 
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return cls.AUOP_FUNC + cls.BUOP_FUNC + cls.ABOP_FUNC + cls.ONE_VAR_FUNC + cls.TWO_VAR_FUNC
+
 # AUOP -> +1 | -1 | *2 | /2 | *(-1) | **2 | *3 | /3 | *4 | /4
 class AUOPNode(Tree):
-  auop_space = ['+1', '-1', '*2', '/2', '*(-1)', '**2', '*3', '/3', '*4', '/4']
+  AUOP_SPACE = ['+1', '-1', '*2', '/2', '*(-1)', '**2', '*3', '/3', '*4', '/4']
 
   def production_space(self, used_vars=set()):
     if self.data == 'hole':
-      return self, self.auop_space, used_vars
+      return self, self.AUOP_SPACE, used_vars
     else:
       return self, [], used_vars
 
   def production(self, rule=None):
-    if rule in self.auop_space:
+    if rule in self.AUOP_SPACE:
       self.data = rule
 
   def interprete(self):
@@ -412,19 +438,24 @@ class AUOPNode(Tree):
   def pretty_print(self, file=None):
     print('({})'.format(self.data), end='', file=file)
 
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return cls.AUOP_SPACE
+
 
 # BUOP -> >0 | <0 | %2==0 | %2==1
 class BUOPNode(Tree):
-  buop_space = ['>0', '<0', '%2==0', '%2==1']
+  BUOP_SPACE = ['>0', '<0', '%2==0', '%2==1']
 
   def production_space(self, used_vars=set()):
     if self.data == 'hole':
-      return self, self.buop_space, used_vars
+      return self, self.BUOP_SPACE, used_vars
     else:
       return self, [], used_vars
     
   def production(self, rule=None):
-    if rule in self.buop_space:
+    if rule in self.BUOP_SPACE:
       self.data = rule
 
   def interprete(self):
@@ -440,18 +471,23 @@ class BUOPNode(Tree):
   def pretty_print(self, file=None):
     print('({})'.format(self.data), end='', file=file)
 
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return cls.BUOP_SPACE
+
 # ABOP -> + | * | MIN | MAX
 class ABOPNode(Tree):
-  abop_space = '+', '*', 'MIN', 'MAX'
+  ABOP_SPACE = ['+', '*', 'MIN', 'MAX']
 
   def production_space(self, used_vars=set()):
     if self.data == 'hole':
-      return self, self.abop_space, used_vars
+      return self, self.ABOP_SPACE, used_vars
     else:
       return self, [], used_vars
 
   def production(self, rule=None):
-    if rule in self.abop_space:
+    if rule in self.ABOP_SPACE:
       self.data = rule
 
   def interprete(self):
@@ -466,3 +502,8 @@ class ABOPNode(Tree):
 
   def pretty_print(self, file=None):
     print('({})'.format(self.data), end='', file=file)
+
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return cls.ABOP_SPACE

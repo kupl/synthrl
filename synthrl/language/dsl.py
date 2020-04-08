@@ -29,6 +29,10 @@ class Tree:
     # print the program tree into program
     raise NotImplementedError
 
+  @property
+  def tokens(self):
+    raise NotImplementedError
+
   def is_hole(self):
     return self.data == 'hole'
 
