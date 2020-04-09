@@ -1,6 +1,10 @@
 from datetime import datetime
 from datetime import timedelta
 
+class TimeoutException(Exception):
+  def __init__(self, *args, **kwargs):
+    super(TimeoutException, self).__init__(*args, **kwargs)
+
 def parse_time(time='0h-0m-0s'):
   parsed = {'hours': 0, 'minutes': 0, 'seconds': 0}
   for t in time.split('-'):
@@ -19,6 +23,9 @@ class Timer:
     self.budget = timedelta(**parse_time(budget))
     self.start_time = datetime.now()
 
+  def __call__(self):
+    return self.elapsed
+
   def __iter__(self):
     while True:
       delta = datetime.now() - self.start_time
@@ -27,6 +34,11 @@ class Timer:
       yield delta
     return delta
 
+  @property
+  def elapsed(self):
+    return datetime.now() - self.start_time
+
+  @property
   def timeout(self):
     delta = datetime.now() - self.start_time
     if delta > self.budget:

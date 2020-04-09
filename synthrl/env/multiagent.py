@@ -47,7 +47,7 @@ class MAEnvironment(Environment):
   def program(self):
     return self.candidate.copy()
 
-  def step(self, action=None):
+  def apply_step(self, action=None):
     if not action in self.space:
       raise ValueError('The given action({}) is not valid.'.format(action))
     self.node.production(action)
