@@ -5,7 +5,7 @@ from synthrl.value.integer import Integer
 from synthrl.value.value import Value
 
 class List(Value):
-  MAX_LENGTH = 256
+  MAX_LENGTH = 20
   TYPE = Value
   def __init__(self, value=[]):
     if isinstance(value, List):
