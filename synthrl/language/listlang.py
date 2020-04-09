@@ -1,6 +1,6 @@
 from synthrl.language.dsl import Tree
 from synthrl.language.dsl import UndefinedSemantics
-from synthrl.utils import classproperty
+from synthrl.utils.decoratorutils import classproperty
 from synthrl.value import Integer
 from synthrl.value import IntList
 from synthrl.value.integer import ZERO, ONE, TWO, THREE, FOUR

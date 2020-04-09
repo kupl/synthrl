@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from synthrl.utils.decoratorutils import classproperty
+
 # Exception to handle when semantic is not defined
 class UndefinedSemantics(Exception):
   def __init__(self, *args, **kwargs):
@@ -29,8 +31,9 @@ class Tree:
     # print the program tree into program
     raise NotImplementedError
 
-  @property
-  def tokens(self):
+  @classproperty
+  @classmethod
+  def tokens(cls):
     raise NotImplementedError
 
   def is_hole(self):
