@@ -178,8 +178,8 @@ class VarNode(Tree):
 # F -> MAP AUOP V       # map
 #    | FILTER BUOP V    # filter
 #    | COUNT BUOP V     # count
+#    | SCANL1 ABOP V    # scanl1
 #    | ZIPWITH ABOP V V # zipwith
-#    | SCANL ABOP V V   # scanl
 #    | HEAD V           # head
 #    | LAST V           # last
 #    | MINIMUM V        # minimum
@@ -193,19 +193,22 @@ class VarNode(Tree):
 class FuncNode(Tree):
   AUOP_FUNC = ['map']
   BUOP_FUNC = ['filter', 'count']
-  ABOP_FUNC = ['zipwith', 'scanl']
+  ABOP1_FUNC = ['scanl1']
+  ABOP2_FUNC = ['zipwith']
   ONE_VAR_FUNC = ['head', 'last', 'minimum', 'maximum', 'reverse', 'sort', 'sum']
   TWO_VAR_FUNC = ['take', 'drop', 'access']
 
   def production_space(self, used_vars=set()):
     if self.data == 'hole':
-      return self, self.AUOP_FUNC + self.BUOP_FUNC + self.ABOP_FUNC + self.ONE_VAR_FUNC + self.TWO_VAR_FUNC, used_vars
+      return self, self.AUOP_FUNC + self.BUOP_FUNC + self.ABOP1_FUNC + self.ABOP2_FUNC + self.ONE_VAR_FUNC + self.TWO_VAR_FUNC, used_vars
     keys = []
     if self.data in self.AUOP_FUNC:
       keys = ['AUOP', 'VAR']
     if self.data in self.BUOP_FUNC:
       keys = ['BUOP', 'VAR']
-    if self.data in self.ABOP_FUNC:
+    if self.data in self.ABOP1_FUNC:
+      keys = ['ABOP', 'VAR']
+    if self.data in self.ABOP2_FUNC:
       keys = ['ABOP', 'VAR1', 'VAR2']
     if self.data in self.ONE_VAR_FUNC:
       keys = ['VAR']
@@ -230,7 +233,13 @@ class FuncNode(Tree):
         'BUOP': BUOPNode(parent=self),
         'VAR': VarNode(parent=self)
       }
-    elif rule in self.ABOP_FUNC:
+    elif rule in self.ABOP1_FUNC:
+      self.data = rule
+      self.children = {
+        'ABOP': ABOPNode(parent=self),
+        'VAR': VarNode(parent=self)
+      }
+    elif rule in self.ABOP2_FUNC:
       self.data = rule
       self.children = {
         'ABOP': ABOPNode(parent=self),
@@ -271,6 +280,20 @@ class FuncNode(Tree):
         raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
       return Integer(len([x for x in xs if f(x)]))
 
+    if self.data == 'scanl1':
+      f = self.children['ABOP'].interprete()
+      xs = self.children['VAR'].interprete(mem)
+      if not isinstance(xs, IntList):
+        raise UndefinedSemantics('type(xs): {}'.format(type(xs)))
+      if len(xs) == 0:
+        return IntList()
+      running_value = xs[0]
+      ys = IntList([running_value])
+      for x in xs[1:]:
+        running_value = f(running_value, x)
+        ys.append(running_value)
+      return ys
+
     if self.data == 'zipwith':
       f = self.children['ABOP'].interprete()
       xs = self.children['VAR1'].interprete(mem)
@@ -280,9 +303,6 @@ class FuncNode(Tree):
       if not isinstance(ys, IntList):
         raise UndefinedSemantics('type(ys): {}'.format(type(ys)))
       return IntList([f(x, y) for x, y in zip(xs, ys)])
-
-    if self.data == 'scanl':
-      raise UndefinedSemantics()
 
     if self.data == 'head':
       xs = self.children['VAR'].interprete(mem)
@@ -378,7 +398,12 @@ class FuncNode(Tree):
       self.children['BUOP'].pretty_print(file=file)
       print(end=' ', file=file)
       self.children['VAR'].pretty_print(file=file)
-    elif self.data in self.ABOP_FUNC:
+    elif self.data in self.ABOP1_FUNC:
+      print(self.data.upper(), end=' ', file=file)
+      self.children['ABOP'].pretty_print(file=file)
+      print(end=' ', file=file)
+      self.children['VAR'].pretty_print(file=file)
+    elif self.data in self.ABOP2_FUNC:
       print(self.data.upper(), end=' ', file=file)
       self.children['ABOP'].pretty_print(file=file)
       print(end=' ', file=file)
@@ -397,7 +422,7 @@ class FuncNode(Tree):
   @classproperty
   @classmethod
   def tokens(cls):
-    return cls.AUOP_FUNC + cls.BUOP_FUNC + cls.ABOP_FUNC + cls.ONE_VAR_FUNC + cls.TWO_VAR_FUNC
+    return cls.AUOP_FUNC + cls.BUOP_FUNC + cls.ABOP1_FUNC + cls.ABOP2_FUNC + cls.ONE_VAR_FUNC + cls.TWO_VAR_FUNC
 
 # AUOP -> +1 | -1 | *2 | /2 | *(-1) | **2 | *3 | /3 | *4 | /4
 class AUOPNode(Tree):
