@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -20,19 +19,20 @@ class Network(nn.Module):
     self.value = nn.Linear(hidden_size, 1)
 
   def forward(self, inputs=None, hidden=None, outputs=None):
-    # inputs: [batch_size, n_example, input_dim]
-    # hidden: (hn, cn)
-    #     hn: [1, batch_size * n_example, hidden_size]
-    #     cn: [1, batch_size * n_example, hidden_size]
+    #  inputs: [batch_size, n_example, input_dim]
+    #  hidden: (hn, cn)
+    #      hn: [1, batch_size * n_example, hidden_size]
+    #      cn: [1, batch_size * n_example, hidden_size]
+    # outputs: [batch_size * n_example, seq_len, hidden_size]
     batch_size, n_example, _ = inputs.shape
-    
+
     # inputs: [1, batch_size * n_example, input_dim]
     inputs = inputs.reshape(-1, self.input_dim).unsqueeze(0)
 
     # query: [1, batch_size * n_example, hidden_size]
     query, hidden = self.lstm(inputs, hidden)
 
-    # attn: [batch_size * n_example, hidden_size]
+    # attn: [1, batch_size * n_example, hidden_size]
     attn = self.attention(query, outputs)
 
     # attn: [batch_size, hidden_size, n_example]
@@ -47,7 +47,7 @@ class Network(nn.Module):
     value = self.value(pooled)
 
     policy = F.softmax(policy, dim=-1)
-    # TODO: Non-linear function for value (-inf, +eta]
+    value = -F.softplus(value) + self.eta
 
     return policy, value, query, hidden
 
