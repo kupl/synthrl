@@ -20,38 +20,40 @@ class Network(nn.Module):
     self.value = nn.Linear(hidden_size, 1)
 
   def forward(self, inputs=None, hidden=None, outputs=None):
-    # inputs: [n_example, batch_size, input_dim]
+    # inputs: [batch_size, n_example, input_dim]
     # hidden: (hn, cn)
-    #     hn: [n_example * batch_size, hidden_size]
-    #     cn: [n_example * batch_size, hidden_size]
-    n_example, batch_size, _ = inputs.shape
+    #     hn: [1, batch_size * n_example, hidden_size]
+    #     cn: [1, batch_size * n_example, hidden_size]
+    batch_size, n_example, _ = inputs.shape
     
-    # inputs: [n_example * batch_size, input_dim]
+    # inputs: [1, batch_size * n_example, input_dim]
     inputs = inputs.reshape(-1, self.input_dim).unsqueeze(0)
 
-    # query: [n_example * batch_size, hidden_size]
+    # query: [1, batch_size * n_example, hidden_size]
     query, hidden = self.lstm(inputs, hidden)
 
-    # attn: [n_example * batch_size, hidden_size]
+    # attn: [batch_size * n_example, hidden_size]
     attn = self.attention(query, outputs)
 
     # attn: [batch_size, hidden_size, n_example]
-    attn = attn.reshape(n_example, batch_size, -1).permute(1, 2, 0)
+    attn = attn.reshape(batch_size, n_example, -1).permute(0, 2, 1)
 
     # pooled: [batch_size, hidden_size]
-    pooled = F.max_pool1d(n_example).sqeeze(-1)
+    pooled = F.max_pool1d(n_example).squeeze(-1)
 
     # policy: [batch_size, num_tokens]
     #  value: [batch_size, 1]
     policy = self.policy(pooled)
     value = self.value(pooled)
 
+    policy = F.softmax(policy, dim=-1)
+    # TODO: Non-linear function for value (-inf, +eta]
+
     return policy, value, query, hidden
 
 class RLAgent(Agent):
   def __init__(self):
-    self.policy_net = None
-    self.value_net = None
+    self.network = None
 
   def take(self, action_space=[]):
     pass
