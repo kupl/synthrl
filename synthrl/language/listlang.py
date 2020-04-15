@@ -1,3 +1,5 @@
+from itertools import cycle
+
 from synthrl.language.dsl import Tree
 from synthrl.language.dsl import UndefinedSemantics
 from synthrl.utils.decoratorutils import classproperty
@@ -14,14 +16,14 @@ class ListLanguage(Tree):
     self.parent = None
 
   def production_space(self):
-    node, space, _ = self.children['PGM'].production_space(used_vars=set(VarNode.INPUT_VARS))
+    node, space, _ = self.children['PGM'].production_space(used_vars=set())
     return node, space
   
   def production(self, rule=None):
     raise ValueError('ListLanguage should not have any hole.')
 
   def interprete(self, inputs=[]):
-    mem = {v: IntList() for v in VarNode.VAR_SPACE}
+    mem = {v: None for v in VarNode.VAR_SPACE}
     for v, i in zip(VarNode.INPUT_VARS, inputs):
       mem[v] = Integer(i) if isinstance(i, Integer) or isinstance(i, int) else IntList(i)
     return self.children['PGM'].interprete(mem=mem)
@@ -130,12 +132,11 @@ class InstNode(Tree):
   def tokens(cls):
     return ['assign']
 
-# V -> v0 | v1        # inputs
-#    | v2 | ... | v19 # variables
+# V -> a0 | a1        # inputs
+#    | v1 | ... | v9  # variables
 class VarNode(Tree):
-  VARIABLE_RANGE = 20
-  VAR_SPACE = ['v{}'.format(i) for i in range(20)]
-  INPUT_VARS = ['v0', 'v1']
+  INPUT_VARS = ['a{}'.format(i) for i in range(2)]
+  VAR_SPACE = ['v{}'.format(i) for i in range(10)]
 
   def __init__(self, assignment=False, *args, **kwargs):
     super(VarNode, self).__init__(*args, **kwargs)
@@ -143,15 +144,13 @@ class VarNode(Tree):
 
   def production_space(self, used_vars=set()):
     if self.data == 'hole' and self.assignment:
-      space = [e for e in self.VAR_SPACE if e not in used_vars]
-      if len(space) > 0:
-        space = list(used_vars - set(self.INPUT_VARS)) + space[:1]
-      else:
-        space = list(used_vars - set(self.INPUT_VARS))
-      return self, space, used_vars
+      possible = list(used_vars)
+      if len(used_vars) < len(self.VAR_SPACE):
+        possible.append(self.VAR_SPACE[len(used_vars)])
+      return self, possible, used_vars
     elif self.data == 'hole' and not self.assignment:
-      self.used_vars = list(used_vars)
-      return self, list(used_vars), used_vars
+      self.used_vars = list(used_vars) + self.INPUT_VARS
+      return self, self.used_vars, used_vars
     elif self.assignment:
       used_vars.add(self.data)
       return self, [], used_vars
