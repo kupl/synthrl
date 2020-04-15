@@ -12,20 +12,22 @@ class SelfPlay:
         program = ListLanguage()
         length = 0 #as appearance count of 'seq' action
 
-        while action!="eof":
+        while action!="return":
             node, space = program.production_space()
-            if space ==["seq","eof"] and length < depth:
-                if "eof" in space: space.remove("eof")
+            if space ==["seq","return"] and length < depth:
+                if "return" in space: space.remove("return")
                 length += 1
-            elif space ==["seq","eof"] and length == depth:
-                node.production("eof")
+            elif space ==["seq","return"] and length == depth:
+                node.production("return")
+                return_node, return_space = program.production_space()
+                return_node.production(np.random.choice(return_space))
                 # print("----Generated Oracle-----")
                 # program.pretty_print()
                 # print("----****************-----")
                 return program
-            #print("Current Action Space:" ,space)
+            # print("Current Action Space:" ,space)
             action = np.random.choice(space)
-            #print("Current Action Choice: ", action)
+            # print("Current Action Choice: ", action)
             node.production(action)
             #print("-------------")
             # program.pretty_print()
@@ -36,6 +38,12 @@ class SelfPlay:
         for i in range(size):
             dataset.append(self.generate_indiv_oracle(depth))
         return dataset
+    
+    def preprocess(dataset):
+        pass
+
+    def io_query():
+        pass
 
 
 
