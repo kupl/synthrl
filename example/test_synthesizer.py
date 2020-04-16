@@ -16,7 +16,8 @@ ioset = [
 ]
 
 program = synthesize_from_oracle(
-  dsl=ListLanguage, 
+  dsl=ListLanguage,
+  dsl_opt={'input_types': (IntList, Integer), 'output_type': Integer},
   synthesizer=ExhaustiveAgent(mode='s'), 
   verifier=ExhaustiveAgent(mode='v'), 
   oracle=oracle, 
