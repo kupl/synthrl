@@ -1,27 +1,58 @@
+from itertools import cycle
+
 from synthrl.language.dsl import Tree
 from synthrl.language.dsl import UndefinedSemantics
 from synthrl.utils.decoratorutils import classproperty
 from synthrl.value import Integer
 from synthrl.value import IntList
+from synthrl.value import NoneType
 from synthrl.value.integer import ZERO, ONE, TWO, THREE, FOUR
 
 # wrapper class for program
 # L -> P  # root
 class ListLanguage(Tree):
-  def __init__(self, *args, **kwargs):
+  def __init__(self, input_types=None, output_type=None, *args, **kwargs):
     self.data = 'root'
     self.children = {'PGM': ProgramNode(parent=self)}
     self.parent = None
+    input_types = list(input_types)
+    if len(input_types) > len(VarNode.INPUT_VARS):
+      raise ValueError('Expecting at most {} inputs, but {} inputs are given.'.format(len(VarNode.INPUT_VARS), len(input_types)))
+    if len(input_types) >= 1:
+      if not (input_types[0] == list or input_types[0] == IntList):
+        raise ValueError('Argument 0 must be list of integers, but {} is given.'.format(input_types[0]))
+      input_types[0] = IntList
+    for i in range(1, len(VarNode.INPUT_VARS)):
+      try:
+        t = input_types[i]
+        if t is None or t == NoneType:
+          input_types[i] = NoneType
+        elif t == int or t == Integer:
+          input_types[i] = Integer
+        elif t == list or t == IntList:
+          input_types[i] = IntList
+        else:
+          raise ValueError('Unsupported Value {} is given.'.format(t))
+      except IndexError:
+        input_types.append(NoneType)
+    self.input_types = input_types
+    if output_type == int or output_type == Integer:
+      self.output_type = Integer
+    elif output_type == list or output_type == IntList:
+      self.output_type = IntList
+    else:
+      raise ValueError('Return type must be integer or list, but {} is given.'.format(output_type))
 
   def production_space(self):
-    node, space, _ = self.children['PGM'].production_space(used_vars=set(VarNode.INPUT_VARS))
+    used_vars = {v: t for v, t in zip(VarNode.INPUT_VARS, self.input_types)}
+    node, space, _ = self.children['PGM'].production_space(used_vars=used_vars)
     return node, space
   
   def production(self, rule=None):
     raise ValueError('ListLanguage should not have any hole.')
 
   def interprete(self, inputs=[]):
-    mem = {v: IntList() for v in VarNode.VAR_SPACE}
+    mem = {}
     for v, i in zip(VarNode.INPUT_VARS, inputs):
       mem[v] = Integer(i) if isinstance(i, Integer) or isinstance(i, int) else IntList(i)
     return self.children['PGM'].interprete(mem=mem)
@@ -37,10 +68,20 @@ class ListLanguage(Tree):
   def tokens(cls):
     return ProgramNode.tokens + InstNode.tokens + VarNode.tokens + FuncNode.tokens + AUOPNode.tokens + BUOPNode.tokens + ABOPNode.tokens
 
+  def copy(self):
+    node = self.__class__(input_types=self.input_types, output_type=self.output_type)
+    children = {}
+    for key, child in self.children.items():
+      child = child.copy()
+      child.parent = node
+      children[key] = child
+    node.children = children
+    return node
+
 # P -> I; P       # seq
 #    | return V;  # return
 class ProgramNode(Tree):
-  def production_space(self, used_vars=set()):
+  def production_space(self, used_vars={}):
     if self.data == 'hole':
       return self, ['seq', 'return'], used_vars
     if self.data == 'seq':
@@ -63,9 +104,12 @@ class ProgramNode(Tree):
         'PGM': ProgramNode(parent=self)
       }
     elif rule == 'return':
+      root = self.parent
+      while root.parent:
+        root = root.parent
       self.data = 'return'
       self.children = {
-        'VAR': VarNode(parent=self)
+        'VAR': VarNode(parent=self, typ=root.output_type)
       }
 
   def interprete(self, mem={}):
@@ -104,11 +148,14 @@ class InstNode(Tree):
       'FUNC': FuncNode(parent=self)
     }
 
-  def production_space(self, used_vars=set()):
-    for key in ['FUNC', 'VAR']:
-      node, space, used_vars = self.children[key].production_space(used_vars=used_vars)
-      if len(space) > 0:
-        return node, space, used_vars
+  def production_space(self, used_vars={}):
+    node, space, used_vars = self.children['FUNC'].production_space(used_vars=used_vars)
+    if len(space) > 0:
+      return node, space, used_vars
+    self.children['VAR'].type = self.children['FUNC'].return_type
+    node, space, used_vars = self.children['VAR'].production_space(used_vars=used_vars)
+    if len(space) > 0:
+      return node, space, used_vars
     return self, [], used_vars
 
   def production(self, rule=None):
@@ -130,38 +177,36 @@ class InstNode(Tree):
   def tokens(cls):
     return ['assign']
 
-# V -> v0 | v1        # inputs
-#    | v2 | ... | v19 # variables
+# V -> a0 | a1        # inputs
+#    | v1 | ... | v9  # variables
 class VarNode(Tree):
-  VARIABLE_RANGE = 20
-  VAR_SPACE = ['v{}'.format(i) for i in range(20)]
-  INPUT_VARS = ['v0', 'v1']
+  INPUT_VARS = ['a{}'.format(i) for i in range(2)]
+  VAR_SPACE = ['v{}'.format(i) for i in range(10)]
 
-  def __init__(self, assignment=False, *args, **kwargs):
+  def __init__(self, assignment=False, typ=None, *args, **kwargs):
     super(VarNode, self).__init__(*args, **kwargs)
     self.assignment = assignment
+    self.type = typ
 
-  def production_space(self, used_vars=set()):
+  def production_space(self, used_vars={}):
     if self.data == 'hole' and self.assignment:
-      space = [e for e in self.VAR_SPACE if e not in used_vars]
-      if len(space) > 0:
-        space = list(used_vars - set(self.INPUT_VARS)) + space[:1]
-      else:
-        space = list(used_vars - set(self.INPUT_VARS))
-      return self, space, used_vars
+      self.possible = [k for k in used_vars.keys() if k not in self.INPUT_VARS]
+      if len(self.possible) < len(self.VAR_SPACE):
+        self.possible.append(self.VAR_SPACE[len(self.possible)])
+      return self, self.possible, used_vars
     elif self.data == 'hole' and not self.assignment:
-      self.used_vars = list(used_vars)
-      return self, list(used_vars), used_vars
+      self.possible = [k for k, t in used_vars.items() if t == self.type]
+      print('used_vars', used_vars)
+      print('possible', self.possible)
+      return self, self.possible, used_vars
     elif self.assignment:
-      used_vars.add(self.data)
+      used_vars[self.data] = self.type
       return self, [], used_vars
     else:
       return self, [], used_vars
     
   def production(self, rule=None):
-    if self.assignment and rule in self.VAR_SPACE:
-      self.data = rule
-    elif not self.assignment and rule in self.used_vars:
+    if rule in self.possible:
       self.data = rule
 
   def interprete(self, mem):
@@ -191,28 +236,31 @@ class VarNode(Tree):
 #    | DROP V V         # drop
 #    | ACCESS V V       # access
 class FuncNode(Tree):
-  AUOP_FUNC = ['map']
-  BUOP_FUNC = ['filter', 'count']
-  ABOP1_FUNC = ['scanl1']
-  ABOP2_FUNC = ['zipwith']
-  ONE_VAR_FUNC = ['head', 'last', 'minimum', 'maximum', 'reverse', 'sort', 'sum']
-  TWO_VAR_FUNC = ['take', 'drop', 'access']
+  AUOP_FUNC_RETL = ['map']
+  BUOP_FUNC_RETL = ['filter']
+  BUOP_FUNC_RETI = ['count']
+  ABOP1_FUNC_RETL = ['scanl1']
+  ABOP2_FUNC_RETL = ['zipwith']
+  ONE_VAR_FUNC_RETL = ['reverse', 'sort']
+  ONE_VAR_FUNC_RETI = ['head', 'last', 'minimum', 'maximum', 'sum']
+  TWO_VAR_FUNC_RETL = ['take', 'drop']
+  TWO_VAR_FUNC_RETI = ['access']
 
   def production_space(self, used_vars=set()):
     if self.data == 'hole':
-      return self, self.AUOP_FUNC + self.BUOP_FUNC + self.ABOP1_FUNC + self.ABOP2_FUNC + self.ONE_VAR_FUNC + self.TWO_VAR_FUNC, used_vars
+      return self, self.tokens, used_vars
     keys = []
-    if self.data in self.AUOP_FUNC:
+    if self.data in self.AUOP_FUNC_RETL:
       keys = ['AUOP', 'VAR']
-    if self.data in self.BUOP_FUNC:
+    if self.data in self.BUOP_FUNC_RETL + self.BUOP_FUNC_RETI:
       keys = ['BUOP', 'VAR']
-    if self.data in self.ABOP1_FUNC:
+    if self.data in self.ABOP1_FUNC_RETL:
       keys = ['ABOP', 'VAR']
-    if self.data in self.ABOP2_FUNC:
+    if self.data in self.ABOP2_FUNC_RETL:
       keys = ['ABOP', 'VAR1', 'VAR2']
-    if self.data in self.ONE_VAR_FUNC:
+    if self.data in self.ONE_VAR_FUNC_RETL + self.ONE_VAR_FUNC_RETI:
       keys = ['VAR']
-    if self.data in self.TWO_VAR_FUNC:
+    if self.data in self.TWO_VAR_FUNC_RETL + self.TWO_VAR_FUNC_RETI:
       keys = ['VAR1', 'VAR2']
     for key in keys:
       node, space, used_vars = self.children[key].production_space(used_vars=used_vars)
@@ -221,41 +269,41 @@ class FuncNode(Tree):
     return self, [], used_vars
 
   def production(self, rule=None):
-    if rule in self.AUOP_FUNC:
+    if rule in self.AUOP_FUNC_RETL:
       self.data = rule
       self.children = {
         'AUOP': AUOPNode(parent=self),
-        'VAR': VarNode(parent=self)
+        'VAR': VarNode(parent=self, typ=IntList)
       }
-    elif rule in self.BUOP_FUNC:
+    elif rule in self.BUOP_FUNC_RETL + self.BUOP_FUNC_RETI:
       self.data = rule
       self.children = {
         'BUOP': BUOPNode(parent=self),
-        'VAR': VarNode(parent=self)
+        'VAR': VarNode(parent=self, typ=IntList)
       }
-    elif rule in self.ABOP1_FUNC:
+    elif rule in self.ABOP1_FUNC_RETL:
       self.data = rule
       self.children = {
         'ABOP': ABOPNode(parent=self),
-        'VAR': VarNode(parent=self)
+        'VAR': VarNode(parent=self, typ=IntList)
       }
-    elif rule in self.ABOP2_FUNC:
+    elif rule in self.ABOP2_FUNC_RETL:
       self.data = rule
       self.children = {
         'ABOP': ABOPNode(parent=self),
-        'VAR1': VarNode(parent=self),
-        'VAR2': VarNode(parent=self)
+        'VAR1': VarNode(parent=self, typ=IntList),
+        'VAR2': VarNode(parent=self, typ=IntList)
       }
-    elif rule in self.ONE_VAR_FUNC:
+    elif rule in self.ONE_VAR_FUNC_RETL + self.ONE_VAR_FUNC_RETI:
       self.data = rule
       self.children = {
-        'VAR': VarNode(parent=self)
+        'VAR': VarNode(parent=self, typ=IntList)
       }
-    elif rule in self.TWO_VAR_FUNC:
+    elif rule in self.TWO_VAR_FUNC_RETL + self.TWO_VAR_FUNC_RETI:
       self.data = rule
       self.children = {
-        'VAR1': VarNode(parent=self),
-        'VAR2': VarNode(parent=self)
+        'VAR1': VarNode(parent=self, typ=Integer),
+        'VAR2': VarNode(parent=self, typ=IntList)
       }
 
   def interprete(self, mem={}):
@@ -388,32 +436,32 @@ class FuncNode(Tree):
   def pretty_print(self, file=None):
     if self.data == 'hole':
       print('(HOLE)', end='', file=file)
-    elif self.data in self.AUOP_FUNC:
+    elif self.data in self.AUOP_FUNC_RETL:
       print(self.data.upper(), end=' ', file=file)
       self.children['AUOP'].pretty_print(file=file)
       print(end=' ', file=file)
       self.children['VAR'].pretty_print(file=file)
-    elif self.data in self.BUOP_FUNC:
+    elif self.data in self.BUOP_FUNC_RETL + self.BUOP_FUNC_RETI:
       print(self.data.upper(), end=' ', file=file)
       self.children['BUOP'].pretty_print(file=file)
       print(end=' ', file=file)
       self.children['VAR'].pretty_print(file=file)
-    elif self.data in self.ABOP1_FUNC:
+    elif self.data in self.ABOP1_FUNC_RETL:
       print(self.data.upper(), end=' ', file=file)
       self.children['ABOP'].pretty_print(file=file)
       print(end=' ', file=file)
       self.children['VAR'].pretty_print(file=file)
-    elif self.data in self.ABOP2_FUNC:
+    elif self.data in self.ABOP2_FUNC_RETL:
       print(self.data.upper(), end=' ', file=file)
       self.children['ABOP'].pretty_print(file=file)
       print(end=' ', file=file)
       self.children['VAR1'].pretty_print(file=file)
       print(end=' ', file=file)
       self.children['VAR2'].pretty_print(file=file)
-    elif self.data in self.ONE_VAR_FUNC:
+    elif self.data in self.ONE_VAR_FUNC_RETL + self.ONE_VAR_FUNC_RETI:
       print(self.data.upper(), end=' ', file=file)
       self.children['VAR'].pretty_print(file=file)
-    elif self.data in self.TWO_VAR_FUNC:
+    elif self.data in self.TWO_VAR_FUNC_RETL + self.TWO_VAR_FUNC_RETI:
       print(self.data.upper(), end=' ', file=file)
       self.children['VAR1'].pretty_print(file=file)
       print(end=' ', file=file)
@@ -422,7 +470,14 @@ class FuncNode(Tree):
   @classproperty
   @classmethod
   def tokens(cls):
-    return cls.AUOP_FUNC + cls.BUOP_FUNC + cls.ABOP1_FUNC + cls.ABOP2_FUNC + cls.ONE_VAR_FUNC + cls.TWO_VAR_FUNC
+    return cls.AUOP_FUNC_RETL + cls.BUOP_FUNC_RETL + cls.BUOP_FUNC_RETI + cls.ABOP1_FUNC_RETL + cls.ABOP2_FUNC_RETL + cls.ONE_VAR_FUNC_RETL + cls.ONE_VAR_FUNC_RETI + cls.TWO_VAR_FUNC_RETL + cls.TWO_VAR_FUNC_RETI
+
+  @property
+  def return_type(self):
+    if self.data in self.AUOP_FUNC_RETL + self.BUOP_FUNC_RETL + self.ABOP1_FUNC_RETL + self.ABOP2_FUNC_RETL + self.ONE_VAR_FUNC_RETL + self.TWO_VAR_FUNC_RETL:
+      return IntList
+    elif self.data in self.BUOP_FUNC_RETI + self.ONE_VAR_FUNC_RETI + self.TWO_VAR_FUNC_RETI:
+      return Integer
 
 # AUOP -> +1 | -1 | *2 | /2 | *(-1) | **2 | *3 | /3 | *4 | /4
 class AUOPNode(Tree):

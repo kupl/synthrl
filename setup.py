@@ -11,7 +11,6 @@ setup_params = dict(
   setup_requires=[    # required library for setup.py itself
   ], 
   install_requires=[  # required library for SynthRL
-    'lark-parser',
     'numpy'
   ], 
   dependency_links=[  # libraries cannot be found on pip

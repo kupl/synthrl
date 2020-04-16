@@ -6,14 +6,14 @@ from synthrl.utils import Timer
 
 logger = logging.getLogger(__name__)
 
-def synthesize_from_oracle(dsl=None, synthesizer=None, verifier=None, oracle=None, ioset=[], budget=None, testing=None, testing_opt={}):
+def synthesize_from_oracle(dsl=None, dsl_opt={}, synthesizer=None, verifier=None, oracle=None, ioset=[], budget=None, testing=None, testing_opt={}):
   # gets callable dsl
   #      synthsizer and verifier agent
   #      callable oracle and initial ioset
   #      time budget
   # and returns synthesized program
   trail = 0
-  program = dsl()
+  program = dsl(**dsl_opt)
   timer = Timer(budget)
   try:
     while True:
@@ -22,7 +22,7 @@ def synthesize_from_oracle(dsl=None, synthesizer=None, verifier=None, oracle=Non
       synthesizer.reset()
       verifier.reset()
 
-      env = MAEnvironment(ioset=ioset, dsl=dsl, testing=lambda pgm1, pgm2: testing(pgm1, pgm2, **testing_opt))
+      env = MAEnvironment(ioset=ioset, dsl=lambda: dsl(**dsl_opt), testing=lambda pgm1, pgm2: testing(pgm1, pgm2, **testing_opt))
       env.set_timer(timer)
       state, _, (t_syn, t_ver) = env.reset()
 
