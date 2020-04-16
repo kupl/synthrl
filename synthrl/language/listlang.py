@@ -42,7 +42,7 @@ class ListLanguage(Tree):
       self.output_type = IntList
     else:
       raise ValueError('Return type must be integer or list, but {} is given.'.format(output_type))
-
+  
   def production_space(self):
     used_vars = {v: t for v, t in zip(VarNode.INPUT_VARS, self.input_types)}
     node, space, _ = self.children['PGM'].production_space(used_vars=used_vars)
