@@ -244,9 +244,12 @@ class FuncNode(Tree):
   TWO_VAR_FUNC_RETL = ['take', 'drop']
   TWO_VAR_FUNC_RETI = ['access']
 
-  def production_space(self, used_vars=set()):
+  def production_space(self, used_vars={}):
     if self.data == 'hole':
-      return self, self.tokens, used_vars
+      if Integer in [e for _, e in used_vars.items()]:
+        return self, self.tokens, used_vars
+      else:
+        return self, self.AUOP_FUNC_RETL + self.BUOP_FUNC_RETL + self.BUOP_FUNC_RETI + self.ABOP1_FUNC_RETL + self.ABOP2_FUNC_RETL + self.ONE_VAR_FUNC_RETL + self.ONE_VAR_FUNC_RETI, used_vars
     keys = []
     if self.data in self.AUOP_FUNC_RETL:
       keys = ['AUOP', 'VAR']
@@ -481,7 +484,7 @@ class FuncNode(Tree):
 class AUOPNode(Tree):
   AUOP_SPACE = ['+1', '-1', '*2', '/2', '*(-1)', '**2', '*3', '/3', '*4', '/4']
 
-  def production_space(self, used_vars=set()):
+  def production_space(self, used_vars={}):
     if self.data == 'hole':
       return self, self.AUOP_SPACE, used_vars
     else:
@@ -526,7 +529,7 @@ class AUOPNode(Tree):
 class BUOPNode(Tree):
   BUOP_SPACE = ['>0', '<0', '%2==0', '%2==1']
 
-  def production_space(self, used_vars=set()):
+  def production_space(self, used_vars={}):
     if self.data == 'hole':
       return self, self.BUOP_SPACE, used_vars
     else:
@@ -558,7 +561,7 @@ class BUOPNode(Tree):
 class ABOPNode(Tree):
   ABOP_SPACE = ['+', '*', 'MIN', 'MAX']
 
-  def production_space(self, used_vars=set()):
+  def production_space(self, used_vars={}):
     if self.data == 'hole':
       return self, self.ABOP_SPACE, used_vars
     else:
