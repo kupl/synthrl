@@ -5,7 +5,6 @@ from synthrl.value import Integer
 from synthrl.value import IntList
 from synthrl.value import NoneType
 import random
-
 class SelfPlay:
     def __init__(self):
         pass
@@ -13,7 +12,7 @@ class SelfPlay:
         action = None
         program = ListLanguage(input_types=input_type, output_type=output_type)
         length = 0 #as appearance count of 'seq' action
-        while action!="return":
+        while True:
             node, space = program.production_space()
             if space ==["seq","return"] and length < depth:
                 if "return" in space: space.remove("return")
@@ -25,8 +24,8 @@ class SelfPlay:
                     print("the space is empty..")
                     program.pretty_print()
                     print(program.output_type)
-                    ##re init
-                    prgoram = ListLanguage(input_types=input_type, output_type=output_type)
+                    ##tryagain
+                    program  = ListLanguage(input_types=input_type, output_type=output_type)
                     action = None
                     length = 0
                 else:
@@ -35,13 +34,8 @@ class SelfPlay:
                     # program.pretty_print()
                     # print("----****************-----")
                     return program
-            # print("Current Action Space:" ,space)
             action = np.random.choice(space)
-            # print("Current Action Choice: ", action)
             node.production(action)
-            #print("-------------")
-            # program.pretty_print()
-    
     @classmethod 
     def generate_oracles(self, depth, size):
         dataset = []
@@ -53,7 +47,6 @@ class SelfPlay:
             program = self.generate_indiv_oracle(depth,input_type,output_type)
             dataset.append(program)
         return dataset 
-    
     def io_query(program):
         inputs = []
         for type in program.input_types:
@@ -66,13 +59,12 @@ class SelfPlay:
                 input.append([random.randint(elm_min, elm_max) for i in range(listlen)])
             elif type==None:
                 pass
-
-
 # program = ListLanguage(input_types=(list, int), output_type=list)
-
 dataset = SelfPlay.generate_oracles(4,10)
+print("-----")
 for data in dataset:
-    print("--**Generated Oracle**--")
-    data.pretty_print()
-    print(data.input_types)
-    SelfPlay.io_query(data)
+    print(data,"\n")
+    # print("--**Generated Oracle**--")
+    # data.pretty_print()
+    # print(data.input_types)
+    # SelfPlay.io_query(data)
