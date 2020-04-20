@@ -21,9 +21,9 @@ class SelfPlay:
                 node.production("return")
                 return_node, return_space = program.production_space()
                 if len(return_space)==0 :
-                    print("the space is empty..")
-                    program.pretty_print()
-                    print(program.output_type)
+                    #print("the space is empty..")
+                    #program.pretty_print()
+                    #print(program.output_type)
                     ##tryagain
                     program  = ListLanguage(input_types=input_type, output_type=output_type)
                     action = None
@@ -61,10 +61,9 @@ class SelfPlay:
                 pass
 # program = ListLanguage(input_types=(list, int), output_type=list)
 dataset = SelfPlay.generate_oracles(4,10)
-print("-----")
 for data in dataset:
-    print(data,"\n")
-    # print("--**Generated Oracle**--")
-    # data.pretty_print()
-    # print(data.input_types)
-    # SelfPlay.io_query(data)
+    # print(data,"\n")
+    print("--**Generated Oracle**--")
+    data.pretty_print()
+    #print(data.input_types)
+    #SelfPlay.io_query(data)
