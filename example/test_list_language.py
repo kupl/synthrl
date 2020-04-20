@@ -1,6 +1,6 @@
 from synthrl.language import ListLanguage
 
-program = ListLanguage(input_types=(list, int), output_type=list)
+program = ListLanguage(input_types=(list, ), output_type=list)
 iter = 0
 while True:
   
