@@ -196,8 +196,6 @@ class VarNode(Tree):
       return self, self.possible, used_vars
     elif self.data == 'hole' and not self.assignment:
       self.possible = [k for k, t in used_vars.items() if t == self.type]
-      print('used_vars', used_vars)
-      print('possible', self.possible)
       return self, self.possible, used_vars
     elif self.assignment:
       used_vars[self.data] = self.type
