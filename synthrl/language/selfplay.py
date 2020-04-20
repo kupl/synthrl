@@ -14,6 +14,14 @@ class SelfPlay:
         length = 0 #as appearance count of 'seq' action
         while True:
             node, space = program.production_space()
+            #처음 선택되는 function이 2-argument function이면, 필연적으로 Hole이 생기고 이에 대한 대처
+            if length==1:
+                try:
+                    space.remove('take')
+                    space.remove('drop')
+                    space.remove('access')
+                except ValueError:
+                    pass  
             if space ==["seq","return"] and length < depth:
                 if "return" in space: space.remove("return")
                 length += 1
@@ -30,9 +38,6 @@ class SelfPlay:
                     length = 0
                 else:
                     return_node.production(np.random.choice(return_space))
-                    # print("----Generated Oracle-----")
-                    # program.pretty_print()
-                    # print("----****************-----")
                     return program
             action = np.random.choice(space)
             node.production(action)
@@ -47,23 +52,29 @@ class SelfPlay:
             program = self.generate_indiv_oracle(depth,input_type,output_type)
             dataset.append(program)
         return dataset 
-    def io_query(program):
+
+
+    def input_sampling(program):
         inputs = []
+        print(program.input_types)
         for type in program.input_types:
-            if type==int:
-                input.append(random.randint(a, b))
-            elif type==list:
-                listlen = random.randint(1,10)
-                elm_min = 0
-                elm_max = 99
-                input.append([random.randint(elm_min, elm_max) for i in range(listlen)])
+            if type==Integer:
+                inputs.append(Integer.sample())
+            elif type==IntList:
+                inputs.append(IntList.sample())
             elif type==None:
                 pass
+        return inputs
+
+    def io_query(inputs,program):
+        output=program.interprete(inputs)
+        print(output)
+
 # program = ListLanguage(input_types=(list, int), output_type=list)
 dataset = SelfPlay.generate_oracles(4,10)
+print("--**Generated Oracle**--")
 for data in dataset:
-    # print(data,"\n")
-    print("--**Generated Oracle**--")
     data.pretty_print()
-    #print(data.input_types)
-    #SelfPlay.io_query(data)
+    # inputs=SelfPlay.input_sampling(data)
+    # print(inputs)
+    # SelfPlay.io_query(inputs,data)
