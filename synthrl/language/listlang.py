@@ -1,5 +1,3 @@
-from itertools import cycle
-
 from synthrl.language.dsl import Tree
 from synthrl.language.dsl import UndefinedSemantics
 from synthrl.utils.decoratorutils import classproperty
