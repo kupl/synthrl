@@ -1,17 +1,23 @@
 from typing import Any
-from typing import List
 from typing import Dict
+from typing import List
+from typing import Tuple
 
 from synthrl.utils.decoratorutils import classproperty
 
 class Tree:
-  def __init__(self, data:str, children:dict, parent:'Tree'=None) -> None:
+  def __init__(self, data:str='hole', children:dict={}, parent:'Tree'=None) -> None:
     self.data = data
     self.children = children
     self.parent = parent
     
   def production_space(self) -> List[str]:
-    # returns 
+    # returns a list of possible production rules
+    raise NotImplementedError
+
+  def production(self, rule:str) -> 'Tree':
+    # gets one production rule to apply
+    # returns self
     raise NotImplementedError
 
   def interprete(self, *args, **kwargs) -> Any:
