@@ -4,6 +4,11 @@ from synthrl.utils.decoratorutils import classproperty
 class UndefinedSemantics(Exception):
   def __init__(self, *args, **kwargs):
     super(UndefinedSemantics, self).__init__(*args, **kwargs)
+  
+# Exception to handle wrong production rule
+class WrongProductionException(Exception):
+  def __init__(self, *args, **kwargs):
+    super(WrongProductionException, self).__init__(*args, **kwargs)
 
 # Abstract class that very first symbol which represent root node should implement
 class Tree:
