@@ -1,6 +1,25 @@
 from synthrl.utils.decoratorutils import classproperty
 
+# very outer class that represent root node
 class Tree:
+  def __init__(self, *args, **kwargs):
+    pass
+
+  def production_space(self):
+    raise NotImplementedError
+
+  def production(self, rule):
+    raise NotImplementedError
+
+  def pretty_print(self, file=None):
+    raise NotImplementedError
+
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    raise NotImplementedError
+
+class Node:
   def __init__(self, data='hole', children={}, parent=None):
     self.data = data
     self.children = children
@@ -29,9 +48,3 @@ class Tree:
   def tokens(cls):
     # returns a list of tokens
     raise NotImplementedError
-
-  @property
-  def spec(self):
-    # returns a dictionary that contains all information to create hole
-    return {}
-  
