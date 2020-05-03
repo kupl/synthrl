@@ -15,20 +15,26 @@ class Tree:
 
   @property
   def production_space(self):
+    # returns a list of production space
     raise NotImplementedError
 
   def production(self, rule):
-    raise NotImplementedError
+    # apply the production rule to hole node
+    self.hole.production(rule)
 
   def interprete(self, inputs):
+    # gets inputs
+    # returns an executed result of program
     raise NotImplementedError
 
   def pretty_print(self, file=None):
+    # print a program
     raise NotImplementedError
 
   @classproperty
   @classmethod
   def tokens(cls):
+    # returns a list of all tokens
     raise NotImplementedError
 
 # Abstract class that each non-terminal symbols should implement
@@ -46,7 +52,7 @@ class Node:
     self.parent = parent
     
   def production_space(self, *args, **kwargs):
-    # returns a list of possible production rules
+    # returns a tuple of a hole node and a list of possible production rules
     raise NotImplementedError
 
   def production(self, rule):
@@ -56,7 +62,7 @@ class Node:
 
   def interprete(self, *args, **kwargs):
     # gets needed information
-    # returns an executed result of program
+    # returns an executed result of node
     raise NotImplementedError
 
   def pretty_print(self, file=None, *args, **kwargs):
