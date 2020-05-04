@@ -34,7 +34,9 @@ from synthrl.utils.exceptionutils import UnexpectedException
 from synthrl.value import Integer
 from synthrl.value import IntList
 
-# maximum length of sequence
+# maximum number of inputs
+S = 2
+# maximum length of sequences
 T = 5
 # symbol L
 class ListLang(Tree):
@@ -64,8 +66,8 @@ class ListLang(Tree):
         raise ValueError('Invalid type "{}" is given.'.format(ty.__name__))
     if len(self.input_types) == 0:
       raise ValueError('No input type is given')
-    if len(self.input_types) > 2:
-      raise ValueError('Expecting at most 2 inputs, but {} inputs are given.'.format(len(self.input_types)))
+    if len(self.input_types) > S:
+      raise ValueError('Expecting at most {} inputs, but {} inputs are given.'.format(S, len(self.input_types)))
     if self.input_types[0] != IntList:
       raise ValueError('First argument must be IntList, but {} is given.'.format(self.input_types[0].__name__))
     
@@ -118,7 +120,7 @@ class ListLang(Tree):
   @classproperty
   @classmethod
   def tokens(cls):
-    raise NotImplementedError
+    return InstNode.tokens + VarNode.tokens + AUOPNode.tokens + BUOPNode.tokens + ABOPNode.tokens
 
 # symbol I
 class InstNode(Node):
@@ -325,7 +327,7 @@ class VarNode(Node):
   @classproperty
   @classmethod
   def tokens(cls):
-    raise NotImplementedError
+    return ['a_{}'.format(i + 1) for i in range(S)] + ['x_{}'.format(i + 1) for i in range(T)]
 
 # symbol AUOP
 class AUOPNode(Node):
