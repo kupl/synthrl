@@ -363,7 +363,7 @@ class AUOPNode(Node):
   @classproperty
   @classmethod
   def tokens(cls):
-    raise NotImplementedError
+    return cls.TOKENS
 
 # symbol BUOP
 class BUOPNode(Node):
@@ -399,7 +399,7 @@ class BUOPNode(Node):
   @classproperty
   @classmethod
   def tokens(cls):
-    raise NotImplementedError
+    return cls.TOKENS
 
 # symbol ABOP
 class ABOPNode(Node):
