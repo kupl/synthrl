@@ -45,7 +45,11 @@ class ListLang(Tree):
     'output_type',
   ]
 
-  def __init__(self, input_types, output_type=None):
+  def __init__(self, input_types, output_type=None):\
+    # input_types: A tuple or list of types of inputs.
+    #              The size must be 1 or 2 and the first element must be IntList(or list).
+    # output_type: The type of the program output.
+    #              None represents "any" type, which is default.
 
     super(ListLang, self).__init__()
 
@@ -140,7 +144,11 @@ class InstNode(Node):
     'nop':     ['END'   , 1, 'LIST'],
   }
   
-  def production_space(self, loc=1, last_type=None, return_type=None, var_types={}):
+  def production_space(self, loc, var_types, last_type, return_type=None):
+    # loc        : Location of instruction. Must be smaller than T.
+    # var_types  : A dictionary contains the type information of previously assigned variable.
+    # last_type  : The return type of very before instruction.
+    # return_type: The desired return type of the whole program.
     
     # if the node should be filled
     if self.data == 'hole':
@@ -167,6 +175,12 @@ class InstNode(Node):
     
     # if program ended
     elif self.data == 'nop':
+
+      # no hole
+      return self, []
+
+    # otherwise
+    else:
 
       # find keys and their order for searching
       keys = []
@@ -202,6 +216,7 @@ class InstNode(Node):
       return self, []
 
   def production(self, rule):
+    # rule: A rule to apply to this node.
 
     # check the given rule is valid and update
     if rule not in self.TOKENS.keys():
@@ -266,20 +281,156 @@ class InstNode(Node):
     # returns the return type of instruction
     return IntList if self.TOKENS[self.data][2] == 'LIST' else Integer
 
+# symbol V
 class VarNode(Node):
 
+  __slots__ = ['type', 'vars']
+
   def __init__(self, type=IntList, *args, **kwargs):
+    # type: The type of the variable. By default, IntList.
 
     super(VarNode, self).__init__(*args, **kwargs)
 
     # store the desiring type
     self.type = type
+    self.vars = None
 
+  def production_space(self, var_types):
+    # var_types  : A dictionary contains the type information of previously assigned variable.
+
+    # if the node should be filled
+    if self.data == 'hole':
+      self.vars = [var for var, ty in var_types.items() if ty == self.type]
+      return self, self.vars
+    
+    # if the node already filled
+    else:
+      return self, []
+
+  def production(self, rule):
+    # rule: A rule to apply to this node.
+
+    # check the validity of rule
+    if rule in self.vars:
+      self.data = rule
+    else:
+      raise WrongProductionException('Invalid production rule "{}" is given.'.format(rule))
+
+  def interprete(self, mem):
+    raise NotImplementedError
+
+  def pretty_print(self, file=None):
+    raise NotImplementedError
+
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    raise NotImplementedError
+
+# symbol AUOP
 class AUOPNode(Node):
-  pass
 
+  # list of tokens
+  TOKENS = ['+1', '-1', '*2', '/2', '*(-1)', '**2', '*3', '/3', '*4', '/4']
+  
+  def production_space(self, *args, **kwargs):
+    
+    # if the node should be filled
+    if self.data == 'hole':
+      return self, self.TOKENS
+
+    # if the node is filled
+    else:
+      return self, []
+
+  def production(self, rule):
+    # rule: A rule to apply to this node.
+
+    # check the validity of rule
+    if rule in self.TOKENS:
+      self.data = rule
+    else:
+      raise WrongProductionException('Invalid production rule "{}" is given.'.format(rule))
+
+  def interprete(self, mem):
+    raise NotImplementedError
+
+  def pretty_print(self, file=None):
+    raise NotImplementedError
+
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    raise NotImplementedError
+
+# symbol BUOP
 class BUOPNode(Node):
-  pass
+  
+  # list of tokens
+  TOKENS = ['POS', 'NEG', 'EVEN', 'ODD']
 
+  def production_space(self, *args, **kwargs):
+    
+    # if the node should be filled
+    if self.data == 'hole':
+      return self, self.TOKENS
+
+    # if the node is filled
+    else:
+      return self, []
+
+  def production(self, rule):
+    # rule: A rule to apply to this node.
+
+    # check the validity of rule
+    if rule in self.TOKENS:
+      self.data = rule
+    else:
+      raise WrongProductionException('Invalid production rule "{}" is given.'.format(rule))
+
+  def interprete(self, mem):
+    raise NotImplementedError
+
+  def pretty_print(self, file=None):
+    raise NotImplementedError
+
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    raise NotImplementedError
+
+# symbol ABOP
 class ABOPNode(Node):
-  pass
+
+  # list of tokens
+  TOKENS = ['+', '*', 'MIN', 'MAX']
+  
+  def production_space(self, *args, **kwargs):
+    
+    # if the node should be filled
+    if self.data == 'hole':
+      return self, self.TOKENS
+
+    # if the node is filled
+    else:
+      return self, []
+
+  def production(self, rule):
+    # rule: A rule to apply to this node.
+
+    # check the validity of rule
+    if rule in self.TOKENS:
+      self.data = rule
+    else:
+      raise WrongProductionException('Invalid production rule "{}" is given.'.format(rule))
+    
+  def interprete(self, mem):
+    raise NotImplementedError
+
+  def pretty_print(self, file=None):
+    raise NotImplementedError
+
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return cls.TOKENS
