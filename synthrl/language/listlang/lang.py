@@ -22,7 +22,7 @@
 # V -> a_1 | a_2              # inputs
 #    | x_1 | x_2 | ... | x_T  # variables
 # AUOP -> +1 | -1 | *2 | /2 | *(-1) | **2 | *3 | /3 | *4 | /4
-# BUOP -> >0 | <0 | %2==0 | %2==1
+# BUOP -> POS | NEG | EVEN | ODD
 # ABOP -> + | * | MIN | MAX
 
 from synthrl.language.abstract import Node
