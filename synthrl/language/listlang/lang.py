@@ -3,11 +3,11 @@
 #      x_2 <- I;
 #      ...;
 #      x_T <- I;              # root: T sequences
-# I -> MAP AUOP V             # map
-#    | FILTER BUOP V          # filter
-#    | COUNT BUOP V           # count
-#    | SCANL1 ABOP V          # scanl1
-#    | ZIPWITH ABOP V V       # zipwith
+# I -> MAP (AUOP) V           # map
+#    | FILTER (BUOP) V        # filter
+#    | COUNT (BUOP) V         # count
+#    | SCANL1 (ABOP) V        # scanl1
+#    | ZIPWITH (ABOP) V V     # zipwith
 #    | HEAD V                 # head
 #    | LAST V                 # last
 #    | MINIMUM V              # minimum
@@ -114,8 +114,18 @@ class ListLang(Tree):
   def interprete(self, inputs):
     raise NotImplementedError
 
-  def pretty_print(self):
-    raise NotImplementedError
+  def pretty_print(self, file=None):
+    # file: TextIOWrapper to use as write stream. By default, use stdout.
+
+    # print inputs
+    for i, ty in enumerate(self.input_types):
+      print('a_{} <- {};'.format(i + 1, 'int' if ty == Integer else '[int]'), file=file)
+
+    # print instructions
+    for i, inst in enumerate(self.instructions):
+      print('x_{} <- '.format(i + 1), end='', file=file)
+      inst.pretty_print(file=file)
+      print(';', file=file)
 
   @classproperty
   @classmethod
@@ -153,7 +163,7 @@ class InstNode(Node):
     # return_type: The desired return type of the whole program.
     
     # if the node should be filled
-    if self.data == 'hole':
+    if self.data == 'HOLE':
 
       # options that can be used
       options = ['AUOP', 'BUOP', 'ABOP', 'NOOPT']
@@ -270,8 +280,57 @@ class InstNode(Node):
   def interprete(self):
     raise NotImplementedError
 
-  def pretty_print(self):
-    raise NotImplementedError
+  def pretty_print(self, file=None):
+    # file: TextIOWrapper to use as write stream. By default, use stdout.
+    
+    # if this node is hole
+    if self.data == 'HOLE':
+      print('(HOLE)', end='', file=file)
+    
+    # otherwise
+    else:
+
+      # distinguish token
+      option, n_vars, _ = self.TOKENS[self.data]
+      # map
+      if option == 'AUOP' and n_vars == 1:
+        print('{} ('.format(self.data.upper()), end='', file=file)
+        self.children['AUOP'].pretty_print(file=file)
+        print(') ', end='', file=file)
+        self.children['VAR'].pretty_print(file=file)
+      # filter, count
+      elif option == 'BUOP' and n_vars == 1:
+        print('{} ('.format(self.data.upper()), end='', file=file)
+        self.children['BUOP'].pretty_print(file=file)
+        print(') ', end='', file=file)
+        self.children['VAR'].pretty_print(file=file)
+      # scanl1
+      elif option == 'ABOP' and n_vars == 1:
+        print('{} ('.format(self.data.upper()), end='', file=file)
+        self.children['ABOP'].pretty_print(file=file)
+        print(') ', end='', file=file)
+        self.children['VAR'].pretty_print(file=file)
+      # zipwith
+      elif option == 'ABOP' and n_vars == 2:
+        print('{} ('.format(self.data.upper()), end='', file=file)
+        self.children['ABOP'].pretty_print(file=file)
+        print(') ', end='', file=file)
+        self.children['VAR1'].pretty_print(file=file)
+        print(' ', end='', file=file)
+        self.children['VAR2'].pretty_print(file=file)
+      # head, last, minimum, maximum, reverse, sort, sum
+      elif option == 'NOOPT' and n_vars == 1:
+        print('{} '.format(self.data.upper()), end='', file=file)
+        self.children['VAR'].pretty_print(file=file)
+      # take, drop, access
+      elif option == 'REQINT' and n_vars == 2:
+        print('{} '.format(self.data.upper()), end='', file=file)
+        self.children['VAR1'].pretty_print(file=file)
+        print(' ', end='', file=file)
+        self.children['VAR2'].pretty_print(file=file)
+      # should not reach here
+      else:
+        raise UnexpectedException('Unexpected values in "InstNode.pretty_print". {{option: {}, n_vars: {}}}'.format(option, n_vars))
 
   @classproperty
   @classmethod
@@ -301,7 +360,7 @@ class VarNode(Node):
     # var_types  : A dictionary contains the type information of previously assigned variable.
 
     # if the node should be filled
-    if self.data == 'hole':
+    if self.data == 'HOLE':
       self.vars = [var for var, ty in var_types.items() if ty == self.type]
       return self, self.vars
     
@@ -322,7 +381,10 @@ class VarNode(Node):
     raise NotImplementedError
 
   def pretty_print(self, file=None):
-    raise NotImplementedError
+    # file: TextIOWrapper to use as write stream. By default, use stdout.
+    
+    # print a token
+    print(self.data, end='', file=file)
 
   @classproperty
   @classmethod
@@ -338,7 +400,7 @@ class AUOPNode(Node):
   def production_space(self, *args, **kwargs):
     
     # if the node should be filled
-    if self.data == 'hole':
+    if self.data == 'HOLE':
       return self, self.TOKENS
 
     # if the node is filled
@@ -358,7 +420,10 @@ class AUOPNode(Node):
     raise NotImplementedError
 
   def pretty_print(self, file=None):
-    raise NotImplementedError
+    # file: TextIOWrapper to use as write stream. By default, use stdout.
+    
+    # print a token
+    print(self.data, end='', file=file)
 
   @classproperty
   @classmethod
@@ -374,7 +439,7 @@ class BUOPNode(Node):
   def production_space(self, *args, **kwargs):
     
     # if the node should be filled
-    if self.data == 'hole':
+    if self.data == 'HOLE':
       return self, self.TOKENS
 
     # if the node is filled
@@ -394,7 +459,10 @@ class BUOPNode(Node):
     raise NotImplementedError
 
   def pretty_print(self, file=None):
-    raise NotImplementedError
+    # file: TextIOWrapper to use as write stream. By default, use stdout.
+    
+    # print a token
+    print(self.data, end='', file=file)
 
   @classproperty
   @classmethod
@@ -410,7 +478,7 @@ class ABOPNode(Node):
   def production_space(self, *args, **kwargs):
     
     # if the node should be filled
-    if self.data == 'hole':
+    if self.data == 'HOLE':
       return self, self.TOKENS
 
     # if the node is filled
@@ -430,7 +498,10 @@ class ABOPNode(Node):
     raise NotImplementedError
 
   def pretty_print(self, file=None):
-    raise NotImplementedError
+    # file: TextIOWrapper to use as write stream. By default, use stdout.
+    
+    # print a token
+    print(self.data, end='', file=file)
 
   @classproperty
   @classmethod
