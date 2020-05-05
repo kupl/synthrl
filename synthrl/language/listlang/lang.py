@@ -33,6 +33,11 @@ from synthrl.utils.decoratorutils import classproperty
 from synthrl.utils.exceptionutils import UnexpectedException
 from synthrl.value import Integer
 from synthrl.value import IntList
+from synthrl.value.integer import FOUR
+from synthrl.value.integer import ONE
+from synthrl.value.integer import THREE
+from synthrl.value.integer import TWO
+from synthrl.value.integer import ZERO
 
 # maximum number of inputs
 S = 2
@@ -278,7 +283,74 @@ class InstNode(Node):
       raise UnexpectedException('Unexpected values in "InstNode.production_space". {{option: {}, n_vars: {}}}'.format(option, n_vars))
 
   def interprete(self):
-    raise NotImplementedError
+    
+    # map
+    if self.data == 'map':
+      raise NotImplementedError
+    
+    # filter
+    elif self.data == 'filter':
+      raise NotImplementedError
+    
+    # count
+    elif self.data == 'count':
+      raise NotImplementedError
+    
+    # scanl1
+    elif self.data == 'scanl1':
+      raise NotImplementedError
+    
+    # zipwith
+    elif self.data == 'zipwith':
+      raise NotImplementedError
+    
+    # head
+    elif self.data == 'head':
+      raise NotImplementedError
+    
+    # last
+    elif self.data == 'last':
+      raise NotImplementedError
+    
+    # minimum
+    elif self.data == 'minimum':
+      raise NotImplementedError
+    
+    # maximum
+    elif self.data == 'maximum':
+      raise NotImplementedError
+    
+    # reverse
+    elif self.data == 'reverse':
+      raise NotImplementedError
+    
+    # sort
+    elif self.data == 'sort':
+      raise NotImplementedError
+    
+    # sum
+    elif self.data == 'sum':
+      raise NotImplementedError
+    
+    # take
+    elif self.data == 'take':
+      raise NotImplementedError
+    
+    # drop
+    elif self.data == 'drop':
+      raise NotImplementedError
+    
+    # access
+    elif self.data == 'access':
+      raise NotImplementedError
+    
+    # nop
+    elif self.data == 'nop':
+      raise NotImplementedError
+    
+    # should not reach here
+    else:
+      raise UnexpectedException('Unexpected value in "InstNode.interprete". {{self.data: {}}}'.format(self.data))
 
   def pretty_print(self, file=None):
     # file: TextIOWrapper to use as write stream. By default, use stdout.
@@ -357,7 +429,7 @@ class VarNode(Node):
     self.vars = None
 
   def production_space(self, var_types):
-    # var_types  : A dictionary contains the type information of previously assigned variable.
+    # var_types: A dictionary contains the type information of previously assigned variable.
 
     # if the node should be filled
     if self.data == 'HOLE':
@@ -378,7 +450,10 @@ class VarNode(Node):
       raise WrongProductionException('Invalid production rule "{}" is given.'.format(rule))
 
   def interprete(self, mem):
-    raise NotImplementedError
+    # mem:  A dictionary that contains assigned variables and their values.
+
+    # find and return data
+    return mem[self.data]
 
   def pretty_print(self, file=None):
     # file: TextIOWrapper to use as write stream. By default, use stdout.
@@ -416,8 +491,51 @@ class AUOPNode(Node):
     else:
       raise WrongProductionException('Invalid production rule "{}" is given.'.format(rule))
 
-  def interprete(self, mem):
-    raise NotImplementedError
+  def interprete(self):
+    
+    # +1
+    if self.data == '+1':
+      return lambda x: x + ONE
+
+    # -1
+    elif self.data == '-1':
+      return lambda x: x - ONE
+
+    # *2
+    elif self.data == '*2':
+      return lambda x: x * TWO
+      
+    # /2
+    elif self.data == '/2':
+      return lambda x: x // TWO
+      
+    # *(-1)
+    elif self.data == '*(-1)':
+      return lambda x: -x
+      
+    # **2
+    elif self.data == '**2':
+      return lambda x: x * x
+      
+    # *3
+    elif self.data == '*3':
+      return lambda x: x * THREE
+      
+    # /3
+    elif self.data == '/3':
+      return lambda x: x / THREE
+      
+    # *4
+    elif self.data == '*4':
+      return lambda x: x * FOUR
+      
+    # /4
+    elif self.data == '/4':
+      return lambda x: x / FOUR
+
+    # should not reach here
+    else:
+      raise UnexpectedException('Unexpected value in "AUOPNode.interprete". {{self.data: {}}}'.format(self.data))
 
   def pretty_print(self, file=None):
     # file: TextIOWrapper to use as write stream. By default, use stdout.
@@ -434,7 +552,7 @@ class AUOPNode(Node):
 class BUOPNode(Node):
   
   # list of tokens
-  TOKENS = ['POS', 'NEG', 'EVEN', 'ODD']
+  TOKENS = ['pos', 'neg', 'even', 'odd']
 
   def production_space(self, *args, **kwargs):
     
@@ -455,14 +573,33 @@ class BUOPNode(Node):
     else:
       raise WrongProductionException('Invalid production rule "{}" is given.'.format(rule))
 
-  def interprete(self, mem):
-    raise NotImplementedError
+  def interprete(self):
+    
+    # POS
+    if self.data == 'pos':
+      return lambda x: x > ZERO
+
+    # NEG
+    elif self.data == 'neg':
+      return lambda x: x < ZERO
+
+    # EVEN
+    elif self.data == 'even':
+      return lambda x: (x % TWO) == ZERO
+
+    # ODD
+    elif self.data == 'odd':
+      return lambda x: (x % TWO) == ONE
+
+    # should not reach here
+    else:
+      raise UnexpectedException('Unexpected value in "BUOPNode.interprete". {{self.data: {}}}'.format(self.data))
 
   def pretty_print(self, file=None):
     # file: TextIOWrapper to use as write stream. By default, use stdout.
     
     # print a token
-    print(self.data, end='', file=file)
+    print(self.data.upper(), end='', file=file)
 
   @classproperty
   @classmethod
@@ -473,7 +610,7 @@ class BUOPNode(Node):
 class ABOPNode(Node):
 
   # list of tokens
-  TOKENS = ['+', '*', 'MIN', 'MAX']
+  TOKENS = ['+', '*', 'min', 'max']
   
   def production_space(self, *args, **kwargs):
     
@@ -494,14 +631,33 @@ class ABOPNode(Node):
     else:
       raise WrongProductionException('Invalid production rule "{}" is given.'.format(rule))
     
-  def interprete(self, mem):
-    raise NotImplementedError
+  def interprete(self):
+
+    # +
+    if self.data == '+':
+      return lambda x, y: x + y
+
+    # *
+    elif self.data == '*':
+      return lambda x, y: x * y
+
+    # MIN
+    elif self.data == 'MIN':
+      return lambda x, y: x if x < y else y
+
+    # MAX
+    elif self.data == 'MAX':
+      return lambda x, y: x if x > y else y
+    
+    # should not reach here
+    else:
+      raise UnexpectedException('Unexpected value in "ABOPNode.interprete". {{self.data: {}}}'.format(self.data))
 
   def pretty_print(self, file=None):
     # file: TextIOWrapper to use as write stream. By default, use stdout.
     
     # print a token
-    print(self.data, end='', file=file)
+    print(self.data.upper(), end='', file=file)
 
   @classproperty
   @classmethod
