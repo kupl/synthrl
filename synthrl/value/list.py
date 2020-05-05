@@ -36,13 +36,16 @@ class List(Value):
       yield v
 
   def __getitem__(self, idx):
-    return self.value[idx]
+    if isinstance(idx, slice):
+      return self.__class__(self.value[idx])
+    else:
+      return self.value[idx]
 
   def __len__(self):
     return len(self.value)
 
   def __reversed__(self):
-    return self.__class__(list(reversed(self.get_value())))
+    return self.__class__(reversed(self.get_value()))
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
