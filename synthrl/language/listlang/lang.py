@@ -19,7 +19,7 @@
 #    | DROP V V               # drop
 #    | ACCESS V V             # access
 #    | NOP                    # nop
-# V -> a_1 | a_2              # inputs
+# V -> a_1 | a_2 | ... | a_S  # inputs
 #    | x_1 | x_2 | ... | x_T  # variables
 # AUOP -> +1 | -1 | *2 | /2 | *(-1) | **2 | *3 | /3 | *4 | /4
 # BUOP -> POS | NEG | EVEN | ODD
@@ -38,6 +38,7 @@ from synthrl.value.integer import ONE
 from synthrl.value.integer import THREE
 from synthrl.value.integer import TWO
 from synthrl.value.integer import ZERO
+from synthrl.value.nonetype import NONE
 
 # maximum number of inputs
 S = 2
@@ -117,7 +118,23 @@ class ListLang(Tree):
     return space
 
   def interprete(self, inputs):
-    raise NotImplementedError
+    # inputs: inputs to execute the program
+
+    # convert python values to synthrl.value types
+    if len(inputs) != len(self.input_types):
+      raise UndefinedSemantics('Expecting {} inputs, but {} inputs are given.'.format(len(self.input_types), len(inputs)))
+    inputs = [ty(i) for i, ty in zip(inputs, self.input_types)]
+
+    # initialize a dictionay that contains variables and their values with inputs
+    mem = {'a_{}'.format(i + 1): v for i, v in enumerate(inputs)}
+
+    # run each instructions
+    for i, inst in enumerate(self.instructions):
+      x_i = inst.interprete(mem)
+      mem['x_{}'.format(i + 1)] = x_i
+
+    # return the result of the final instruction
+    return x_i
 
   def pretty_print(self, file=None):
     # file: TextIOWrapper to use as write stream. By default, use stdout.
@@ -282,71 +299,115 @@ class InstNode(Node):
     else:
       raise UnexpectedException('Unexpected values in "InstNode.production_space". {{option: {}, n_vars: {}}}'.format(option, n_vars))
 
-  def interprete(self):
+  def interprete(self, mem):
+    # mem:  A dictionary that contains assigned variables and their values.
     
     # map
     if self.data == 'map':
-      raise NotImplementedError
+      f = self.children['AUOP'].interprete()
+      xs = self.children['VAR'].interprete(mem)
+      return IntList(map(f, xs))
     
     # filter
     elif self.data == 'filter':
-      raise NotImplementedError
+      f = self.children['AUOP'].interprete()
+      xs = self.children['VAR'].interprete(mem)
+      return IntList(filter(f, xs))
     
     # count
     elif self.data == 'count':
-      raise NotImplementedError
+      f = self.children['AUOP'].interprete()
+      xs = self.children['VAR'].interprete(mem)
+      return Integer(len(list(filter(f, xs))))
     
     # scanl1
     elif self.data == 'scanl1':
-      raise NotImplementedError
+      f = self.children['ABOP'].interprete()
+      xs = self.children['VAR'].interprete(mem)
+      if len(xs) == 0:
+        return IntList()
+      running_value = xs[0]
+      ys = IntList([running_value])
+      for x in xs[1:]:
+        running_value = f(running_value, x)
+        ys.append(running_value)
+      return ys
     
     # zipwith
     elif self.data == 'zipwith':
-      raise NotImplementedError
+      f = self.children['ABOP'].interprete()
+      xs = self.children['VAR1'].interprete(mem)
+      ys = self.children['VAR2'].interprete(mem)
+      return IntList(map(lambda x: f(x[0], f[1]), zip(xs, ys)))
     
     # head
     elif self.data == 'head':
-      raise NotImplementedError
+      xs = self.children['VAR'].interprete(mem)
+      if len(xs) == 0:
+        raise UndefinedSemantics('len(xs) == 0')
+      return xs[0]
     
     # last
     elif self.data == 'last':
-      raise NotImplementedError
+      xs = self.children['VAR'].interprete(mem)
+      if len(xs) == 0:
+        raise UndefinedSemantics('len(xs) == 0')
+      return xs[-1]
     
     # minimum
     elif self.data == 'minimum':
-      raise NotImplementedError
+      xs = self.children['VAR'].interprete(mem)
+      if len(xs) == 0:
+        raise UndefinedSemantics('len(xs) == 0')
+      return min(xs)
     
     # maximum
     elif self.data == 'maximum':
-      raise NotImplementedError
+      xs = self.children['VAR'].interprete(mem)
+      if len(xs) == 0:
+        raise UndefinedSemantics('len(xs) == 0')
+      return max(xs)
     
     # reverse
     elif self.data == 'reverse':
-      raise NotImplementedError
+      xs = self.children['VAR'].interprete(mem)
+      return reversed(xs)
     
     # sort
     elif self.data == 'sort':
-      raise NotImplementedError
+      xs = self.children['VAR'].interprete(mem)
+      return IntList(sorted(xs))
     
     # sum
     elif self.data == 'sum':
-      raise NotImplementedError
+      xs = self.children['VAR'].interprete(mem)
+      return sum(xs, ZERO)
     
     # take
     elif self.data == 'take':
-      raise NotImplementedError
+      n = self.children['VAR1'].interprete(mem)
+      xs = self.children['VAR2'].interprete(mem)
+      return xs[:n]
     
     # drop
     elif self.data == 'drop':
-      raise NotImplementedError
+      n = self.children['VAR1'].interprete(mem)
+      xs = self.children['VAR2'].interprete(mem)
+      return xs[n:]
     
     # access
     elif self.data == 'access':
-      raise NotImplementedError
+      n = self.children['VAR1'].interprete(mem)
+      xs = self.children['VAR2'].interprete(mem)
+      if len(xs) <= n.get_value():
+        raise UndefinedSemantics('len(xs) <= n: {} <= {}'.format(len(xs), n))
+      if len(xs) < -(n.get_value()):
+        raise UndefinedSemantics('len(xs) < n: {} < {}'.format(len(xs), -n))
+      return xs[n]
     
     # nop
     elif self.data == 'nop':
-      raise NotImplementedError
+      return NONE
     
     # should not reach here
     else:
