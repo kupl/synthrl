@@ -7,7 +7,7 @@ setup_params = dict(
   url='https://github.com/kupl/SynthRL-dev',
   author='Software Analysis Labrotory at Korea University',
   author_email='noemail@no.email',
-  packages=find_packages(exclude=['example']),
+  packages=find_packages(exclude=['example', 'test']),
   setup_requires=[    # required library for setup.py itself
   ], 
   install_requires=[  # required library for SynthRL
