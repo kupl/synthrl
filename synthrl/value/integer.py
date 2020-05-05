@@ -12,16 +12,12 @@ class Integer(Value):
   def __init__(self, value=0):
     if isinstance(value, Integer):
       value = value.get_value()
-    elif isinstance(value, str):
-      value = int(value)
-    elif isinstance(value, float):
-      value = int(value)
-    elif not isinstance(value, int):
+    elif not (isinstance(value, int) or isinstance(value, str) or isinstance(value, float)):
       raise ValueError('{} is not an integer.'.format(value))
     elif value < Integer.MIN or value > Integer.MAX:
       logger.warning('The given value {} is not in between {} and {}. The value will be clipped.'.format(value, Integer.MIN, Integer.MAX))
       value = max(Integer.MIN, min(value, Integer.MAX))
-    self.value = value
+    self.value = int(value)
 
   def get_value(self):
     return self.value
