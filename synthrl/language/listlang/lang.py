@@ -167,6 +167,8 @@ class ListLang(Tree):
     for i, line in enumerate(lines):
       if line.startswith('a_{}'.format(i + 1)):
         inputs.append(line.split('<-')[1].strip())
+      elif line.startswith('a'):
+        raise SyntaxError('Next input must be assignmed to a_{}, but the program tried to assign to {}.'.format(i + 1, line.split('<-')[0].strip()))
       else:
         break
 
@@ -174,11 +176,11 @@ class ListLang(Tree):
     instructions = []
     for i, line in enumerate(lines[len(inputs):]):
       if line.startswith('a'):
-        raise SyntaxError('Inputs must come first.')
+        raise SyntaxError('The input must come before instructions.')
       elif line.startswith('x_{}'.format(i + 1)):
         instructions.append(line.split('<-')[1].strip())
       else:
-        raise SyntaxError('Invalid variable assignment in {}.'.format(line.split('<-')[0].strip()))
+        raise SyntaxError('Next instruction must be assignmed to x_{}, but the program tried to assign to {}.'.format(i + 1, line.split('<-')[0].strip()))
 
     # distinguish input types
     input_types = []
@@ -193,6 +195,8 @@ class ListLang(Tree):
       raise SyntaxError('No input is given.')
     if len(input_types) > S:
       raise SyntaxError('Program expect at most {} inputs, but {} inputs are given.'.format(S, len(input_types)))
+    if input_types[0] != IntList:
+      raise SyntaxError('First input type must be [int].')
 
     # construct instructions
     instructions = [InstNode.parse(inst, len(input_types), i) for i, inst in enumerate(instructions)]
