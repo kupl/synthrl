@@ -7,7 +7,7 @@ class Value:
     raise NotImplementedError
 
   def get_value(self):
-    # returns the actual value
+    # returns the python value
     raise NotImplementedError
 
   @classmethod
