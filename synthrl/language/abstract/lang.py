@@ -1,9 +1,19 @@
 from synthrl.utils.decoratorutils import classproperty
 
+# Exception to handle when invalid syntax is given
+class SyntaxError(Exception):
+  def __init__(self, *args, **kwargs):
+    super(SyntaxError, self).__init__(*args, **kwargs)
+
 # Exception to handle when semantic is not defined
 class UndefinedSemantics(Exception):
   def __init__(self, *args, **kwargs):
     super(UndefinedSemantics, self).__init__(*args, **kwargs)
+
+# Exception to handle when the unexpected behavior of program is observed
+class UnexpectedException(Exception):
+  def __init__(self, *args, **kwargs):
+    super(UnexpectedException, self).__init__(*args, **kwargs)
   
 # Exception to handle wrong production rule
 class WrongProductionException(Exception):
@@ -40,6 +50,12 @@ class Tree:
   @classmethod
   def tokens(cls):
     # returns a list of all tokens
+    raise NotImplementedError
+
+  @classmethod
+  def parse(cls, program):
+    # gets program as string
+    # returns a parsed Tree object
     raise NotImplementedError
 
 # Abstract class that each non-terminal symbols should implement

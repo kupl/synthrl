@@ -26,11 +26,12 @@
 # ABOP -> + | * | MIN | MAX
 
 from synthrl.language.abstract import Node
+from synthrl.language.abstract import SyntaxError
 from synthrl.language.abstract import Tree
 from synthrl.language.abstract import UndefinedSemantics
+from synthrl.language.abstract import UnexpectedException
 from synthrl.language.abstract import WrongProductionException
 from synthrl.utils.decoratorutils import classproperty
-from synthrl.utils.exceptionutils import UnexpectedException
 from synthrl.value import Integer
 from synthrl.value import IntList
 from synthrl.value.integer import FOUR
@@ -153,6 +154,61 @@ class ListLang(Tree):
   @classmethod
   def tokens(cls):
     return InstNode.tokens + VarNode.tokens + AUOPNode.tokens + BUOPNode.tokens + ABOPNode.tokens
+
+  @classmethod
+  def parse(cls, program):
+
+    # split the instructions
+    lines = [l.strip() for l in program.split(';')]
+    lines = [l for l in lines if len(l) > 0]
+
+    # distinguish inputs
+    inputs = []
+    for i, line in enumerate(lines):
+      if line.startswith('a_{}'.format(i + 1)):
+        inputs.append(line.split('<-')[1].strip())
+      else:
+        break
+
+    # distinguish instructions
+    instructions = []
+    for i, line in enumerate(lines[len(inputs):]):
+      if line.startswith('a'):
+        raise SyntaxError('Inputs must come first.')
+      elif line.startswith('x_{}'.format(i + 1)):
+        instructions.append(line.split('<-')[1].strip())
+      else:
+        raise SyntaxError('Invalid variable assignment in {}.'.format(line.split('<-')[0].strip()))
+
+    # distinguish input types
+    input_types = []
+    for i in inputs:
+      if i == 'int':
+        input_types.append(Integer)
+      elif i == '[int]':
+        input_types.append(IntList)
+      else:
+        raise SyntaxError('Unknown input {} is given.'.format(i))
+    if len(input_types) == 0:
+      raise SyntaxError('No input is given.')
+    if len(input_types) > S:
+      raise SyntaxError('Program expect at most {} inputs, but {} inputs are given.'.format(S, len(input_types)))
+
+    # construct instructions
+    instructions = [InstNode.parse(inst, len(input_types), i) for i, inst in enumerate(instructions)]
+
+    # distinguish output type
+    if len(instructions) == 0:
+      output_type = input_types[-1]
+    else:
+      output_type = instructions[-1].return_type
+
+    # create ListLang tree
+    tree = cls(input_types, output_type)
+    for inst in instructions:
+      inst.parent = tree
+    tree.instructions = instructions
+    return tree
 
 # symbol I
 class InstNode(Node):
@@ -475,12 +531,72 @@ class InstNode(Node):
     # returns the return type of instruction
     return IntList if self.TOKENS[self.data][2] == 'LIST' else Integer
 
+  @classmethod
+  def parse(cls, inst, n_input=S, n_inst=T):
+
+    # split up into tokens
+    tokens = inst.split()
+
+    # distinguish function
+    function = tokens[0].lower()
+    if function not in cls.TOKENS.keys():
+      raise SyntaxError('Invalid function token {} is given'.format(function))
+
+    # parse other tokens
+    option, n_vars, _ = cls.TOKENS[function]
+    # map
+    if option == 'AUOP' and n_vars == 1:
+      children = {
+        'AUOP': AUOPNode.parse(tokens[1].strip('()')),
+        'VAR': VarNode.parse(tokens[2], IntList, n_input, n_inst)
+      }
+    # filter, count
+    elif option == 'BUOP' and n_vars == 1:
+      children = {
+        'BUOP': BUOPNode.parse(tokens[1].strip('()')),
+        'VAR': VarNode.parse(tokens[2], IntList, n_input, n_inst)
+      }
+    # scanl1
+    elif option == 'ABOP' and n_vars == 1:
+      children = {
+        'ABOP': ABOPNode.parse(tokens[1].strip('()')),
+        'VAR': VarNode.parse(tokens[2], IntList, n_input, n_inst)
+      }
+    # zipwith
+    elif option == 'ABOP' and n_vars == 2:
+      children = {
+        'ABOP': ABOPNode.parse(tokens[1].strip('()')),
+        'VAR1': VarNode.parse(tokens[2], IntList, n_input, n_inst),
+        'VAR2': VarNode.parse(tokens[3], IntList, n_input, n_inst)
+      }
+    # head, last, minimum, maximum, reverse, sort, sum
+    elif option == 'NOOPT' and n_vars == 1:
+      children = {
+        'VAR': VarNode.parse(tokens[1], IntList, n_input, n_inst)
+      }
+    # take, drop, access
+    elif option == 'REQINT' and n_vars == 2:
+      children = {
+        'VAR1': VarNode.parse(tokens[1], Integer, n_input, n_inst),
+        'VAR2': VarNode.parse(tokens[2], IntList, n_input, n_inst)
+      }
+    # should not reach here
+    else:
+      raise UnexpectedException('Unexpected values in "InstNode.production_space". {{option: {}, n_vars: {}}}'.format(option, n_vars))
+
+    # create node and return
+    node = cls(data=function)
+    for key in children.keys():
+      children[key].parent = node
+    node.children = children
+    return node
+
 # symbol V
 class VarNode(Node):
 
   __slots__ = ['type', 'vars']
 
-  def __init__(self, type=IntList, *args, **kwargs):
+  def __init__(self, type, *args, **kwargs):
     # type: The type of the variable. By default, IntList.
 
     super(VarNode, self).__init__(*args, **kwargs)
@@ -526,6 +642,17 @@ class VarNode(Node):
   @classmethod
   def tokens(cls):
     return ['a_{}'.format(i + 1) for i in range(S)] + ['x_{}'.format(i + 1) for i in range(T)]
+
+  @classmethod
+  def parse(cls, token, type, n_input=S, n_inst=T):
+    
+    # check the if token is valid
+    token = token.lower()
+    if token not in ['a_{}'.format(i + 1) for i in range(n_input)] + ['x_{}'.format(i + 1) for i in range(n_input)]:
+      raise SyntaxError('Variable {} is not assigned before.'.format(token))
+
+    # create node and return
+    return cls(data=token, type=type)
 
 # symbol AUOP
 class AUOPNode(Node):
@@ -609,6 +736,17 @@ class AUOPNode(Node):
   def tokens(cls):
     return cls.TOKENS
 
+  @classmethod
+  def parse(cls, token):
+    
+    # check the if token is valid
+    token = token.lower()
+    if token not in cls.TOKENS:
+      raise SyntaxError('Invalid AUOP {} is given.'.format(token))
+
+    # create node and return
+    return cls(token)
+
 # symbol BUOP
 class BUOPNode(Node):
   
@@ -667,6 +805,17 @@ class BUOPNode(Node):
   def tokens(cls):
     return cls.TOKENS
 
+  @classmethod
+  def parse(cls, token):
+
+    # check the if token is valid
+    token = token.lower()
+    if token not in cls.TOKENS:
+      raise SyntaxError('Invalid BUOP {} is given.'.format(token))
+
+    # create node and return
+    return cls(token)
+
 # symbol ABOP
 class ABOPNode(Node):
 
@@ -703,11 +852,11 @@ class ABOPNode(Node):
       return lambda x, y: x * y
 
     # MIN
-    elif self.data == 'MIN':
+    elif self.data == 'min':
       return lambda x, y: x if x < y else y
 
     # MAX
-    elif self.data == 'MAX':
+    elif self.data == 'max':
       return lambda x, y: x if x > y else y
     
     # should not reach here
@@ -724,3 +873,14 @@ class ABOPNode(Node):
   @classmethod
   def tokens(cls):
     return cls.TOKENS
+
+  @classmethod
+  def parse(cls, token):
+
+    # check the if token is valid
+    token = token.lower()
+    if token not in cls.TOKENS:
+      raise SyntaxError('Invalid ABOP {} is given.'.format(token))
+
+    # create node and return
+    return cls(token)
