@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 import logging
 import numpy as np
 
@@ -8,10 +9,8 @@ class List(Value):
   MAX_LENGTH = 20
   TYPE = Value
   def __init__(self, value=[]):
-    if isinstance(value, List):
-      value = value.get_value()
-    elif not isinstance(value, list):
-      raise ValueError('{} is not list.'.format(value))
+    if not isinstance(value, Iterable):
+      raise ValueError('{} is not iterable.'.format(value))
     value = [self.TYPE(v) for v in value]
     self.value = value
 
