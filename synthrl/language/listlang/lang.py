@@ -265,7 +265,7 @@ class InstNode(Node):
         types.extend(['LIST', 'INT'])
     
       # returns the token that satisfy conditions
-      return self, [token for token, prop in self.TOKENS if prop[0] in options and prop[2] in types]
+      return self, [token for token, prop in self.TOKENS.items() if prop[0] in options and prop[2] in types]
     
     # if program ended
     elif self.data == 'nop':
