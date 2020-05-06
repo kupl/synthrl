@@ -1,5 +1,6 @@
 import torch.nn as nn
 
+# Abstract helper class for converting tokens into index
 class Bag:
 
   __slots__ = ['bag', 'unbag']
