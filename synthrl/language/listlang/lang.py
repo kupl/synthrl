@@ -114,7 +114,7 @@ class ListLang(Tree):
 
       # update variables and go to next instruction
       last_type = inst.return_type
-      var_types['v_{}'.format(i + 1)] = inst.return_type
+      var_types['x_{}'.format(i + 1)] = inst.return_type
 
     return space
 
