@@ -1,3 +1,5 @@
+from synthrl.language.abstract.embedding import Bag
+from synthrl.language.abstract.embedding import Embedding
 from synthrl.language.abstract.lang import Node
 from synthrl.language.abstract.lang import SyntaxError
 from synthrl.language.abstract.lang import Tree
