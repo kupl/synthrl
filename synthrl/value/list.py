@@ -5,14 +5,18 @@ import numpy as np
 from synthrl.value.integer import Integer
 from synthrl.value.value import Value
 
+logger = logging.getLogger(__name__)
+
 class List(Value):
   MAX_LENGTH = 20
   TYPE = Value
   def __init__(self, value=[]):
     if not isinstance(value, Iterable):
       raise ValueError('{} is not iterable.'.format(value))
-    value = [self.TYPE(v) for v in value]
-    self.value = value
+    self.value = [self.TYPE(v) for v in value]
+    if len(self.value) > self.MAX_LENGTH:
+      logger.warning('The length of the given list is greater than {}. The elements over {} will be discarded.'.format(self.MAX_LENGTH, self.MAX_LENGTH))
+      self.value = self.value[:self.MAX_LENGTH]
 
   def get_value(self):
     return [v.get_value() for v in self.value]
