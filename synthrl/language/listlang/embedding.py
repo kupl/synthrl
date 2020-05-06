@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from synthrl.language.abstract import Bag
-from synthrl.language.abstract import Embedding as EmbeddingLayer
+from synthrl.language.abstract import Embedding as EmbeddingInterface
 from synthrl.language import ListLang
 from synthrl.value import Integer
 from synthrl.value import IntList
@@ -28,7 +28,7 @@ class ValueBag(Bag):
     bag[NONE] = 0
     return cls(bag)
 
-class Embedding(EmbeddingLayer):
+class Embedding(EmbeddingInterface):
 
   def __init__(self, n_token, n_value, token_dim=15, value_dim=20):
     # token_dim: Embedding dimension of tokens.
