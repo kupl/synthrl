@@ -71,7 +71,7 @@ class Node:
     'parent',
   ]
 
-  def __init__(self, data='hole', children={}, parent=None):
+  def __init__(self, data='HOLE', children={}, parent=None):
     self.data = data
     self.children = children
     self.parent = parent
