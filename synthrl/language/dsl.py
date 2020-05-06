@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from synthrl.utils.decoratorutils import classproperty
 
 # Exception to handle when semantic is not defined

@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 import logging
 import numpy as np
 
@@ -8,10 +9,8 @@ class List(Value):
   MAX_LENGTH = 20
   TYPE = Value
   def __init__(self, value=[]):
-    if isinstance(value, List):
-      value = value.get_value()
-    elif not isinstance(value, list):
-      raise ValueError('{} is not list.'.format(value))
+    if not isinstance(value, Iterable):
+      raise ValueError('{} is not iterable.'.format(value))
     value = [self.TYPE(v) for v in value]
     self.value = value
 
@@ -37,13 +36,16 @@ class List(Value):
       yield v
 
   def __getitem__(self, idx):
-    return self.value[idx]
+    if isinstance(idx, slice):
+      return self.__class__(self.value[idx])
+    else:
+      return self.value[idx]
 
   def __len__(self):
     return len(self.value)
 
   def __reversed__(self):
-    return self.__class__(list(reversed(self.get_value())))
+    return self.__class__(reversed(self.get_value()))
 
   def __eq__(self, other):
     if not isinstance(other, self.__class__):
