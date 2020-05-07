@@ -107,9 +107,6 @@ def OracleSampler(size=5,depth=5, io_number = 5, io_set_len = 10, value_range = 
     while True:
       space = program.production_space
       if len(space)==0:
-        print("------")
-        program.pretty_print()
-        # print(length)
         break
       node = program.hole
       if isinstance(node, InstNode):
@@ -119,19 +116,15 @@ def OracleSampler(size=5,depth=5, io_number = 5, io_set_len = 10, value_range = 
       action = random.choice(space)
       if action == 'nop':
         break
-      # print(action)
       node.production(action)
     source = encode_for_utile(program)
     source = source.replace(' | ', '\n')
-    program = compile(source, V=value_range, L=io_set_len)
-    samples = generate_IO_examples(program, N=io_number, L=io_set_len, V=value_range)
-    for (inputs, outputs) in samples:
-      print("%s -> %s" % (inputs, outputs))
+    program_ = compile(source, V=value_range, L=io_set_len)
+    samples = generate_IO_examples(program_, N=io_number, L=io_set_len, V=value_range)
 
     dataset.add(program, samples)
 
   return dataset
 
-OracleSampler()
-  
+print(OracleSampler())
 

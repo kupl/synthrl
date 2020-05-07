@@ -1,3 +1,4 @@
+from io import StringIO
 
 # list of input and output pairs
 class IOSet:
@@ -30,7 +31,8 @@ class Element:
   def program(self):
 
     # to make program immutable
-    return self._program.copy()
+    # return self._program.copy()
+    return self._program
 
 # List of (program, ioset)
 class Dataset:
@@ -56,3 +58,30 @@ class Dataset:
     # create Element object
     elem = Element(program, ioset)
     self.elements.append(elem)
+
+  def __repr__(self):
+    
+    # make string using StingIO
+    stream = StringIO()
+
+    # for each element
+    for element in self.elements:
+
+      # print program
+      print('--program--', file=stream)
+      element.program.pretty_print(file=stream)
+      
+      # print io pairs
+      print('--io set--', file=stream)
+      for pair in element.ioset:
+        print(pair, file=stream)
+
+      print(file=stream)
+
+    # get string and return
+    string = stream.getvalue()
+    stream.close()
+    return string
+
+  def __str__(self):
+    return repr(self)
