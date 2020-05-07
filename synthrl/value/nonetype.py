@@ -11,10 +11,13 @@ class NoneType(Value):
   def sample(cls):
     return None
 
+  def __hash__(self):
+    return hash(None)
+
   def __eq__(self, other):
-    return not other.get_value()
+    return other is None
 
   def __ne__(self, other):
-    return not (self == other)
+    return other is not None
 
 NONE = NoneType()
