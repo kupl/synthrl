@@ -17,7 +17,7 @@ class TokenBag(Bag):
   def create(cls):
 
     # create token to index bag
-    bag = {t: i + 1 for i, t in enumerate(ListLang.tokens)}
+    bag = {t: i + 1 for i, t in enumerate(sorted(ListLang.tokens))}
     bag['HOLE'] = 0
     return cls(bag)
 
@@ -126,6 +126,7 @@ class Embedding(EmbeddingInterface):
 
     # token: [batch_size, token_dim] of tensor
     token = self.token_emb(token)
+    batch_size = token.shape[0]
 
     # embed inputs and outputs
     io = []
@@ -152,10 +153,30 @@ class Embedding(EmbeddingInterface):
         # lists: [S + 1, IntList.MAX_LENGTH * value_dim]
         lists = lists.reshape(S + 1, -1)
 
-        # embedding = [S + 1, 2 + IntList.MAX_LENGTH * value_dim]
+        # emb: [S + 1, 2 + IntList.MAX_LENGTH * value_dim]
         embedding = torch.cat((types, lists), dim=1)
 
-        # embedding = [(S + 1) * (2 + IntList.MAX_LENGTH * value_dim)]
-        embedding = embedding.reshape(-1)
+        # emb: [io_dim] = [(S + 1) * (2 + IntList.MAX_LENGTH * value_dim)]
+        emb = emb.reshape(-1)
+        io_dim = emb.shape[0]
 
-    raise NotImplementedError
+        io.append(emb)
+    
+    # io: [batch_size * n_example, io_dim]
+    io = torch.stack(io)
+
+    # io: [batch_size, n_example, io_dim]
+    io = io.reshape(batch_size, -1, io_dim)
+    n_example = io.shape[1]
+
+    # token: [batch_size, 1, token_dim]
+    token = token.unsqueeze(1)
+
+    # token: [batch_size, n_example, token_dim]
+    token = token.repeat(1, n_example, 1)
+
+    # embedding: [batch_size, n_example, token_dim + io_dim]
+    embedding = torch.cat((token, io), dim=2)
+
+    # embedding: [batch_size, n_example, emb_dim]
+    return embedding
