@@ -62,6 +62,9 @@ class Tree:
     # returns a parsed Tree object
     raise NotImplementedError
 
+  def __call__(self, *args, **kwargs):
+    return self.interprete(*args, **kwargs)
+
 # Abstract class that each non-terminal symbols should implement
 class Node:
 
