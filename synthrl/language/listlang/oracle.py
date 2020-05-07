@@ -6,11 +6,13 @@ from synthrl.language.listlang import ListLang
 from synthrl.language.listlang.lang import InstNode
 from synthrl.language.listlang.generate_io_samples import generate_IO_examples
 from synthrl.language.listlang.generate_io_samples import compile
-
+import time
 from synthrl.language.abstract import Node
 import os
-
+import subprocess
+import sys
 import random
+import json 
 
 def encode_for_utile(program):
   representation = str()
@@ -29,8 +31,8 @@ def encode_for_utile(program):
 
             'pos'    : 'isPOS',
             'neg'    : 'isNEG', 
-            'even' :  'isODD',
-            'odd' :  'isEVEN',
+            'even' :  'isEVEN',
+            'odd' :  'isODD',
             'min' : 'MIN',
             'max' : 'MAX',
             '+' : '+', 
@@ -58,6 +60,9 @@ def encode_for_utile(program):
     last_letter = str(chr(ord(last_letter)+1))
 
     var_dict["x_"+ str(i+1)]=last_letter
+    if(inst.data=='HOLE'):
+      print("ERROR")
+      print(program.pretty_print())
     option, n_vars, _ = InstNode.TOKENS[inst.data]
 
     func_name = (inst.data).upper()
@@ -89,18 +94,16 @@ def encode_for_utile(program):
       representation+=  var1 + " " + var2
   return representation
 
-def OracleSampler(size=5,depth=5, io_number = 5, io_set_len = 10, value_range = 512):
+def OracleSampler(size=5, depth=5, io_number = 5, io_set_len = 10, value_range = 512):
   input_types=[[IntList],[IntList,Integer],[IntList,IntList]]
   output_types=[IntList, Integer]
-  # create dataset
-  dataset = Dataset()
-
+  dataset = Dataset()  
   # create size examples
-  for _ in range(size):
+  for j in range(size):
     input_type = random.choice(input_types)
     output_type = random.choice(output_types)
     program = ListLang(input_types=input_type, output_type=output_type)
-
+    
     length = 0 
     action = None
     space = None
@@ -111,20 +114,48 @@ def OracleSampler(size=5,depth=5, io_number = 5, io_set_len = 10, value_range = 
       node = program.hole
       if isinstance(node, InstNode):
         length+=1
-      if length < depth:
+      if length < depth+1:
         if 'nop' in space: space.remove('nop')
       action = random.choice(space)
       if action == 'nop':
         break
       node.production(action)
-    source = encode_for_utile(program)
-    source = source.replace(' | ', '\n')
-    program_ = compile(source, V=value_range, L=io_set_len)
-    samples = generate_IO_examples(program_, N=io_number, L=io_set_len, V=value_range)
-
+    samples = IOSample(program,io_number, io_set_len, value_range)
     dataset.add(program, samples)
-
+    if dataset.length() >size:
+      return dataset
   return dataset
 
-print(OracleSampler())
+
+def IOSample(program, io_number = 5, io_set_len = 10, value_range = 512):
+    source = encode_for_utile(program)
+    print("---")
+    print(source)
+    cmd = 'python2 generate_io_samples_p2.py' + " -N " + str(io_number) + " -L " + str(io_set_len) + " -V " + str(value_range) 
+    cmd= cmd.split()
+    cmd.append(source)
+    # print(cmd)
+    samples = []
+    try:
+      cnt = 0
+      proc = subprocess.check_output(cmd,universal_newlines=True)
+      for line in proc.replace('\0', '').split('\n'):
+        cnt+=1
+        if cnt != (io_number+1):
+          print(type(line))
+          print(line)
+          res = json.loads(line)
+          _input = res[0]
+          _output = res[1]
+          sample = (_input,_output)
+          samples.append(sample)
+      time.sleep(1)
+      return samples
+    except subprocess.CalledProcessError:
+      
+      print("^^")
+  
+
+
+dataset = OracleSampler()
 

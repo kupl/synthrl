@@ -85,3 +85,5 @@ class Dataset:
 
   def __str__(self):
     return repr(self)
+  def length(self):
+    return len(self.elements)
