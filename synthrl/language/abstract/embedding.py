@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 # Abstract helper class for converting tokens into index
@@ -24,7 +25,7 @@ class Bag:
     # return: [batch_size]
 
     # convert tokens into indices
-    return [self.bag[t] for t in token]
+    return torch.LongTensor([self.bag[t] for t in token])
 
   def inverse(self, index):
     # gets indices
@@ -35,6 +36,10 @@ class Bag:
 
     # convert indices into tokens
     return [self.unbag[i] for i in index]
+
+  def __len__(self):
+    # returns number of tokens
+    return len(self.bag)
 
   @classmethod
   def load_from(cls, dict):
