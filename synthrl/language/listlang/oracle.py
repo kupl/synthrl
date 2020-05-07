@@ -4,6 +4,8 @@ from synthrl.value import IntList
 from synthrl.value.nonetype import NONE
 from synthrl.language.listlang import ListLang
 from synthrl.language.listlang.lang import InstNode
+from synthrl.language.listlang.generate_io_samples import generate_IO_examples
+from synthrl.language.listlang.generate_io_samples import compile
 
 from synthrl.language.abstract import Node
 import os
@@ -87,7 +89,7 @@ def encode_for_utile(program):
       representation+=  var1 + " " + var2
   return representation
 
-def OracleSampler(size=0,depth=5):
+def OracleSampler(size=5,depth=5, io_number = 5, io_set_len = 10, value_range = 512):
   input_types=[[IntList],[IntList,Integer],[IntList,IntList]]
   output_types=[IntList, Integer]
   # create dataset
@@ -107,7 +109,7 @@ def OracleSampler(size=0,depth=5):
       if len(space)==0:
         print("------")
         program.pretty_print()
-        print(length)
+        # print(length)
         break
       node = program.hole
       if isinstance(node, InstNode):
@@ -119,21 +121,14 @@ def OracleSampler(size=0,depth=5):
         break
       # print(action)
       node.production(action)
+    source = encode_for_utile(program)
+    source = source.replace(' | ', '\n')
+    program = compile(source, V=value_range, L=io_set_len)
+    samples = generate_IO_examples(program, N=io_number, L=io_set_len, V=value_range)
+    for (inputs, outputs) in samples:
+      print("%s -> %s" % (inputs, outputs))
 
-    print(encode_for_utile(program))
-
-    line = 'python2 generate_io_samples.py' + " " + '\"'  +  encode_for_utile(program) +'\"'
-    io=os.popen(line)
-    print(io.read())
-    # dataset.add(program, ioset)
-
-
-    # # create oracle and ioset
-    # program = None
-    # ioset = None
-
-    # add to dataset
-    # dataset.add(program, ioset)
+    dataset.add(program, samples)
 
   return dataset
 

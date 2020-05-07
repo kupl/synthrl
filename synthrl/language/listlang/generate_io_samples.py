@@ -78,74 +78,82 @@ def scanl1_bounds(l, A, B, L):
 def get_language(V):
     Null = V
     lambdas = [
-        Function('IDT',     (int, int),          lambda i: i,                                         lambda (A, B): [(A, B)]),
+        Function('IDT',     (int, int),          lambda i: i,                                         lambda tupl: [(tupl[0], tupl[1])]),
 
-        Function('INC',     (int, int),          lambda i: i+1,                                       lambda (A, B): [(A, B-1)]),
-        Function('DEC',     (int, int),          lambda i: i-1,                                       lambda (A, B): [(A+1, B)]),
-        Function('SHL',     (int, int),          lambda i: i*2,                                       lambda (A, B): [((A+1)/2, B/2)]),
-        Function('SHR',     (int, int),          lambda i: int(float(i)/2),                           lambda (A, B): [(2*A, 2*B)]),
-        Function('doNEG',   (int, int),          lambda i: -i,                                        lambda (A, B): [(-B+1, -A+1)]),
-        Function('MUL3',    (int, int),          lambda i: i*3,                                       lambda (A, B): [((A+2)/3, B/3)]),
-        Function('DIV3',    (int, int),          lambda i: int(float(i)/3),                           lambda (A, B): [(A, B)]),
+        Function('INC',     (int, int),          lambda i: i+1,                                       lambda tupl: [(tupl[0], tupl[1]-1)]),
+        Function('DEC',     (int, int),          lambda i: i-1,                                       lambda tupl: [(  tupl[0]+1, tupl[1] )]),
+        Function('SHL',     (int, int),          lambda i: i*2,                                       lambda tupl: [((tupl[0]+1)/2, tupl[1]/2)]),
+        Function('SHR',     (int, int),          lambda i: int(float(i)/2),                           lambda tupl: [(2*tupl[1], 2*tupl[0])]),
+        Function('doNEG',   (int, int),          lambda i: -i,                                        lambda tupl: [(-tupl[1]+1, -tupl[0]+1)]),
+        Function('MUL3',    (int, int),          lambda i: i*3,                                       lambda tupl: [((tupl[0]+2)/3, tupl[1]/3)]),
+        Function('DIV3',    (int, int),          lambda i: int(float(i)/3),                           lambda tupl: [(tupl[0], tupl[1])]),
 
-        Function('MUL4',    (int, int),          lambda i: i*4,                                       lambda (A, B): [((A+3)/4, B/4)]),
-        Function('DIV4',    (int, int),          lambda i: int(float(i)/4),                           lambda (A, B): [(A, B)]),
-        Function('SQR',     (int, int),          lambda i: i*i,                                       lambda (A, B): SQR_bounds(A, B)),
+        Function('MUL4',    (int, int),          lambda i: i*4,                                       lambda tupl: [((tupl[0]+3)/4, tupl[1]/4)]),
+        Function('DIV4',    (int, int),          lambda i: int(float(i)/4),                           lambda tupl: [(tupl[0], tupl[1])]),
+        Function('SQR',     (int, int),          lambda i: i*i,                                       lambda tupl: SQR_bounds(tupl[1], tupl[0])),
         #Function('SQRT',    (int, int),          lambda i: int(sqrt(i)),                              lambda (A, B): [(max(0, A*A), B*B)]),
 
-        Function('isPOS',   (int, bool),         lambda i: i > 0,                                     lambda (A, B): [(A, B)]),
-        Function('isNEG',   (int, bool),         lambda i: i < 0,                                     lambda (A, B): [(A, B)]),
-        Function('isODD',   (int, bool),         lambda i: i % 2 == 1,                                lambda (A, B): [(A, B)]),
-        Function('isEVEN',  (int, bool),         lambda i: i % 2 == 0,                                lambda (A, B): [(A, B)]),
+        Function('isPOS',   (int, bool),         lambda i: i > 0,                                     lambda tupl: [(tupl[0],tupl[1] )]),
+        Function('isNEG',   (int, bool),         lambda i: i < 0,                                     lambda tupl: [(tupl[0], tupl[1])]),
+        Function('isODD',   (int, bool),         lambda i: i % 2 == 1,                                lambda tupl: [(tupl[0], tupl[1])]),
+        Function('isEVEN',  (int, bool),         lambda i: i % 2 == 0,                                lambda tupl: [(tupl[0], tupl[1])]),
 
-        Function('+',       (int, int, int),     lambda i, j: i+j,                                    lambda (A, B): [(A/2+1, B/2)]),
-        Function('-',       (int, int, int),     lambda i, j: i-j,                                    lambda (A, B): [(A/2+1, B/2)]),
-        Function('*',       (int, int, int),     lambda i, j: i*j,                                    lambda (A, B): MUL_bounds(A, B)),
-        Function('MIN',     (int, int, int),     lambda i, j: min(i, j),                              lambda (A, B): [(A, B)]),
-        Function('MAX',     (int, int, int),     lambda i, j: max(i, j),                              lambda (A, B): [(A, B)]),
+        Function('+',       (int, int, int),     lambda i, j: i+j,                                    lambda tupl: [(tupl[0]/2+1, tupl[1]/2)]),
+        Function('-',       (int, int, int),     lambda i, j: i-j,                                    lambda tupl: [(tupl[0]/2+1, tupl[1]/2)]),
+        Function('*',       (int, int, int),     lambda i, j: i*j,                                    lambda tupl: MUL_bounds(tupl[0], tupl[1])),
+        Function('MIN',     (int, int, int),     lambda i, j: min(i, j),                              lambda tupl: [(tupl[0], tupl[1])]),
+        Function('MAX',     (int, int, int),     lambda i, j: max(i, j),                              lambda tupl: [(tupl[0], tupl[1])]),
     ]
 
     LINQ = [
-        Function('REVERSE', ([int], [int]),      lambda xs: list(reversed(xs)),                       lambda (A, B, L): [(A, B)]),
-        Function('SORT',    ([int], [int]),      lambda xs: sorted(xs),                               lambda (A, B, L): [(A, B)]),
-        Function('TAKE',    (int, [int], [int]), lambda n, xs: xs[:n],                                lambda (A, B, L): [(0,L), (A, B)]),
-        Function('DROP',    (int, [int], [int]), lambda n, xs: xs[n:],                                lambda (A, B, L): [(0,L), (A, B)]),
-        Function('ACCESS',  (int, [int], int),   lambda n, xs: xs[n] if n>=0 and len(xs)>n else Null, lambda (A, B, L): [(0,L), (A, B)]),
-        Function('HEAD',    ([int], int),        lambda xs: xs[0] if len(xs)>0 else Null,             lambda (A, B, L): [(A, B)]),
-        Function('LAST',    ([int], int),        lambda xs: xs[-1] if len(xs)>0 else Null,            lambda (A, B, L): [(A, B)]),
-        Function('MINIMUM', ([int], int),        lambda xs: min(xs) if len(xs)>0 else Null,           lambda (A, B, L): [(A, B)]),
-        Function('MAXIMUM', ([int], int),        lambda xs: max(xs) if len(xs)>0 else Null,           lambda (A, B, L): [(A, B)]),
-        Function('SUM',     ([int], int),        lambda xs: sum(xs),                                  lambda (A, B, L): [(A/L+1, B/L)]),
+        Function('REVERSE', ([int], [int]),      lambda xs: list(reversed(list(xs))),                       lambda tupl: [(tupl[0], tupl[1])]),
+        Function('SORT',    ([int], [int]),      lambda xs: sorted(list(xs)),                               lambda tupl: [(tupl[0], tupl[1])]),
+        Function('TAKE',    (int, [int], [int]), lambda n, xs: list(xs)[:n],                                lambda tupl: [(0,tupl[2]), (tupl[0], tupl[1])]),
+        Function('DROP',    (int, [int], [int]), lambda n, xs: list(xs)[n:],                                lambda tupl: [(0,tupl[2]), (tupl[0], tupl[1]) ] ),
+        Function('ACCESS',  (int, [int], int),   lambda n, xs: list(xs)[n] if n>=0 and len(xs)>n else Null, lambda tupl: [(0,tupl[2]), (tupl[0],tupl[1] )]),
+        Function('HEAD',    ([int], int),        lambda xs: list(xs)[0] if len(list(xs))>0 else Null,             lambda tupl: [(tupl[0] , tupl[1])]),
+        Function('LAST',    ([int], int),        lambda xs: list(xs)[-1] if len(list(xs))>0 else Null,            lambda tupl: [(tupl[0], tupl[1])]),
+        Function('MINIMUM', ([int], int),        lambda xs: min(list(xs)) if len(list(xs))>0 else Null,           lambda tupl: [(tupl[0], tupl[1])]),
+        Function('MAXIMUM', ([int], int),        lambda xs: max(list(xs)) if len(list(xs))>0 else Null,           lambda tupl: [(tupl[0], tupl[1])]),
+        Function('SUM',     ([int], int),        lambda xs: sum(list(xs)),                                  lambda tupl: [(tupl[0]/tupl[2]+1, tupl[1]/tupl[2])]),
     ] + \
     [Function(
             'MAP ' + l.src,
             ([int], [int]),
             lambda xs, l=l: map(l.fun, xs),
-            lambda (A, B, L), l=l: l.bounds((A, B))
+            # lambda A, B, L, l=l: l.bounds((A, B))
+            lambda tupl, l=l: l.bounds((tupl[0], tupl[1]))
         ) for l in lambdas if l.sig==(int, int)] + \
     [Function(
             'FILTER ' + l.src,
             ([int], [int]),
             lambda xs, l=l: filter(l.fun, xs),
-            lambda (A, B, L), l=l: [(A, B)],
+            # lambda (A, B, L), l=l: [(A, B)],
+            lambda tupl, l=l: [(tupl[0], tupl[1])],
         ) for l in lambdas if l.sig==(int, bool)] + \
     [Function(
             'COUNT ' + l.src,
             ([int], int),
-            lambda xs, l=l: len(filter(l.fun, xs)),
-            lambda (A, B, L), l=l: [(-V, V)],
+            lambda xs, l=l: len(list(filter(l.fun, xs))),
+            # lambda A, B, L, l=l: [(-V, V)],
+            lambda tupl, l=l: [(-V, V)],
+
         ) for l in lambdas if l.sig==(int, bool)] + \
     [Function(
             'ZIPWITH ' + l.src,
             ([int], [int], [int]),
             lambda xs, ys, l=l: [l.fun(x, y) for (x, y) in zip(xs, ys)],
-            lambda (A, B, L), l=l: l.bounds((A, B)) + l.bounds((A, B)),
+            # lambda (A, B, L), l=l: l.bounds((A, B)) + l.bounds((A, B)),
+            lambda tupl, l=l: l.bounds((tupl[0], tupl[1])) + l.bounds((tupl[0], tupl[1])),
+
         ) for l in lambdas if l.sig==(int, int, int)] + \
     [Function(
             'SCANL1 ' + l.src,
             ([int], [int]),
             lambda xs, l=l: list(scanl1(l, xs)),
-            lambda (A, B, L), l=l: scanl1_bounds(l, A, B, L),
+            # lambda A, B, L, l=l: scanl1_bounds(l, A, B, L),
+            lambda tupl, l=l: scanl1_bounds(l, tupl[0], tupl[1], tupl[2]),
+
         ) for l in lambdas if l.sig==(int, int, int)]
 
     return LINQ, lambdas
@@ -187,8 +195,8 @@ def compile(source_code, V, L, min_input_range_length=0):
             functions.append(f)
             pointers.append(ps)
             assert [types[p] == t for p, t in zip(ps, f.sig)]
-    input_length = len(input_types)
-    program_length = len(types)
+    input_length = len(list(input_types))
+    program_length = len(list(input_types))
 
     # Validate program by propagating input constraints and check all registers are useful
     limits = [(-V, V)]*program_length
@@ -257,19 +265,22 @@ def generate_IO_examples(program, N, L, V):
                 raise Exception("Unsupported input type " + input_types[a] + " for random input generation")
         output_value = program.fun(input_value)
         IO.append((input_value, output_value))
-        assert (program.out == int and output_value <= V) or (program.out == [int] and len(output_value) == 0) or (program.out == [int] and max(output_value) <= V)
+        # assert (program.out == int and output_value <= V) or (program.out == [int] and len(list(output_value)) == 0) or (program.out == [int] and max(list(output_value)) <= V)
     return IO
 
 
-if __name__ == '__main__':    
-    args = docopt(__doc__)
-    source = args['PROGRAM_TEXT']
-    number = int(args['--number'])
-    length = int(args['--length'])
-    value_range = int(args['--value-range'])
-
-    source = source.replace(' | ', '\n')
-    program = compile(source, V=value_range, L=length)
-    samples = generate_IO_examples(program, N=number, L=length, V=value_range)
-    for (inputs, outputs) in samples:
-        print("%s -> %s" % (inputs, outputs))
+# if __name__ == '__main__':    
+#     # args = docopt(__doc__)
+#     # source = args['PROGRAM_TEXT']
+#     # number = int(args['--number'])
+#     # length = int(args['--length'])
+#     # value_range = int(args['--value-range'])
+#     source="a <- [int] | b <- int | c <- TAKE b a | d <- COUNT isEVEN c | e <- TAKE d a"
+#     number = 5
+#     length = 10
+#     value_range = 512
+#     source = source.replace(' | ', '\n')
+#     program = compile(source, V=value_range, L=length)
+#     samples = generate_IO_examples(program, N=number, L=length, V=value_range)
+#     for (inputs, outputs) in samples:
+#         print("%s -> %s" % (inputs, outputs))
