@@ -15,7 +15,7 @@ class List(Value):
       raise ValueError('{} is not iterable.'.format(value))
     self.value = [self.TYPE(v) for v in value]
     if len(self.value) > self.MAX_LENGTH:
-      logger.warning('The length of the given list is greater than {}. The elements over {} will be discarded.'.format(self.MAX_LENGTH, self.MAX_LENGTH))
+      logger.info('The length of the given list is greater than {}. The elements over {} will be discarded.'.format(self.MAX_LENGTH, self.MAX_LENGTH))
       self.value = self.value[:self.MAX_LENGTH]
 
   def get_value(self):
