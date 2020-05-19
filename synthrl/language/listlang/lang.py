@@ -91,6 +91,15 @@ class ListLang(Tree):
     # instructions
     self.instructions = [InstNode(parent=self) for _ in range(T)]
 
+  # the number of instructions
+  def __len__(self):
+    length = 0
+    for i in self.instructions:
+      if i.data == 'HOLE' or i.data == 'nop':
+        break
+      length += 1
+    return length
+
   @property
   def production_space(self):
 
@@ -117,6 +126,19 @@ class ListLang(Tree):
       var_types['x_{}'.format(i + 1)] = inst.return_type
 
     return space
+
+  def production(self, rule):
+    # rule: production rule to apply
+
+    super(ListLang, self).production(rule)
+
+    # handle nop
+    if rule == 'nop':
+      for inst in self.instructions:
+        if inst.data != 'HOLE':
+          continue
+        inst.production(rule)
+
 
   def interprete(self, inputs):
     # inputs: inputs to execute the program
@@ -235,7 +257,7 @@ class InstNode(Node):
     'take':    ['REQINT', 2, 'LIST'],
     'drop':    ['REQINT', 2, 'LIST'],
     'access':  ['REQINT', 2, 'INT' ],
-    'nop':     ['END'   , 1, 'LIST'],
+    'nop':     ['END'   , 0, 'LIST'],
   }
   
   def production_space(self, loc, var_types, last_type, return_type=None):
@@ -355,6 +377,9 @@ class InstNode(Node):
         'VAR1': VarNode(parent=self, type=Integer),
         'VAR2': VarNode(parent=self, type=IntList)
       }
+    # nop
+    elif option == 'END' and n_vars == 0:
+      pass
     # should not reach here
     else:
       raise UnexpectedException('Unexpected values in "InstNode.production_space". {{option: {}, n_vars: {}}}'.format(option, n_vars))
@@ -521,6 +546,9 @@ class InstNode(Node):
         self.children['VAR1'].pretty_print(file=file)
         print(' ', end='', file=file)
         self.children['VAR2'].pretty_print(file=file)
+      # nop
+      elif option == 'END' and n_vars == 0:
+        print(self.data.upper(), end='', file=file)
       # should not reach here
       else:
         raise UnexpectedException('Unexpected values in "InstNode.pretty_print". {{option: {}, n_vars: {}}}'.format(option, n_vars))
