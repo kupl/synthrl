@@ -395,13 +395,13 @@ class InstNode(Node):
     
     # filter
     elif self.data == 'filter':
-      f = self.children['AUOP'].interprete()
+      f = self.children['BUOP'].interprete()
       xs = self.children['VAR'].interprete(mem)
       return IntList(filter(f, xs))
     
     # count
     elif self.data == 'count':
-      f = self.children['AUOP'].interprete()
+      f = self.children['BUOP'].interprete()
       xs = self.children['VAR'].interprete(mem)
       return Integer(len(list(filter(f, xs))))
     
@@ -423,7 +423,7 @@ class InstNode(Node):
       f = self.children['ABOP'].interprete()
       xs = self.children['VAR1'].interprete(mem)
       ys = self.children['VAR2'].interprete(mem)
-      return IntList(map(lambda x: f(x[0], f[1]), zip(xs, ys)))
+      return IntList(map(lambda x: f(x[0], x[1]), zip(xs, ys)))
     
     # head
     elif self.data == 'head':
