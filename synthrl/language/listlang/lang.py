@@ -25,6 +25,8 @@
 # BUOP -> POS | NEG | EVEN | ODD
 # ABOP -> + | * | MIN | MAX
 
+import logging
+
 from synthrl.language.abstract import Node
 from synthrl.language.abstract import SyntaxError
 from synthrl.language.abstract import Tree
@@ -40,6 +42,8 @@ from synthrl.value.integer import THREE
 from synthrl.value.integer import TWO
 from synthrl.value.integer import ZERO
 from synthrl.value.nonetype import NONE
+
+logger = logging.getLogger(__name__)
 
 # maximum number of inputs
 S = 2
@@ -435,28 +439,32 @@ class InstNode(Node):
     elif self.data == 'head':
       xs = self.children['VAR'].interprete(mem)
       if len(xs) == 0:
-        raise UndefinedSemantics('len(xs) == 0')
+        logger.info('Cannot interprete {} when len(xs) == 0. The return value will be 0.'.format(self.data))
+        return ZERO
       return xs[0]
     
     # last
     elif self.data == 'last':
       xs = self.children['VAR'].interprete(mem)
       if len(xs) == 0:
-        raise UndefinedSemantics('len(xs) == 0')
+        logger.info('Cannot interprete {} when len(xs) == 0. The return value will be 0.'.format(self.data))
+        return ZERO
       return xs[-1]
     
     # minimum
     elif self.data == 'minimum':
       xs = self.children['VAR'].interprete(mem)
       if len(xs) == 0:
-        raise UndefinedSemantics('len(xs) == 0')
+        logger.info('Cannot interprete {} when len(xs) == 0. The return value will be 0.'.format(self.data))
+        return ZERO
       return min(xs)
     
     # maximum
     elif self.data == 'maximum':
       xs = self.children['VAR'].interprete(mem)
       if len(xs) == 0:
-        raise UndefinedSemantics('len(xs) == 0')
+        logger.info('Cannot interprete {} when len(xs) == 0. The return value will be 0.'.format(self.data))
+        return ZERO
       return max(xs)
     
     # reverse
@@ -491,9 +499,11 @@ class InstNode(Node):
       n = self.children['VAR1'].interprete(mem)
       xs = self.children['VAR2'].interprete(mem)
       if len(xs) <= n.get_value():
-        raise UndefinedSemantics('len(xs) <= n: {} <= {}'.format(len(xs), n))
+        logger.info('Cannot interprete {} when len(xs) <= n: {} <= {}. The return value will be 0.'.format(self.data, len(xs), n))
+        return ZERO
       if len(xs) < -(n.get_value()):
-        raise UndefinedSemantics('len(xs) < n: {} < {}'.format(len(xs), -n))
+        logger.info('Cannot interprete {} when len(xs) < n: {} < {}. The return value will be 0.'.format(self.data, len(xs), -n))
+        return ZERO
       return xs[n]
     
     # nop
