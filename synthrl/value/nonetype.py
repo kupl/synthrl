@@ -15,9 +15,13 @@ class NoneType(Value):
     return hash(None)
 
   def __eq__(self, other):
-    return other is None
+    if isinstance(other, Value):
+      other = other.get_value()
+    return other == None
 
   def __ne__(self, other):
-    return other is not None
+    if isinstance(other, Value):
+      other = other.get_value()
+    return other != None
 
 NONE = NoneType()

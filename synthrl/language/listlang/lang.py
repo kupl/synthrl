@@ -152,12 +152,24 @@ class ListLang(Tree):
     mem = {'a_{}'.format(i + 1): v for i, v in enumerate(inputs)}
 
     # run each instructions
+    ret = inputs[-1]
     for i, inst in enumerate(self.instructions):
-      x_i = inst.interprete(mem)
+      try:
+        x_i = inst.interprete(mem)
+      except UndefinedSemantics:
+        x_i = NONE
+
+      # skip if return is None
+      print('---')
+      print(x_i)
+      print(x_i != NONE)
+      if x_i != NONE:
+        ret = x_i
+
       mem['x_{}'.format(i + 1)] = x_i
 
     # return the result of the final instruction
-    return x_i
+    return ret
 
   def pretty_print(self, file=None):
     # file: TextIOWrapper to use as write stream. By default, use stdout.
