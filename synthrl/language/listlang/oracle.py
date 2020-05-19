@@ -1,3 +1,7 @@
+import numpy as np
+
+from synthrl.language.listlang.lang import T
+
 from synthrl.utils.trainutils import Dataset
 from synthrl.value import Integer
 from synthrl.value import IntList
@@ -94,6 +98,28 @@ def encode_for_utile(program):
       representation+=  var1 + " " + var2
   return representation
 
+def generate_program(input_types, output_type, length=T):
+
+  prog = ListLang(input_types, output_type)
+
+  space = prog.production_space
+  while len(space) > 0:
+
+    # if InstNode
+    if 'nop' in space:
+      if len(prog) < length:
+        space.remove('nop')
+      else:
+        space = ['nop']
+    action = np.random.choice(space)
+    prog.production(action)
+    space = prog.production_space
+
+  return prog
+
+def generate_io(program, n_io=3):
+  return
+
 def OracleSampler(size=5, depth=5, io_number = 5, io_set_len = 10, value_range = 512):
   input_types=[[IntList],[IntList,Integer],[IntList,IntList]]
   output_types=[IntList, Integer]
@@ -157,5 +183,5 @@ def IOSample(program, io_number = 5, io_set_len = 10, value_range = 512):
   
 
 
-dataset = OracleSampler()
+# dataset = OracleSampler()
 
