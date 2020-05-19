@@ -154,15 +154,9 @@ class ListLang(Tree):
     # run each instructions
     ret = inputs[-1]
     for i, inst in enumerate(self.instructions):
-      try:
-        x_i = inst.interprete(mem)
-      except UndefinedSemantics:
-        x_i = NONE
+      x_i = inst.interprete(mem)
 
       # skip if return is None
-      print('---')
-      print(x_i)
-      print(x_i != NONE)
       if x_i != NONE:
         ret = x_i
 
