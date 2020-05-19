@@ -41,8 +41,8 @@ def generate_io(program, n_io=3):
 
 def OracleSampler(size=5, depth=5, io_number=5):
 
-  input_types=[[IntList], [IntList, Integer], [IntList, IntList]]
-  output_types=[IntList, Integer]
+  input_types = [[IntList], [IntList, Integer], [IntList, IntList]]
+  output_types = [IntList, Integer]
   
   # create size examples
   dataset = Dataset()  
