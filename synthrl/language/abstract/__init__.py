@@ -6,3 +6,4 @@ from synthrl.language.abstract.lang import Tree
 from synthrl.language.abstract.lang import UndefinedSemantics
 from synthrl.language.abstract.lang import UnexpectedException
 from synthrl.language.abstract.lang import WrongProductionException
+from synthrl.language.abstract.oracle import OracleSampler
