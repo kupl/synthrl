@@ -63,6 +63,11 @@ class Embedding(nn.Module):
     # super().__init__() must be called
     super(Embedding, self).__init__()
 
+  @property
+  def emb_dim(self):
+    # returns the output dimension
+    raise NotImplementedError
+
   def forward(self, token, inputs, outputs):
     # gets token, inputs, outputs
     # token  : [batch_size]

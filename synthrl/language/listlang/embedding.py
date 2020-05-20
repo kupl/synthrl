@@ -112,8 +112,10 @@ class Embedding(EmbeddingInterface):
     # value_emb: [batch_size] -> [batch_size, value_dim]
     self.value_emb = nn.Embedding(self.n_value, self.value_dim)
 
-    # result embedding dimension
-    self.emb_dim = token_dim + (S + 1) * (2 + IntList.MAX_LENGTH * value_dim)
+  # result embedding dimension
+  @property
+  def emb_dim(self):
+    return self.token_dim + (S + 1) * (2 + IntList.MAX_LENGTH * self.value_dim)
 
   def forward(self, token, inputs, outputs):
     # token  : [batch_size]            of tokens
