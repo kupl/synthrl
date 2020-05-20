@@ -25,6 +25,8 @@
 # BUOP -> POS | NEG | EVEN | ODD
 # ABOP -> + | * | MIN | MAX
 
+import logging
+
 from synthrl.language.abstract import Node
 from synthrl.language.abstract import SyntaxError
 from synthrl.language.abstract import Tree
@@ -40,6 +42,8 @@ from synthrl.value.integer import THREE
 from synthrl.value.integer import TWO
 from synthrl.value.integer import ZERO
 from synthrl.value.nonetype import NONE
+
+logger = logging.getLogger(__name__)
 
 # maximum number of inputs
 S = 2
@@ -91,6 +95,15 @@ class ListLang(Tree):
     # instructions
     self.instructions = [InstNode(parent=self) for _ in range(T)]
 
+  # the number of instructions
+  def __len__(self):
+    length = 0
+    for i in self.instructions:
+      if i.data == 'HOLE' or i.data == 'nop':
+        break
+      length += 1
+    return length
+
   @property
   def production_space(self):
 
@@ -118,6 +131,19 @@ class ListLang(Tree):
 
     return space
 
+  def production(self, rule):
+    # rule: production rule to apply
+
+    super(ListLang, self).production(rule)
+
+    # handle nop
+    if rule == 'nop':
+      for inst in self.instructions:
+        if inst.data != 'HOLE':
+          continue
+        inst.production(rule)
+
+
   def interprete(self, inputs):
     # inputs: inputs to execute the program
 
@@ -130,12 +156,18 @@ class ListLang(Tree):
     mem = {'a_{}'.format(i + 1): v for i, v in enumerate(inputs)}
 
     # run each instructions
+    ret = inputs[-1]
     for i, inst in enumerate(self.instructions):
       x_i = inst.interprete(mem)
+
+      # skip if return is None
+      if x_i != NONE:
+        ret = x_i
+
       mem['x_{}'.format(i + 1)] = x_i
 
     # return the result of the final instruction
-    return x_i
+    return ret
 
   def pretty_print(self, file=None):
     # file: TextIOWrapper to use as write stream. By default, use stdout.
@@ -235,7 +267,7 @@ class InstNode(Node):
     'take':    ['REQINT', 2, 'LIST'],
     'drop':    ['REQINT', 2, 'LIST'],
     'access':  ['REQINT', 2, 'INT' ],
-    'nop':     ['END'   , 1, 'LIST'],
+    'nop':     ['END'   , 0, 'LIST'],
   }
   
   def production_space(self, loc, var_types, last_type, return_type=None):
@@ -355,6 +387,9 @@ class InstNode(Node):
         'VAR1': VarNode(parent=self, type=Integer),
         'VAR2': VarNode(parent=self, type=IntList)
       }
+    # nop
+    elif option == 'END' and n_vars == 0:
+      pass
     # should not reach here
     else:
       raise UnexpectedException('Unexpected values in "InstNode.production_space". {{option: {}, n_vars: {}}}'.format(option, n_vars))
@@ -370,13 +405,13 @@ class InstNode(Node):
     
     # filter
     elif self.data == 'filter':
-      f = self.children['AUOP'].interprete()
+      f = self.children['BUOP'].interprete()
       xs = self.children['VAR'].interprete(mem)
       return IntList(filter(f, xs))
     
     # count
     elif self.data == 'count':
-      f = self.children['AUOP'].interprete()
+      f = self.children['BUOP'].interprete()
       xs = self.children['VAR'].interprete(mem)
       return Integer(len(list(filter(f, xs))))
     
@@ -398,34 +433,38 @@ class InstNode(Node):
       f = self.children['ABOP'].interprete()
       xs = self.children['VAR1'].interprete(mem)
       ys = self.children['VAR2'].interprete(mem)
-      return IntList(map(lambda x: f(x[0], f[1]), zip(xs, ys)))
+      return IntList(map(lambda x: f(x[0], x[1]), zip(xs, ys)))
     
     # head
     elif self.data == 'head':
       xs = self.children['VAR'].interprete(mem)
       if len(xs) == 0:
-        raise UndefinedSemantics('len(xs) == 0')
+        logger.info('Cannot interprete {} when len(xs) == 0. The return value will be 0.'.format(self.data))
+        return ZERO
       return xs[0]
     
     # last
     elif self.data == 'last':
       xs = self.children['VAR'].interprete(mem)
       if len(xs) == 0:
-        raise UndefinedSemantics('len(xs) == 0')
+        logger.info('Cannot interprete {} when len(xs) == 0. The return value will be 0.'.format(self.data))
+        return ZERO
       return xs[-1]
     
     # minimum
     elif self.data == 'minimum':
       xs = self.children['VAR'].interprete(mem)
       if len(xs) == 0:
-        raise UndefinedSemantics('len(xs) == 0')
+        logger.info('Cannot interprete {} when len(xs) == 0. The return value will be 0.'.format(self.data))
+        return ZERO
       return min(xs)
     
     # maximum
     elif self.data == 'maximum':
       xs = self.children['VAR'].interprete(mem)
       if len(xs) == 0:
-        raise UndefinedSemantics('len(xs) == 0')
+        logger.info('Cannot interprete {} when len(xs) == 0. The return value will be 0.'.format(self.data))
+        return ZERO
       return max(xs)
     
     # reverse
@@ -460,9 +499,11 @@ class InstNode(Node):
       n = self.children['VAR1'].interprete(mem)
       xs = self.children['VAR2'].interprete(mem)
       if len(xs) <= n.get_value():
-        raise UndefinedSemantics('len(xs) <= n: {} <= {}'.format(len(xs), n))
+        logger.info('Cannot interprete {} when len(xs) <= n: {} <= {}. The return value will be 0.'.format(self.data, len(xs), n))
+        return ZERO
       if len(xs) < -(n.get_value()):
-        raise UndefinedSemantics('len(xs) < n: {} < {}'.format(len(xs), -n))
+        logger.info('Cannot interprete {} when len(xs) < n: {} < {}. The return value will be 0.'.format(self.data, len(xs), -n))
+        return ZERO
       return xs[n]
     
     # nop
@@ -521,6 +562,9 @@ class InstNode(Node):
         self.children['VAR1'].pretty_print(file=file)
         print(' ', end='', file=file)
         self.children['VAR2'].pretty_print(file=file)
+      # nop
+      elif option == 'END' and n_vars == 0:
+        print(self.data.upper(), end='', file=file)
       # should not reach here
       else:
         raise UnexpectedException('Unexpected values in "InstNode.pretty_print". {{option: {}, n_vars: {}}}'.format(option, n_vars))
