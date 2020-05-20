@@ -7,6 +7,12 @@ from synthrl.utils.torchutils import Attention
 
 class Network(nn.Module):
   def __init__(self, input_dim, num_tokens, hidden_size=256, hidden_layers=1, eta=1):
+    # input_dim    : dimension of input, maybe dimension of embedding
+    # num_tokens   : number of tokens in language
+    # hidden_size  : dimension in hidden layer
+    # hidden_layers: number of hidden layers
+    # eta          : upper bound of reward
+
     super(Network, self).__init__()
 
     self.input_dim = input_dim
@@ -62,7 +68,7 @@ class RLAgent(Agent):
 
     self.network = Network(self.embedding.emb_dim, len(self.language.tokens), hidden_size, hidden_layers, eta)
 
-  def take(self, action_space=[]):
+  def take(self, state, space):
     pass
 
   def save(self):
