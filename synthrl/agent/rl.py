@@ -2,16 +2,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from synthrl.agent.agent import Agent
+from synthrl.language import Language
 from synthrl.utils.torchutils import Attention
 
 class Network(nn.Module):
-  def __init__(self, input_dim=0, num_tokens=0, hidden_size=256, hidden_layers=1):
+  def __init__(self, input_dim, num_tokens, hidden_size=256, hidden_layers=1, eta=1):
     super(Network, self).__init__()
 
     self.input_dim = input_dim
     self.num_tokens = num_tokens
     self.hidden_size = hidden_size
     self.hidden_layers = hidden_layers
+    self.eta = eta
 
     self.lstm = nn.LSTM(input_dim, hidden_size, hidden_layers, bidirectional=False)
     self.attention = Attention(hidden_size)
@@ -52,8 +54,13 @@ class Network(nn.Module):
     return policy, value, query, hidden
 
 class RLAgent(Agent):
-  def __init__(self):
-    self.network = None
+  def __init__(self, language, embedding_layer, hidden_size=256, hidden_layers=1, eta=1):
+
+    self.language = Language(language)
+
+    self.embedding = embedding_layer
+
+    self.network = Network(self.embedding.emb_dim, len(self.language.tokens), hidden_size, hidden_layers, eta)
 
   def take(self, action_space=[]):
     pass
