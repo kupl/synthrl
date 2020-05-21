@@ -52,8 +52,7 @@ You can add your path to SynthRL to the ```PYTHONPATH``` with the following code
 ```
 $ export PYTHONPATH="$(pwd):$PYTHONPATH"
 ```
-Or, you can add followin line at the end of ```.bashrc``` (if you use zsh, write it to ```.zshrc```).
+Or, you can add followin line at the end of ```.bashrc``` with the following command (if you use zsh, write it to ```.zshrc```).
 ```
-...
-echo "export PYTHONPATH=$(pwd):\$PYTHONPATH" >> ~/.bashrc
+$ echo "export PYTHONPATH=$(pwd):\$PYTHONPATH" >> ~/.bashrc
 ```
