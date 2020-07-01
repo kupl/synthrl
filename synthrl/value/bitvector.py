@@ -74,6 +74,9 @@ class BitVector(Value):
   def __ne__(self, other):
     return not (self == other)
 
+class BitVector16(BitVector):
+  TYPE = np.int16
+  
 class BitVector32(BitVector):
   TYPE = np.int32
 

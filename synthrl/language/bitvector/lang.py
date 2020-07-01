@@ -1,18 +1,30 @@
-from synthrl.language.dsl import Tree
-from synthrl.value import BitVector32
-
+from synthrl.language.abstract import Node
+from synthrl.language.abstract import Tree
+from synthrl.value.bitvector import BitVector64
 #N_z -> Var_z            => var
 #     | Const_z          => const
 #     | N_z Bop N_z      => bop
 #     | -N_z             => neg
 #     | Ite N_B N_z N_Z  => ite
 
-class ExprNode(Tree):
+# class BitVectorLang(Tree):
+#   def __init__(self):
+#     self.start_node = ExprNode()
+
+#   def production_space(self):
+#       _, space = self.start_node.production_space()
+#       return space
+#   def production(self): 
+
+
+
+class ExprNode(Node): ## as Starte Node
   expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
   def production_space(self):
-    if self.data =='hole':
+    if self.data =='HOLE':
       return self, self.expr_productions
     else:
+      children=[]
       if self.data=="var":
         children=["VAR_Z"]
       elif self.data=="const":
@@ -28,6 +40,7 @@ class ExprNode(Tree):
         if len(space) > 0:
           return node, space
       return self, []
+      
   def production(self, rule=None):
     if rule =="var":
       self.data="var"
@@ -72,10 +85,10 @@ class ExprNode(Tree):
 
 #N_B -> true|false
 #         | Nz=Nz | N_B land N_B |N_B lor N_B| N_B lnot N_B
-class BOOLNode(Tree):
+class BOOLNode(Node):
   bool_operations = ["true", "false", "equal","land","lor","lnot"]
   def production_space(self):
-    if self.data=="hole":
+    if self.data=='HOLE':
       return self, self.bool_operations
     else:
       for child in self.children:
@@ -127,14 +140,12 @@ class BOOLNode(Tree):
 
 
 
-
-
 # Bop -> + | − | & | ∥ | × | / |<< | >> | mod
-class BOPNode(Tree):
+class BOPNode(Node):
   binary_operations = ["+", "-","&", "||", "x", "/", "<<", ">>","mod"]
 
   def production_space(self):
-    if self.data=='hole':
+    if self.data=='HOLE' or self.data=='hole':
       return self, self.binary_operations
     else:
       for key in ['LeftEXPR','RightEXPR']:
@@ -181,15 +192,48 @@ class BOPNode(Tree):
       pass
     
 #Const_z -> ...
-class ConstNode(Tree):
-  pass
+class ConstNode(Node):
+  '''
+  Following the standard in https://github.com/wslee/euphony/blob/master/benchmarks/bitvec/test/99_1000.sl,
+  we set constant from 1 to 16, as 64-bitvecor
+  #x0000000000000000
+  #x0000000000000001
+  #x0000000000000002
+  #x0000000000000003
+  #x0000000000000004
+  #x0000000000000005
+  #x0000000000000006
+  #x0000000000000007
+  #x0000000000000008
+  #x0000000000000009
+  #x000000000000000A
+  #x000000000000000B
+  #x000000000000000C
+  #x000000000000000D
+  #x000000000000000E
+  #x000000000000000F
+  #x0000000000000010
+  '''
+  constants = [i for i in range(16+1)]
+  def production_space(self):
+    if self.data == 'HOLE'or self.data=='hole':
+      return self, self.constants
+
+  def production(self,rule):
+    if rule in self.constants:
+      self.data=rule
+
+  def interprete(self, inputs):
+    return BitVector64(self.data)
+
+
 
 #Var_z -> param1 | param2 ...
-class ParamNode(Tree):
+class ParamNode(Node):
   param_space = ["param{}".format(i) for i in range(2)]
 
   def production_space(self):
-    if self.data == 'hole':
+    if self.data == 'HOLE':
       return self, self.param_space
     else:
       return self,[]
@@ -200,9 +244,26 @@ class ParamNode(Tree):
   
   def interprete(self, inputs): ##inputs as list?
     if self.data=="param1":
-      return inputs[1]
+      return BitVector64(inputs[1])
     elif self.data=="param2":
-      return inputs[2]
+      return BitVector64(inputs[2])
   
   def pretty_print(self):
     print('({})'.format(self.data), end='')
+
+####Tests
+# vec_program = BitVectorLang()
+# print((vec_program.production_space()))
+
+
+# vec_program = ExprNode()
+# vec_program.production("bop")
+# node, space = vec_program.production_space()
+# node.production("+")
+
+# print(vec_program.production_space())
+vec_program = ExprNode()
+vec_program.production("const")
+const_node, space = vec_program.production_space()
+print(space)
+
