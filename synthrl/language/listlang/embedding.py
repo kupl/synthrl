@@ -27,7 +27,7 @@ class ValueBag(Bag):
   def create(cls):
 
     # create token to index bag
-    bag = {i: idx + 1 for idx, i in range(Integer.MIN, Integer.MAX + 1)}
+    bag = {i: idx + 1 for idx, i in enumerate(range(Integer.MIN, Integer.MAX + 1))}
     bag[NONE] = 0
     return cls(bag)
 
