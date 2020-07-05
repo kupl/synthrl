@@ -56,7 +56,7 @@ def margin_value(inputs, output):
       # [0, 1]: IntList
       types.append([0, 1])
       # marginalize with None to IntList.MAX_LENGTH
-      lists.append(i.get_value() + [NONE] * IntList.MAX_LENGTH - len(i))
+      lists.append(i.get_value() + [NONE] * (IntList.MAX_LENGTH - len(i)))
 
     # if None
     else:
@@ -140,14 +140,20 @@ class Embedding(EmbeddingInterface):
         # output: 1 output
 
         # types: [S + 1, 2]                  of int
-        # lists: [S + 1, IntList.MAX_LENGTH] of int list
+        # lists: [S + 1, IntList.MAX_LENGTH] of int
         types, lists = margin_value(input, output)
 
         # types: [S + 1, 2] of tensor
         types = torch.FloatTensor(types)
+
+        # lists: [(S + 1) * IntList.MAX_LENGTH] of long tensor
+        lists = sum(lists, [])
+
+        # lists: [(S + 1) * IntList.MAX_LENGTH] of long tensor
+        lists = self.value_bag(lists)
         
         # lists: [S + 1, IntList.MAX_LENGTH] of long tensor
-        lists = torch.LongTensor(lists)
+        lists = lists.reshape(S + 1, -1)
 
         # lists: [S + 1, IntList.MAX_LENGTH, value_dim] of tensor
         lists = self.value_emb(lists)
@@ -156,7 +162,7 @@ class Embedding(EmbeddingInterface):
         lists = lists.reshape(S + 1, -1)
 
         # emb: [S + 1, 2 + IntList.MAX_LENGTH * value_dim]
-        embedding = torch.cat((types, lists), dim=1)
+        emb = torch.cat((types, lists), dim=1)
 
         # emb: [io_dim] = [(S + 1) * (2 + IntList.MAX_LENGTH * value_dim)]
         emb = emb.reshape(-1)
