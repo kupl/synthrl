@@ -65,6 +65,9 @@ class Tree:
   def __call__(self, *args, **kwargs):
     return self.interprete(*args, **kwargs)
 
+  def copy(self):
+    raise NotImplementedError
+
 # Abstract class that each non-terminal symbols should implement
 class Node:
 
@@ -102,3 +105,10 @@ class Node:
   def tokens(cls):
     # returns a list of tokens
     raise NotImplementedError
+
+  def copy(self):
+    copied_children = {key: child.copy() for key, child in self.children.items()}
+    copied = self.__class__(self.data, copied_children)
+    for key in copied.children.keys():
+      copied.children[key].parent = copied
+    return copied
