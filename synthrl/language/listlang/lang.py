@@ -249,6 +249,8 @@ class ListLang(Tree):
   def copy(self):
     copied = self.__class__(self.input_types, self.output_type)
     copied_instructions = [i.copy() for i in self.instructions]
+    for inst in copied_instructions:
+      inst.parent = copied
     copied.instructions = copied_instructions
     return copied
 
