@@ -1,27 +1,41 @@
 from synthrl.language.abstract import Node
 from synthrl.language.abstract import Tree
 from synthrl.value.bitvector import BitVector64
+from synthrl.language.abstract import WrongProductionException
+
 #N_z -> Var_z            => var
 #     | Const_z          => const
 #     | N_z Bop N_z      => bop
 #     | -N_z             => neg
 #     | Ite N_B N_z N_Z  => ite
 
-# class BitVectorLang(Tree):
-#   def __init__(self):
-#     self.start_node = ExprNode()
+#'bop', 'neg', 'ite' as instruction command
 
-#   def production_space(self):
-#       _, space = self.start_node.production_space()
-#       return space
-#   def production(self): 
+class BitVectorLang(Tree):
+  def __init__(self):
+    self.start_node = ExprNode()
 
-
-
-class ExprNode(Node): ## as Starte Node
-  expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
   def production_space(self):
-    if self.data =='HOLE':
+    _, space = self.start_node.production_space()
+    return space
+
+  def production(self,action):
+    node, possible_actions = self.start_node.production_space()
+    if action in possible_actions:
+        node.production(action)
+    else:
+      raise WrongProductionException('Invalid production rule "{}" is given.'.format(action))
+      
+  def pretty_print(self,file=None):
+    print('(',end='')
+    self.start_node.pretty_print(file=file)
+    print(')')
+#N_z
+class ExprNode(Node):
+  # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
+  expr_productions = ['var','const','bop','neg','ite']
+  def production_space(self):
+    if self.data =='HOLE': 
       return self, self.expr_productions
     else:
       children=[]
@@ -83,6 +97,27 @@ class ExprNode(Node): ## as Starte Node
     if self.data =="ite":
       pass
 
+  def pretty_print(self,file=None):
+    if self.data == 'var':
+      self.children['VAR_Z'].pretty_print(file=file)
+    elif self.data=='const':
+      self.children['CONST_Z'].pretty_print(file=file)
+    elif self.data=='bop':
+      self.children['BOP'].pretty_print(file=file)
+    elif self.data=='neg':
+      print("NEG(",end='')
+      self.children['NEG'].pretty_print(file=file)
+      print(")",end='')
+    elif self.data=="ite":
+      print('(',end='')
+      print(" IF",end='')
+      self.children["IF_BOOL"].pretty_print(file=file)
+      print(" THEN ",end='') 
+      self.children["THEN_EXPR"].pretty_print(file=file)
+      print(" ELSE ",end='') 
+      self.children["ELSE_EXPR"].pretty_print(file=file)
+      print(')',end='')
+
 #N_B -> true|false
 #         | Nz=Nz | N_B land N_B |N_B lor N_B| N_B lnot N_B
 class BOOLNode(Node):
@@ -138,6 +173,18 @@ class BOOLNode(Node):
     if self.data=="lnot":
       return not self.children["BOOL"].interprete(inputs)
 
+  def pretty_print(self,file=None):
+    if self.data == "true" or self.data == "false":
+      print(" {} ".format(self.data),end='')
+    elif self.data == "lnot":
+      print(" ~ {}".fomrat(self.data),end='')
+    else:
+      print('(',end='')
+      self.children["LeftExpr"].pretty_print(file=file)
+      print(' {} '.format(self.data), end='')
+      self.children["RightBool"].pretty_print(file=file)
+      print(')',end='')
+
 
 
 # Bop -> + | − | & | ∥ | × | / |<< | >> | mod
@@ -190,7 +237,13 @@ class BOPNode(Node):
       pass
     if self.data=="mod":
       pass
-    
+  
+  def pretty_print(self,file=None):
+    print(' ( ', end='') 
+    self.children['LeftEXPR'].pretty_print(file=file)
+    print(' {} '.format(self.data), end='')
+    self.children['RightEXPR'].pretty_print(file=file)
+    print(' ) ', end='') 
 #Const_z -> ...
 class ConstNode(Node):
   '''
@@ -218,6 +271,8 @@ class ConstNode(Node):
   def production_space(self):
     if self.data == 'HOLE'or self.data=='hole':
       return self, self.constants
+    else:
+      return self, []
 
   def production(self,rule):
     if rule in self.constants:
@@ -226,7 +281,8 @@ class ConstNode(Node):
   def interprete(self, inputs):
     return BitVector64(self.data)
 
-
+  def pretty_print(self,file=None):
+    print(' {} '.format(self.data),end='')
 
 #Var_z -> param1 | param2 ...
 class ParamNode(Node):
@@ -248,23 +304,23 @@ class ParamNode(Node):
     elif self.data=="param2":
       return BitVector64(inputs[2])
   
-  def pretty_print(self):
-    print('({})'.format(self.data), end='')
-
-####Tests
-# vec_program = BitVectorLang()
-# print((vec_program.production_space()))
-
-
-# vec_program = ExprNode()
-# vec_program.production("bop")
-# node, space = vec_program.production_space()
-# node.production("+")
-
-# print(vec_program.production_space())
-vec_program = ExprNode()
-vec_program.production("const")
-const_node, space = vec_program.production_space()
-print(space)
+  def pretty_print(self,file=None):
+    print(' {} '.format(self.data), end='')
+  
 ######test######
-
+# print("--test--")
+# vec_program = BitVectorLang()
+# poss = vec_program.production_space()
+# print(poss)
+# vec_program.production('bop')
+# poss = vec_program.production_space()
+# print(poss)
+# vec_program.production('+')
+# vec_program.pretty_print()
+# print(vec_program.production_space())
+# vec_program.production('const')
+# vec_program.pretty_print()
+# print(vec_program.production_space())
+# vec_program.production(10)
+# vec_program.pretty_print()
+# print(vec_program.production_space())
