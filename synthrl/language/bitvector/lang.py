@@ -32,7 +32,9 @@ class BitVectorLang(Tree):
 #N_z
 class ExprNode(Node):
   # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
-  expr_productions = ['var','const','bop','neg','ite']
+  # expr_productions = ['var','const','bop','neg']
+  expr_productions = ['bop','const','var']
+  # expr_productions += ['ite']
   def production_space(self):
     if self.data =='HOLE': 
       return self, self.expr_productions
@@ -97,42 +99,53 @@ class ExprNode(Node):
       pass
 
   def pretty_print(self,file=None):
-    if self.data == 'var':
+    if self.data=="HOLE" or self.data=='hole':
+      print(" (HOLE) ", end='')
+    elif self.data == 'var':
       self.children['VAR_Z'].pretty_print(file=file)
     elif self.data=='const':
       self.children['CONST_Z'].pretty_print(file=file)
     elif self.data=='bop':
       self.children['BOP'].pretty_print(file=file)
     elif self.data=='neg':
-      print("NEG(",end='')
+      print("NEG ( ",end='')
       self.children['NEG'].pretty_print(file=file)
-      print(")",end='')
+      print(" ) ",end='')
     elif self.data=="ite":
-      print('(',end='')
-      print(" IF",end='')
+      print(' ( ',end='')
+      print(" IF ",end='')
       self.children["IF_BOOL"].pretty_print(file=file)
       print(" THEN ",end='') 
       self.children["THEN_EXPR"].pretty_print(file=file)
       print(" ELSE ",end='') 
       self.children["ELSE_EXPR"].pretty_print(file=file)
-      print(')',end='')
+      print(' ) ',end='')
 
 #N_B -> true|false
 #         | Nz=Nz | N_B land N_B |N_B lor N_B| N_B lnot N_B
 #Add Later: <=_u
 class BOOLNode(Node):
   bool_operations = ["true", "false", "equal","land","lor","lnot"]
+
   def production_space(self):
     if self.data=='HOLE':
       return self, self.bool_operations
     else:
-      for child in self.children:
-        pass
+      if self.data == "true" or self.data=="false":
+        return self, []
+      else:
+        for child in self.children:
+          child_node = self.children[child]
+          node, space = child_node.production_space()
+          if len(space) > 0:
+            return node, space
+        return self, []
+
   def production(self,rule=None):
     if rule == "true" or rule == "false":
       self.data==rule
     if rule == "equal":
-      self.data=="rule"
+      self.data==rule
       self.children={
         "LeftExpr"  : ExprNode(parent=self) ,
         "RightExpr" : ExprNode(parent=self) 
@@ -166,25 +179,30 @@ class BOOLNode(Node):
       left  =  self.children["LeftBool"].interprete(inputs)
       right = self.children["RightBool"].interprete(inputs)
       return left or right
-    if self.data=="lor" :
-      left  =  self.children["LeftBool"].interprete(inputs)
-      right = self.children["RightBool"].interprete(inputs)
-      return left or right
     if self.data=="lnot":
       return not self.children["BOOL"].interprete(inputs)
 
   def pretty_print(self,file=None):
-    if self.data == "true" or self.data == "false":
+    if self.data=="HOLE" or self.data=="hole":
+      print(" (HOLE) ", end="")
+    elif self.data == "true" or self.data == "false":
       print(" {} ".format(self.data),end='')
     elif self.data == "lnot":
-      print(" ~ {}".fomrat(self.data),end='')
+      print(" ~ " ,end='')
+      print(' ( ', end='')
+      self.children["BOOL"].pretty_print(file)
+      print(' ) ', end='')
     else:
-      print('(',end='')
-      self.children["LeftExpr"].pretty_print(file=file)
-      print(' {} '.format(self.data), end='')
-      self.children["RightBool"].pretty_print(file=file)
-      print(')',end='')
-
+      print(' ( ',end='')
+      if self.data == "equal":
+        self.children["LeftExpr"].pretty_print(file=file)
+        print(' {} '.format(self.data), end='')
+        self.children["RightExpr"].pretty_print(file=file)
+      else:
+        self.children["LeftBool"].pretty_print(file=file)
+        print(' {} '.format(self.data), end='')
+        self.children["RightBool"].pretty_print(file=file)
+      print(' ) ',end='')
 
 
 # Bop -> + | − | & | ∥ | × | / |<< | >> | mod
@@ -245,6 +263,8 @@ class BOPNode(Node):
     print(' {} '.format(self.data), end='')
     self.children['RightEXPR'].pretty_print(file=file)
     print(' ) ', end='') 
+
+
 #Const_z -> ...
 class ConstNode(Node):
   '''
@@ -276,14 +296,16 @@ class ConstNode(Node):
       return self, []
 
   def production(self,rule):
-    if rule in self.constants:
-      self.data=rule
+    self.data=rule
 
   def interprete(self, inputs):
     return BitVector64(self.data)
 
   def pretty_print(self,file=None):
-    print(' {} '.format(self.data),end='')
+    if self.data=="HOLE" or self.data=="hole":
+      print(' (HOLE) ', end ='')
+    else:
+      print(' {} '.format(self.data),end='')
 
 #Var_z -> param1 | param2 ...
 class ParamNode(Node):
@@ -296,8 +318,7 @@ class ParamNode(Node):
       return self,[]
   
   def production(self, rule=None):
-    if rule in self.param_space:
-      self.data=rule
+    self.data=rule
   
   def interprete(self, inputs): ##inputs as list?
     if self.data=="param1":
@@ -306,7 +327,10 @@ class ParamNode(Node):
       return BitVector64(inputs[2])
   
   def pretty_print(self,file=None):
-    print(' {} '.format(self.data), end='')
+    if self.data=="HOLE" or self.data=="hole":
+      print(' (HOLE) ', end ='')
+    else:
+      print(' {} '.format(self.data), end='')
   
 ######test######
 # if __name__ == '__main__':
