@@ -10,13 +10,12 @@ from synthrl.language.abstract import WrongProductionException
 #     | Ite N_B N_z N_Z  => ite
 
 #'bop', 'neg', 'ite' as instruction command
-
 class BitVectorLang(Tree):
   def __init__(self):
     self.start_node = ExprNode()
 
   def production_space(self):
-    _, space = self.start_node.production_space()
+    _ , space = self.start_node.production_space()
     return space
 
   def production(self,action):
@@ -120,6 +119,7 @@ class ExprNode(Node):
 
 #N_B -> true|false
 #         | Nz=Nz | N_B land N_B |N_B lor N_B| N_B lnot N_B
+#Add Later: <=_u
 class BOOLNode(Node):
   bool_operations = ["true", "false", "equal","land","lor","lnot"]
   def production_space(self):
@@ -128,25 +128,25 @@ class BOOLNode(Node):
     else:
       for child in self.children:
         pass
-  def prooduction(self,rule=None):
+  def production(self,rule=None):
     if rule == "true" or rule == "false":
       self.data==rule
     if rule == "equal":
       self.data=="rule"
       self.children={
-        "LeftExpr"  : ExprNode(paraent=self) ,
-        "RightExpr" : ExprNode(paraent=self) 
+        "LeftExpr"  : ExprNode(parent=self) ,
+        "RightExpr" : ExprNode(parent=self) 
       }
     if rule =="land" or rule =="lor":
       self.data=rule
       self.children={
-        "LeftBool"  : BOOLNode(paraent=self) ,
-        "RightBool" : BOOLNode(paraent=self) 
+        "LeftBool"  : BOOLNode(parent=self) ,
+        "RightBool" : BOOLNode(parent=self) 
       }
     if rule=="lnot":
       self.data=rule
       self.children={
-        "BOOL" : BOOLNode(paraent=self)
+        "BOOL" : BOOLNode(parent=self)
       }
 
   def interprete(self, inputs):
@@ -188,6 +188,7 @@ class BOOLNode(Node):
 
 
 # Bop -> + | − | & | ∥ | × | / |<< | >> | mod
+#Add Later : XOR
 class BOPNode(Node):
   binary_operations = ["+", "-","&", "||", "x", "/", "<<", ">>","mod"]
 
@@ -308,19 +309,23 @@ class ParamNode(Node):
     print(' {} '.format(self.data), end='')
   
 ######test######
-# print("--test--")
-# vec_program = BitVectorLang()
-# poss = vec_program.production_space()
-# print(poss)
-# vec_program.production('bop')
-# poss = vec_program.production_space()
-# print(poss)
-# vec_program.production('+')
-# vec_program.pretty_print()
-# print(vec_program.production_space())
-# vec_program.production('const')
-# vec_program.pretty_print()
-# print(vec_program.production_space())
-# vec_program.production(10)
-# vec_program.pretty_print()
-# print(vec_program.production_space())
+# if __name__ == '__main__':
+#   print("--test--")
+#   vec_program = BitVectorLang()
+#   poss = vec_program.production_space()
+#   print(poss)
+#   vec_program.production('bop')
+#   poss = vec_program.production_space()
+#   print(poss)
+#   vec_program.production('+')
+#   vec_program.pretty_print()
+#   print(vec_program.production_space())
+#   vec_program.production('const')
+#   vec_program.pretty_print()
+#   print(vec_program.production_space())
+#   vec_program.production(10)
+#   vec_program.pretty_print()
+#   print(vec_program.production_space())
+#   vec_program.production('neg')
+#   vec_program.pretty_print()
+#   print(vec_program.production_space())
