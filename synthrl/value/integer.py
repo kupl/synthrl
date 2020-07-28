@@ -111,8 +111,8 @@ class Integer(Value):
     return self.get_value() >= other.get_value()
 
 # constants
-# ZERO = Integer(0)
-# ONE = Integer(1)
-# TWO = Integer(2)
-# THREE = Integer(3)
-# FOUR = Integer(4)
+ZERO = Integer(0)
+ONE = Integer(1)
+TWO = Integer(2)
+THREE = Integer(3)
+FOUR = Integer(4)
