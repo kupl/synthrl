@@ -4,10 +4,7 @@ import torch.nn as nn
 from synthrl.language.abstract import Bag
 from synthrl.language.abstract import Embedding as EmbeddingInterface
 from synthrl.language.bitvector import BitVectorLang
-from synthrl.value.bitvector import BitVector
-
-# integer represent None
-NONE = BitVector.size
+from synthrl.value.bitvector import BitVector64
 
 class TokenBag(Bag):
 
@@ -19,25 +16,9 @@ class TokenBag(Bag):
     bag['HOLE'] = 0
     return cls(bag)
 
-def preprocess_value(inputs, output):
-  # inputs: tuple (or list) of input
-  # output: output value
-  
-  # make unsigned
-  inputs = [i.unsigned for i in inputs]
-  output = output.unsigned
-
-  # marginalize with None to 2
-  inputs = inputs + [NONE] * (2 - len(inputs))
-
-  # return variables
-  values = inputs + [output]
-
-  return values
-
 class Embedding(EmbeddingInterface):
 
-  def __init__(self, token_dim=15, value_dim=80):
+  def __init__(self, token_dim=15, value_dim=80, type=BitVector64):
     # token_dim: Embedding dimension of tokens.
     # value_dim: Embedding dimension of inputs and outputs.
 
@@ -52,7 +33,9 @@ class Embedding(EmbeddingInterface):
     self.token_emb = nn.Embedding(self.n_token, self.token_dim)
 
     # create i/o embedding layer
-    self.n_value = BitVector.size + 1
+    self.type = type
+    self.none = self.type.size
+    self.n_value = self.type.size + 1
     self.value_dim = value_dim
     # value_emb: [batch_size] -> [batch_size, value_dim]
     self.value_emb = nn.Embedding(self.n_value, self.value_dim)
@@ -85,7 +68,7 @@ class Embedding(EmbeddingInterface):
         # output: 1 output
 
         # values: [3] of unsigned bitvector
-        values = preprocess_value(input, output)
+        values = [i.unsigned for i in input] + [self.none] * (2 - len(input)) + [output.unsigned]
 
         # values: [3] of long tensor
         values = torch.LongTensor(values)
