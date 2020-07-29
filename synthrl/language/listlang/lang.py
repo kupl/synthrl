@@ -246,6 +246,14 @@ class ListLang(Tree):
     tree.instructions = instructions
     return tree
 
+  def copy(self):
+    copied = self.__class__(self.input_types, self.output_type)
+    copied_instructions = [i.copy() for i in self.instructions]
+    for inst in copied_instructions:
+      inst.parent = copied
+    copied.instructions = copied_instructions
+    return copied
+
 # symbol I
 class InstNode(Node):
 
@@ -701,6 +709,10 @@ class VarNode(Node):
 
     # create node and return
     return cls(data=token, type=type)
+
+  def copy(self):
+    copied = VarNode(self.type, self.data)
+    return copied
 
 # symbol AUOP
 class AUOPNode(Node):

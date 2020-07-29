@@ -1,5 +1,6 @@
 import numpy as np
 
+from synthrl.utils.decoratorutils import classproperty
 from synthrl.value.integer import Integer
 from synthrl.value.value import Value
 
@@ -22,6 +23,17 @@ class BitVector(Value):
   def sample(cls):
     iinfo = np.iinfo(cls.TYPE)
     return cls(np.random.randint(iinfo.min, iinfo.max + 1, dtype=cls.TYPE))
+
+  @property
+  def unsigned(self):
+    utype = np.dtype('uint{}'.format(self.value.dtype.itemsize * 8))
+    return self.value.view(utype)
+
+  @classproperty
+  @classmethod
+  def size(cls):
+    iinfo = np.iinfo(cls.TYPE)
+    return iinfo.max - iinfo.min + 1
 
   def __neg__(self):
     return self.__class__(-self.value)

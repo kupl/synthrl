@@ -2,9 +2,11 @@ from synthrl.utils import TimeoutException
 
 # Abstract class that all environment classes should inherit
 class Environment:
-  def __init__(self, *args, **kwargs):
+  def __init__(self, timer=None, *args, **kwargs):
     # gets needed objects to create environment
-    raise NotImplementedError
+
+    # timer: synthrl.utils.timer.Timer object
+    self.timer = timer
   
   @property
   def state(self):
@@ -17,7 +19,7 @@ class Environment:
     raise NotImplementedError
 
   def step(self, action=None):
-    if self.timer.timeout:
+    if self.timer and self.timer.timeout:
       raise TimeoutException
     return self.apply_step(action=action)
 
@@ -35,6 +37,3 @@ class Environment:
   def program(self):
     # returns the current program
     raise NotImplementedError
-
-  def set_timer(self, timer=None):
-    self.timer = timer
