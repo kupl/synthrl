@@ -35,6 +35,10 @@ class BitVector(Value):
     iinfo = np.iinfo(cls.TYPE)
     return iinfo.max - iinfo.min + 1
 
+  @property
+  def bits(self):
+    return np.binary_repr(self.value, width=self.value.dtype.itemsize * 8)
+
   def __neg__(self):
     return self.__class__(-self.value)
 
