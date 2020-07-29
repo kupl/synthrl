@@ -6,7 +6,9 @@ from synthrl.language.abstract import WrongProductionException
 #N_z -> Var_z            => var
 #     | Const_z          => const
 #     | N_z Bop N_z      => bop
-#     | -N_z             => neg
+#     | - N_z            => arithmethic neg
+#     | ¬ N_z            => bitwise_neg   
+# out-of-range, for now
 #     | Ite N_B N_z N_Z  => ite
 
 #'bop', 'neg', 'ite' as instruction command
@@ -29,11 +31,14 @@ class BitVectorLang(Tree):
     print('(',end='')
     self.start_node.pretty_print(file=file)
     print(')')
+
+  def interprete(self, inputs):
+    
 #N_z
 class ExprNode(Node):
   # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
   # expr_productions = ['var','const','bop','neg']
-  expr_productions = ['bop','const','var']
+  expr_productions = ['bop','const','var', 'neg']
   # expr_productions += ['ite']
   def production_space(self):
     if self.data =='HOLE': 
@@ -77,6 +82,11 @@ class ExprNode(Node):
       self.children={
         'NEG' : ExprNode(parent=self)
       }
+    if rule =="arith-neg":
+      self.data=="arith-neg"
+      self.children={
+        'ARITH-NEG' : ExprNode(parent=self)
+      }
     if rule=="ite":
       self.data="ite"
       self.children={
@@ -89,14 +99,19 @@ class ExprNode(Node):
     if self.data =="var":
       return self.children['VAR_Z'].interprete(inputs)
     if self.data =="const":
-      pass
+      return self.children['CONST_Z'].interprete(inputs)
     if self.data =="bop":
-      pass
+      return self.children['BOP'].interprete(inputs)
+    if self.data=="arith-neg":
+      sub=self.children['ARTHI-NEG'].interprete(inputs)
+      return -sub
     if self.data =="neg":
-      sub=self.children['NEG'].interprete(inputs)
-      return sub.negate()
-    if self.data =="ite":
       pass
+      ##implement
+    
+
+    # if self.data =="ite":
+    #   pass
 
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=='hole':
@@ -111,6 +126,11 @@ class ExprNode(Node):
       print("NEG ( ",end='')
       self.children['NEG'].pretty_print(file=file)
       print(" ) ",end='')
+    elif self.data == 'arith-neg':
+      print("ARITH-NEG ( ",end='')
+      self.children['ARITH-NEG'].pretty_print(file=file)
+      print(" ) ",end='')
+
     elif self.data=="ite":
       print(' ( ',end='')
       print(" IF ",end='')
@@ -204,11 +224,12 @@ class BOOLNode(Node):
         self.children["RightBool"].pretty_print(file=file)
       print(' ) ',end='')
 
-
-# Bop -> + | − | & | ∥ | × | / |<< | >> | mod
-#Add Later : XOR
+# ["+", "-","&", "||", "x", "/", ">>_s","xor",">>_u"]
+# Bop -> {bitwise-logical opts} | {airthmetic opts}
+# bitwise logical operators = {|, &, \oplus(XOR), singed/unsigned >>(right shift)}
+# airthmetic operators = {+, -. x , /, %} 
 class BOPNode(Node):
-  binary_operations = ["+", "-","&", "||", "x", "/", "<<", ">>","mod"]
+  binary_operations = ["+","-","x","/","%"] + ["||","&","^"] + [">>_s",">>_u"]
 
   def production_space(self):
     if self.data=='HOLE' or self.data=='hole':
@@ -228,6 +249,7 @@ class BOPNode(Node):
     }
 
   def interprete(self, inputs):
+    ##Arithmetics
     if self.data=="+":
       left=self.children['LeftEXPR'].interprete(inputs)
       right=self.children['RightEXPR'].interprete(inputs)
@@ -236,26 +258,39 @@ class BOPNode(Node):
       left=self.children['LeftEXPR'].interprete(inputs)
       right=self.children['RightEXPR'].interprete(inputs)
       return left-right
-    if self.data=="&":
-      left=self.children['LeftEXPR'].interprete(inputs)
-      right=self.children['RightEXPR'].interprete(inputs)
-      return left&right
-    if self.data=="||":
-      left=self.children['LeftEXPR'].interprete(inputs)
-      right=self.children['RightEXPR'].interprete(inputs)
-      return left|right
     if self.data=="x":
       left=self.children['LeftEXPR'].interprete(inputs)
       right=self.children['RightEXPR'].interprete(inputs)
       return left*right
     if self.data=="/":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left/right
+    if self.data=="%":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left%right
+
+    ##bitwise, logic operators
+    if self.data=="||":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left|right
+    if self.data=="&":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left&right
+    if self.data=="^":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left^right
+    
+    ##shifts
+    if self.data==">>_s":
       pass
-    if self.data=="<<":
+    if self.data==">>_u":
       pass
-    if self.data==">>":
-      pass
-    if self.data=="mod":
-      pass
+
   
   def pretty_print(self,file=None):
     print(' ( ', end='') 
@@ -299,7 +334,7 @@ class ConstNode(Node):
     self.data=rule
 
   def interprete(self, inputs):
-    return BitVector64(self.data)
+    return BitVector32(self.data)
 
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=="hole":
@@ -322,9 +357,9 @@ class ParamNode(Node):
   
   def interprete(self, inputs): ##inputs as list?
     if self.data=="param1":
-      return BitVector64(inputs[1])
+      return BitVector32(inputs[0])
     elif self.data=="param2":
-      return BitVector64(inputs[2])
+      return BitVector32(inputs[1])
   
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=="hole":
