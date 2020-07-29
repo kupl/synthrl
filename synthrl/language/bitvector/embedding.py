@@ -109,7 +109,7 @@ class Embedding(EmbeddingInterface):
     token = token.unsqueeze(1)
 
     # token: [batch_size, n_example, token_dim]
-    token = token.repeat(batch_size, n_example, 1)
+    token = token.repeat(1, n_example, 1)
 
     # embedding: [batch_size, n_example, token_dim + 3 * value_dim]
     embedding = torch.cat((token, io), dim=2)
