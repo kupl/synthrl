@@ -1,7 +1,6 @@
 import numpy as np
 
 from synthrl.utils.decoratorutils import classproperty
-from synthrl.value.integer import Integer
 from synthrl.value.value import Value
 
 class BitVector(Value):
@@ -73,13 +72,13 @@ class BitVector(Value):
     return self.__class__(np.bitwise_xor(self.value, other.value))
 
   def __lshift__(self, n):
-    if not isinstance(Integer):
-      raise ValueError('{} is not a value of synthrl.value.Integer.'.format(n))
+    if not isinstance(n, BitVector):
+      raise ValueError('{} is not a value of synthrl.value.BitVector.'.format(n))
     return self.__class__(np.left_shift(self.value, n.get_value()))
 
   def __rshift__(self, n):
-    if not isinstance(Integer):
-      raise ValueError('{} is not a value of synthrl.value.Integer.'.format(n))
+    if not isinstance(n, BitVector):
+      raise ValueError('{} is not a value of synthrl.value.BitVector.'.format(n))
     return self.__class__(np.right_shift(self.value, n.get_value()))
 
   def __eq__(self, other):
