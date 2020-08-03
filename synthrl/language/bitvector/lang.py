@@ -14,6 +14,10 @@ from synthrl.language.abstract import WrongProductionException
 #     | Ite N_B N_z N_Z  => ite
 
 #'bop', 'neg', 'ite' as instruction command
+
+#[16,32,64]
+VECTOR_LENGTH = 32 
+
 class BitVectorLang(Tree):
   def __init__(self):
     self.start_node = ExprNode()
