@@ -1,14 +1,35 @@
 # from synthrl.language.bitvector.lang import ExprNode
 import numpy as np
 from synthrl.language.bitvector.lang import BitVectorLang
+from synthrl.value.bitvector import BitVector
+from synthrl.value.bitvector import BitVector16
+from synthrl.value.bitvector import BitVector32
+from synthrl.utils.trainutils import Dataset
 
-def OracleSampler(size=5, depth=5, io_number=5):
-    pass
+def OracleSampler(sample_size=5, io_number=5):
+    dataset = Dataset()
+    for _ in range(sample_size):
+        prog = generate_program(max_move=100)
+        sample_ios = generate_io(prog, io_number=5, bit_length=16)
+        dataset.add(prog, sample_ios)
+    return dataset
 
-def generate_io(program, n_io=3):  
-    pass
+#16bit range : [-(2^15),(2^15)-1]
+#32bit range : [-(2^31), (2^31)-1]
 
-def generate_program(max_move):
+def generate_io(prog, io_number=5, bit_length=16):
+    ios = []
+    for _ in range(io_number):
+        low = -(2**bit_length)
+        high = (2**bit_length)-1
+        rand_val1 = np.random.randint(low,high) #integer
+        rand_val2 = np.random.randint(low,high)
+        output_val = prog.interprete((rand_val1,rand_val2))
+        input_tuple = (rand_val1,rand_val2)
+        ios.append((input_tuple,output_val))
+    return ios
+
+def generate_program(max_move=100):
     prog = BitVectorLang()
     space = prog.production_space()
     for i in range(max_move):
@@ -20,9 +41,4 @@ def generate_program(max_move):
     return prog
 
 if __name__ == '__main__':
-    prog = generate_program(100)
-    prog.pretty_print()
-    for k in range(10):
-        print("program ", k )
-        prog = generate_program(100)
-        prog.pretty_print()
+    dataset = OracleSampler(5,5)
