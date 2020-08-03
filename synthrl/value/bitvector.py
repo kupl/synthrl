@@ -28,6 +28,11 @@ class BitVector(Value):
     utype = np.dtype('uint{}'.format(self.value.dtype.itemsize * 8))
     return self.value.view(utype)
 
+  @property
+  def signed(self):
+    stype = np.dtype('int{}'.format(self.value.dtype.itemsize * 8))
+    return self.value.view(stype)
+
   @classproperty
   @classmethod
   def size(cls):
