@@ -72,14 +72,14 @@ class BitVector(Value):
     return self.__class__(np.bitwise_xor(self.value, other.value))
 
   def __lshift__(self, n):
-    if not isinstance(n, BitVector):
-      raise ValueError('{} is not a value of synthrl.value.BitVector.'.format(n))
+    if not isinstance(n, self.__class__):
+      raise ValueError('Operator << is not supported between {} and {}'.format(self.__class__.__name__, n.__class__.__name__))
     shifted = np.left_shift(self.value, n.get_value(),dtype=self.TYPE)
     return self.__class__(shifted)
 
   def __rshift__(self, n): #signed rshfit
-    if not isinstance(n, BitVector):
-      raise ValueError('{} is not a value of synthrl.value.BitVector.'.format(n))
+    if not isinstance(n, self.__class__):
+      raise ValueError('Operator >> is not supported between {} and {}'.format(self.__class__.__name__, n.__class__.__name__))
     shifted=np.right_shift(self.value, n.get_value(),dtype=self.TYPE)
     return self.__class__(shifted)
 
