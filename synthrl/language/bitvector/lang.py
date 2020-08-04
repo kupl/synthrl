@@ -38,6 +38,9 @@ class BitVectorLang(Tree):
 
   def interprete(self, inputs):
     return self.start_node.interprete(inputs)
+
+  def tokenize(self):
+    return self.start_node.tokenize()
     
 #N_z
 class ExprNode(Node):
@@ -132,16 +135,34 @@ class ExprNode(Node):
       print("ARITH-NEG ( ",end='')
       self.children['ARITH-NEG'].pretty_print(file=file)
       print(" ) ",end='')
+    # elif self.data=="ite":
+    #   print(' ( ',end='')
+    #   print(" IF ",end='')
+    #   self.children["IF_BOOL"].pretty_print(file=file)
+    #   print(" THEN ",end='') 
+    #   self.children["THEN_EXPR"].pretty_print(file=file)
+    #   print(" ELSE ",end='') 
+    #   self.children["ELSE_EXPR"].pretty_print(file=file)
+    #   print(' ) ',end='')
 
-    elif self.data=="ite":
-      print(' ( ',end='')
-      print(" IF ",end='')
-      self.children["IF_BOOL"].pretty_print(file=file)
-      print(" THEN ",end='') 
-      self.children["THEN_EXPR"].pretty_print(file=file)
-      print(" ELSE ",end='') 
-      self.children["ELSE_EXPR"].pretty_print(file=file)
-      print(' ) ',end='')
+  def tokenize(self):
+    if self.data=="HOLE" or self.data=='hole':
+      return []
+    else:
+      tokenized = []
+      tokenized.append(self.data)
+      if self.data=='var':
+        tokenized = tokenized + self.children['VAR_Z'].tokenize()
+      elif self.data=='const':
+        tokenized = tokenized + self.children['CONST_Z'].tokenize()
+      elif self.data=='bop':
+        tokenized = tokenized + self.children['BOP'].tokenize()
+      elif self.data=='neg':
+        tokenized = tokenized + self.children['NEG'].tokenize()
+      elif self.data=='arith-neg':
+        tokenized = tokenized + self.children['ARITH-NEG'].tokenize()
+      return tokenized
+
 
 #N_B -> true|false
 #         | Nz=Nz | N_B land N_B |N_B lor N_B| N_B lnot N_B
@@ -293,7 +314,6 @@ class BOPNode(Node):
       left=self.children['LeftEXPR'].interprete(inputs)
       right=self.children['RightEXPR'].interprete(inputs)
       return left.uns_rshift(right)
-
   
   def pretty_print(self,file=None):
     print(' ( ', end='') 
@@ -301,7 +321,15 @@ class BOPNode(Node):
     print(' {} '.format(self.data), end='')
     self.children['RightEXPR'].pretty_print(file=file)
     print(' ) ', end='') 
-
+  
+  def tokenize(self):
+    if self.data=="HOLE" or self.data=='hole':
+      return []
+    else:
+      tokenized = []
+      tokenized.append(self.data)
+      tokenized = tokenized + self.children['LeftEXPR'].tokenize() + self.children['RightEXPR'].tokenize()
+      return tokenized
 
 #Const_z -> ...
 class ConstNode(Node):
@@ -351,6 +379,12 @@ class ConstNode(Node):
     else:
       print(' {} '.format(self.data),end='')
 
+  def tokenize(self):
+    if self.data=="HOLE" or self.data=="hole":
+      return []
+    else:
+      return [self.data]
+
 #Var_z -> param1 | param2 ...
 class ParamNode(Node):
   param_space = ["param{}".format(i) for i in range(2)]
@@ -381,6 +415,11 @@ class ParamNode(Node):
     else:
       print(' {} '.format(self.data), end='')
   
+  def tokenize(self):
+    if self.data=="HOLE" or self.data=="hole":
+      return []
+    else:
+      return [self.data]
 ######test######
 # if __name__ == '__main__':
 #   print("--test--")
