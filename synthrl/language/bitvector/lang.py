@@ -13,8 +13,6 @@ from synthrl.language.abstract import WrongProductionException
 # out-of-range, for now
 #     | Ite N_B N_z N_Z  => ite
 
-#'bop', 'neg', 'ite' as instruction command
-
 #[16,32,64]
 VECTOR_LENGTH = 32 
 
@@ -341,7 +339,11 @@ class ConstNode(Node):
   def interprete(self, inputs):
     if self.data=="HOLE" or self.data=='hole':
       raise ValueError("The Constant Value is invalid as {}".format(self.data))
-    return BitVector16(self.data)
+
+    if VECTOR_LENGTH==16:    
+      return BitVector16(self.data)
+    elif VECTOR_LENGTH ==32 :
+      return BitVector32(self.data)
 
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=="hole":
@@ -364,10 +366,15 @@ class ParamNode(Node):
   
   def interprete(self, inputs): ##inputs as list?
     if self.data=="param0":
-      return BitVector16(inputs[0])
+      if VECTOR_LENGTH==16:
+        return BitVector16(inputs[0])
+      elif VECTOR_LENGTH==32:
+        return BitVector32(inputs[0])
     elif self.data=="param1":
-      return BitVector16(inputs[1])
-  
+      if VECTOR_LENGTH==16:
+        return BitVector16(inputs[1])
+      elif VECTOR_LENGTH==32:
+        return BitVector32(inputs[1])
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=="hole":
       print(' (HOLE) ', end ='')
