@@ -5,6 +5,7 @@ from synthrl.value.bitvector import BitVector
 from synthrl.value.bitvector import BitVector16
 from synthrl.value.bitvector import BitVector32
 from synthrl.utils.trainutils import Dataset
+from synthrl.language.bitvector.lang import VECTOR_LENGTH
 
 def OracleSampler(sample_size=5, io_number=5):
     dataset = Dataset()
@@ -16,7 +17,6 @@ def OracleSampler(sample_size=5, io_number=5):
 
 #16bit range : [-(2^15),(2^15)-1]
 #32bit range : [-(2^31), (2^31)-1]
-
 def generate_io(prog, io_number=5, bit_length=16):
     ios = []
     for _ in range(io_number):
