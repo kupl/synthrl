@@ -42,3 +42,7 @@ def generate_program(max_move=100):
 
 if __name__ == '__main__':
     dataset = OracleSampler(5,5)
+    for data in dataset.elements:
+        data.program.pretty_print()
+        print(data.program.tokenize())
+
