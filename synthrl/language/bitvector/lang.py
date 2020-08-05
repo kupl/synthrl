@@ -120,7 +120,7 @@ class ExprNode(Node):
     if self.data =="bop":
       return self.children['BOP'].interprete(inputs)
     if self.data=="arith-neg":
-      sub=self.children['ARTHI-NEG'].interprete(inputs)
+      sub=self.children['ARITH-NEG'].interprete(inputs)
       return -sub
     if self.data =="neg": #logical neg
       return self.children['NEG'].interprete(inputs).logical_neg()
