@@ -150,7 +150,7 @@ class ExprNode(Node):
       return []
     else:
       tokenized = []
-      tokenized.append(self.data)
+      # tokenized.append(self.data)
       if self.data=='var':
         tokenized = tokenized + self.children['VAR_Z'].tokenize()
       elif self.data=='const':
@@ -327,7 +327,7 @@ class BOPNode(Node):
       return []
     else:
       tokenized = []
-      tokenized.append(self.data)
+      # tokenized.append(self.data)
       tokenized = tokenized + self.children['LeftEXPR'].tokenize() + self.children['RightEXPR'].tokenize()
       return tokenized
 
