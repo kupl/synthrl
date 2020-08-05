@@ -7,19 +7,21 @@ from synthrl.value.bitvector import BitVector32
 from synthrl.utils.trainutils import Dataset
 from synthrl.language.bitvector.lang import VECTOR_LENGTH
 
-def OracleSampler(sample_size=5, io_number=5):
+def OracleSampler(sample_size=5, io_number=5,seed=2020):
     dataset = Dataset()
     for _ in range(sample_size):
-        prog = generate_program(max_move=100)
-        sample_ios = generate_io(prog, io_number=5, bit_length=16)
+        prog = generate_program(max_move=100,seed=seed)
+        sample_ios = generate_io(prog, io_number=5, bit_length=16, seed=seed)
         dataset.add(prog, sample_ios)
+        seed+=1
     return dataset
 
 #16bit range : [-(2^15),(2^15)-1]
 #32bit range : [-(2^31), (2^31)-1]
-def generate_io(prog, io_number=5, bit_length=16):
+def generate_io(prog, io_number=5, bit_length=16,seed=2020):
     ios = []
     for _ in range(io_number):
+        np.random.seed(seed)
         low = -(2**bit_length)
         high = (2**bit_length)-1
         rand_val1 = np.random.randint(low,high) #integer
@@ -27,21 +29,24 @@ def generate_io(prog, io_number=5, bit_length=16):
         output_val = prog.interprete((rand_val1,rand_val2))
         input_tuple = (rand_val1,rand_val2)
         ios.append((input_tuple,output_val))
+        seed+=1
     return ios
 
-def generate_program(max_move=100):
+def generate_program(max_move=100,seed=2020):
     prog = BitVectorLang()
     space = prog.production_space()
     for i in range(max_move):
+        np.random.seed(seed)
         action = np.random.choice(space)
         prog.production(action)
         space = prog.production_space()
         if len(space)==0:
             break
+        seed+=1        
     return prog
 
 if __name__ == '__main__':
-    dataset = OracleSampler(5,5)
+    dataset = OracleSampler(5,5,seed=1010)
     for data in dataset.elements:
         data.program.pretty_print()
         print(data.program.tokenize())
