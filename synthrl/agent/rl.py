@@ -47,7 +47,7 @@ class Network(nn.Module):
     attn = attn.reshape(batch_size, n_example, -1).permute(0, 2, 1)
 
     # pooled: [batch_size, hidden_size]
-    pooled = F.max_pool1d(n_example).squeeze(-1)
+    pooled = F.max_pool1d(attn, n_example).squeeze(-1)
 
     # policy: [batch_size, num_tokens]
     #  value: [batch_size, 1]
