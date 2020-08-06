@@ -117,7 +117,7 @@ if __name__=='__main__':
         
         loss = -torch.div(loss,len(programs))
         print("Loss at epoch {} is {}".format(epoch+1, loss[0]))
-        pre_train_losses.append(loss[0])
+        pre_train_losses.append(loss.item())
         print("Current Train Losses: ", pre_train_losses)
         loss.backward()
         optimizer.step()
