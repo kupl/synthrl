@@ -15,7 +15,7 @@ from synthrl.utils.decoratorutils import classproperty
 #     | Ite N_B N_z N_Z  => ite
 
 #[16,32,64]
-VECTOR_LENGTH = 32 
+VECTOR_LENGTH = 16
 
 class BitVectorLang(Tree):
   def __init__(self):
@@ -421,7 +421,7 @@ class ConstNode(Node):
     if self.data=="HOLE" or self.data=="hole":
       return []
     else:
-      return [self.data]
+      return [str(self.data)]
 
   @classproperty
   @classmethod
