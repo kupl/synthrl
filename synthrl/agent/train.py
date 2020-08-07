@@ -20,9 +20,6 @@ from synthrl.language.bitvector.embedding import Embedding
 
 
 
-def loss(a):
-    return 
-
 def DataLoader(sample_size=10, io_number=5 , seed=None):
     dataset = OracleSampler(sample_size =sample_size, io_number=io_number,seed=seed)
     programs = []
@@ -66,14 +63,18 @@ if __name__=='__main__':
     emb_model = Embedding(token_dim=15,value_dim=40, type=BitVector16)
     model = Network(emb_model.emb_dim,len(BitVectorLang.tokens))
     
-    epochs = 1000
-    programs, IOs = DataLoader(10,5)
+    epochs = 100
+    programs, IOs = DataLoader(1000,5)
     seq_len=10
     hidden_size=256
 
+    print("Epochs: {}".format(epochs))
+    print("Sampled Pgms: {}".format(len(programs)))
+    print("Sampled IOs for each Pgm: {}".format(len(IOs[0][0])))
     
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
+    
     if torch.cuda.is_available():
         emb_model = emb_model.to(device)
         model = model.to(device)
@@ -83,7 +84,9 @@ if __name__=='__main__':
     model.train()
     emb_model.train()
     pre_train_losses = []
+
     for epoch in range(epochs):
+        print(epoch)
         loss = torch.zeros(1)
         loss = loss.to(device)
         for idx, prog in enumerate(programs):
@@ -115,7 +118,7 @@ if __name__=='__main__':
                     idx_a_t = sorted(BitVectorLang.tokens).index(tokenized[k])
                     loss+=(y_policy[0][idx_a_t].float().log())
         
-        loss = -torch.div(loss,len(programs))
+        loss = - torch.div(loss,len(programs))
         print("Loss at epoch {} is {}".format(epoch+1, loss[0]))
         pre_train_losses.append(loss.item())
         print("Current Train Losses: ", pre_train_losses)
