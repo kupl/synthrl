@@ -4,6 +4,7 @@ from synthrl.value.bitvector import BitVector64
 from synthrl.value.bitvector import BitVector32
 from synthrl.value.bitvector import BitVector16
 from synthrl.language.abstract import WrongProductionException
+from synthrl.utils.decoratorutils import classproperty
 
 #N_z -> Var_z            => var
 #     | Const_z          => const
@@ -49,7 +50,14 @@ class BitVectorLang(Tree):
 
   def tokenize(self):
     return self.start_node.tokenize()
-    
+  
+  def is_complete(self):
+    return self.start_node.is_complete()
+
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return ExprNode.tokens + BOPNode.tokens + ConstNode.tokens + ParamNode.tokens
 #N_z
 class ExprNode(Node):
   # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
@@ -103,13 +111,14 @@ class ExprNode(Node):
       self.children={
         'ARITH-NEG' : ExprNode(parent=self)
       }
-    if rule=="ite":
-      self.data="ite"
-      self.children={
-        "IF_BOOL" : BOOLNode(parent=self),
-        "THEN_EXPR" : ExprNode(parent=self),
-        "ELSE_EXPR" : ExprNode(parent=self)
-      }
+    
+    # if rule=="ite":
+    #   self.data="ite"
+    #   self.children={
+    #     "IF_BOOL" : BOOLNode(parent=self),
+    #     "THEN_EXPR" : ExprNode(parent=self),
+    #     "ELSE_EXPR" : ExprNode(parent=self)
+    #   }
 
   def interprete(self, inputs):
     if self.data =="var":
@@ -228,7 +237,6 @@ class ExprNode(Node):
       return []
     else:
       tokenized = []
-      tokenized.append(self.data)
       if self.data=='var':
         tokenized = tokenized + self.children['VAR_Z'].tokenize()
       elif self.data=='const':
@@ -236,11 +244,26 @@ class ExprNode(Node):
       elif self.data=='bop':
         tokenized = tokenized + self.children['BOP'].tokenize()
       elif self.data=='neg':
+        tokenized.append(self.data)
         tokenized = tokenized + self.children['NEG'].tokenize()
       elif self.data=='arith-neg':
+        tokenized.append(self.data)
         tokenized = tokenized + self.children['ARITH-NEG'].tokenize()
       return tokenized
 
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return ["arith-neg","neg"]
+  
+  def is_complete(self):
+    if self.data=="HOLE" or self.data=="hole":
+      return False
+    else:
+      is_comp= True
+      for key in list(self.children.keys()):
+        is_comp = True and (self.children[key].is_complete())
+      return is_comp
 
 #N_B -> true|false
 #         | Nz=Nz | N_B land N_B |N_B lor N_B| N_B lnot N_B
@@ -444,11 +467,14 @@ class BOPNode(Node):
       return left.uns_rshift(right)
   
   def pretty_print(self,file=None):
-    print(' ( ', end='')
-    self.children['LeftEXPR'].pretty_print(file=file)
-    print(' {} '.format(self.data), end='')
-    self.children['RightEXPR'].pretty_print(file=file)
-    print(' ) ', end='') 
+    if self.data=="HOLE" or self.data=="hole":
+      print(' ( {} ) '.format(self.data))
+    else:
+      print(' ( ', end='') 
+      self.children['LeftEXPR'].pretty_print(file=file)
+      print(' {} '.format(self.data), end='')
+      self.children['RightEXPR'].pretty_print(file=file)
+      print(' ) ', end='') 
     
   @classmethod
   def parse(cls, exp):
@@ -498,6 +524,17 @@ class BOPNode(Node):
       tokenized = tokenized + self.children['LeftEXPR'].tokenize() + self.children['RightEXPR'].tokenize()
       return tokenized
 
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return cls.binary_operations
+
+  def is_complete(self):
+    if self.data=="HOLE" or self.data=="hole":
+      return False
+    else: 
+      return True and (self.children['LeftEXPR'].is_complete()) and (self.children['RightEXPR'].is_complete())
+
 #Const_z -> ...
 class ConstNode(Node):
   '''
@@ -522,6 +559,7 @@ class ConstNode(Node):
   #x0000000000000010
   '''
   constants = [i for i in range(16+1)]
+  str_constants = [str(i) for i in range(16+1)]
   def production_space(self):
     if self.data == 'HOLE'or self.data=='hole':
       return self, self.constants
@@ -563,6 +601,17 @@ class ConstNode(Node):
     else:
       return [self.data]
 
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return cls.str_constants
+
+  def is_complete(self):
+    if self.data=="HOLE" or self.data=="hole":
+      return False
+    else: 
+      return True
+
 #Var_z -> param1 | param2 ...
 class ParamNode(Node):
   param_space = ["param{}".format(i) for i in range(2)]
@@ -587,6 +636,7 @@ class ParamNode(Node):
         return BitVector16(inputs[1])
       elif VECTOR_LENGTH==32:
         return BitVector32(inputs[1])
+
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=="hole":
       print(' (HOLE) ', end ='')
@@ -610,6 +660,18 @@ class ParamNode(Node):
       return []
     else:
       return [self.data]
+  
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return cls.param_space
+
+  def is_complete(self):
+    if self.data=="HOLE" or self.data=="hole":
+      return False
+    else: 
+      return True
+
 ######test######
 #if __name__ == '__main__':
   #print("--test--")
