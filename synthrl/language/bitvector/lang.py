@@ -50,7 +50,7 @@ class BitVectorLang(Tree):
   @classmethod
   def tokens(cls):
     return ExprNode.tokens + BOPNode.tokens + ConstNode.tokens + ParamNode.tokens
- 
+  
   @classmethod
   def parse(cls, program):
     # check if program is string
@@ -61,7 +61,7 @@ class BitVectorLang(Tree):
 class ExprNode(Node):
   # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
   # expr_productions = ['var','const','bop','neg']
-  expr_productions = ['bop','const','var', 'neg']
+  expr_productions = ['bop','const','var', 'neg','arith-neg']
   # expr_productions += ['ite']
   def production_space(self):
     if self.data =='HOLE': 
@@ -144,11 +144,11 @@ class ExprNode(Node):
     elif self.data=='bop':
       self.children['BOP'].pretty_print(file=file)
     elif self.data=='neg':
-      print("NEG ( ",end='')
+      print("¬ ( ",end='')
       self.children['NEG'].pretty_print(file=file)
       print(" ) ",end='')
     elif self.data == 'arith-neg':
-      print("ARITH-NEG ( ",end='')
+      print(" - ( ",end='')
       self.children['ARITH-NEG'].pretty_print(file=file)
       print(" ) ",end='')
     # elif self.data=="ite":
@@ -194,7 +194,7 @@ class ExprNode(Node):
       return ParamNode.parse(exp)
     elif exp in [str(i) for i in range(16)]: # const
       return ConstNode.parse(exp)
-    elif exp.startswith('-'): # neg
+    elif exp.startswith('¬'): # neg
       # set operator
       op = 'neg'
       # get leftmost '('
@@ -215,7 +215,7 @@ class ExprNode(Node):
       children = {
         'NEG': ExprNode.parse(subexp)
       }
-    elif exp.startswith('¬'): # arith-neg
+    elif exp.startswith('-'): # arith-neg
       # set operator
       op = 'arith-neg'
       # get leftmost '('
