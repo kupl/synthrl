@@ -203,7 +203,7 @@ class ExprNode(Node):
       e = exp.rfind(')')
       # no parentheses
       if (s==-1 and e==-1):
-        op_i = exp.find('-')
+        op_i = exp.find('¬')
         subexp = exp[op_i+1:].strip()
       # valid parentheses
       elif (s!=-1 and e!=-1):
@@ -224,7 +224,7 @@ class ExprNode(Node):
       e = exp.rfind(')')
       # no parentheses
       if (s==-1 and e==-1):
-        op_i = exp.find('¬')
+        op_i = exp.find('-')
         subexp = exp[op_i+1:].strip()
       # valid parentheses
       elif (s!=-1 and e!=-1):
