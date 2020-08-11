@@ -27,6 +27,12 @@ from synthrl.language.bitvector.oracle import OracleSampler
 from synthrl.language.bitvector.embedding import Embedding
 
 
+class RollOutError(Exception):
+
+  def __init__(self, *args, **kwargs):
+    super(RollOutError, self).__init__(*args, **kwargs)
+
+
 
 def DataLoader(sample_size=10, io_number=5 , seed=None):
     dataset = OracleSampler(sample_size =sample_size, io_number=io_number,seed=seed)
@@ -79,8 +85,8 @@ def PreTrain(emb_model, model,programs, IOs, epochs=100):
     print("Sampled Pgms: {}".format(len(programs)))
     print("Sampled IOs for each Pgm: {}".format(len(IOs[0][0])))
     
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # device = torch.device("cpu")
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
     
     if torch.cuda.is_available():
         emb_model = emb_model.to(device)
@@ -167,7 +173,7 @@ def policy_rollout(io_spec, emb_model, model):
         if pgm.is_complete():
             break
         if (k == MAX_MOVE-1) and ( not pgm.is_complete() ) :
-            raise ValueError("program couldn't be synthesized untill {} moves".format(MAX_MOVE))
+            raise RollOutError("Rollout synthesis couldn't be done in {} moves".format(MAX_MOVE))
     return pgm
 
 def reward(io_spec, prog):
@@ -185,13 +191,20 @@ def Train(emb_model, model, IOs, epochs):
     seq_len = 10 
     train_losses = []
     eps=1e-5
+
+
     print("Main Training Start")
     for epoch in range(epochs):
         total_avg_loss = 0
-        #optimizer.zero_grad()
+        success_rollout = 0 #counts policy rollouts of completed sythesis  
         for io_spec in IOs:
             loss = torch.zeros(1) #According to our paper, "Given the specific rollout, we train v and π to maximize~", So set loss zero val for each specific roll out(i.e for each speicific io_spec)
-            prog = policy_rollout(io_spec, emb_model, model)
+            
+            try:
+                prog = policy_rollout(io_spec, emb_model, model)
+            except RollOutError:
+                continue
+
             n_example = len(io_spec[0])
             tokenized = prog.tokenize()
             R = reward(io_spec, prog)
@@ -219,12 +232,18 @@ def Train(emb_model, model, IOs, epochs):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            total_avg_loss += loss
-        total_avg_loss = torch.div(total_avg_loss,len(IOs))
+            total_avg_loss  += loss
+            success_rollout += 1
+
+        total_avg_loss = torch.div(total_avg_loss, success_rollout)
         train_losses.append(total_avg_loss.item())
         print("Loss at epoch {} is {}".format(epoch+1, total_avg_loss[0]))
         print("Current Train Losses: ", train_losses)
 
+        print("FINAL RESULT::" , train_losses)
+        path = "./saved_models/model_maintrain" + ".tar"
+        torch.save({'model_state_dict': model.state_dict() , 'emb_model_state_dict': emb_model.state_dict() }, path)
+        print("Model Saved!!")
         
 if __name__=='__main__':
     emb_model = Embedding(token_dim=15,value_dim=40, type=BitVector16)
@@ -233,4 +252,4 @@ if __name__=='__main__':
     programs, IOs = DataLoader(10,10)
     PreTrain(emb_model, model, programs, IOs ,epochs)
     Train(emb_model, model, IOs, epochs)
-
+    print("Training finished.")
