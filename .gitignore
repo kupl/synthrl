@@ -4,3 +4,4 @@ dist
 build
 *.DS_Store
 *.tar
+*.json
