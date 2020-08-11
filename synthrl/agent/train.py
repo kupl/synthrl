@@ -74,6 +74,7 @@ def PreTrain(emb_model, model,programs, IOs, epochs=100):
     seq_len=10
     hidden_size=256
 
+    print("Pretraining Start")
     print("Epochs: {}".format(epochs))
     print("Sampled Pgms: {}".format(len(programs)))
     print("Sampled IOs for each Pgm: {}".format(len(IOs[0][0])))
@@ -87,11 +88,11 @@ def PreTrain(emb_model, model,programs, IOs, epochs=100):
     optimizer = optim.Adam(list(model.parameters()) + list(emb_model.parameters()) )
 
     pre_train_losses = []
+
     for epoch in range(epochs):
         print(epoch)
         loss = torch.zeros(1)
         loss = loss.to(device)
-
         for idx, prog in enumerate(programs):
             batch_size = 1
             n_example = len(IOs[idx][0])
@@ -115,12 +116,11 @@ def PreTrain(emb_model, model,programs, IOs, epochs=100):
                         outputs = torch.cat((outputs,query),dim=1)
                 idx_a_t = sorted(BitVectorLang.tokens).index(tokenized[k])
                 loss+=(y_policy[0][idx_a_t].float().log())
-
         loss = - torch.div(loss,len(programs))
         print("Loss at epoch {} is {}".format(epoch+1, loss[0]))
         pre_train_losses.append(loss.item())
         print("Current Train Losses: ", pre_train_losses)
-        opimizer.zero_grad()
+        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -132,7 +132,7 @@ def PreTrain(emb_model, model,programs, IOs, epochs=100):
 
 def policy_rollout(io_spec, emb_model, model):
     #The io_spec must be packed by BitVector cls
-    MAX_MOVE = 50 
+    MAX_MOVE = 100 
     pgm = BitVectorLang()
     seq_len = 10
     batch_size = 1
@@ -166,6 +166,8 @@ def policy_rollout(io_spec, emb_model, model):
             print("Something bad happended")
         if pgm.is_complete():
             break
+        if (k == MAX_MOVE-1) and ( not pgm.is_complete() ) :
+            raise ValueError("program couldn't be synthesized untill {} moves".format(MAX_MOVE))
     return pgm
 
 def reward(io_spec, prog):
@@ -181,8 +183,12 @@ def Train(emb_model, model, IOs, epochs):
     batch_size = 1
     optimizer = optim.Adam(list(model.parameters()) + list(emb_model.parameters()) )
     seq_len = 10 
+    train_losses = []
+    eps=1e-5
+    print("Main Training Start")
     for epoch in range(epochs):
-    #optimizer.zero_grad()
+        total_avg_loss = 0
+        #optimizer.zero_grad()
         for io_spec in IOs:
             loss = torch.zeros(1) #According to our paper, "Given the specific rollout, we train v and π to maximize~", So set loss zero val for each specific roll out(i.e for each speicific io_spec)
             prog = policy_rollout(io_spec, emb_model, model)
@@ -204,23 +210,28 @@ def Train(emb_model, model, IOs, epochs):
                         query = query.permute(1,0,2)
                         outputs = torch.cat((outputs,query),dim=1)      
                 if R == 1:
-                    loss += (y_value.float().log()).reshape(1)
+                    loss += ( (y_value.float() - eps ).log()).reshape(1)
                     idx_a_t = sorted(BitVectorLang.tokens).index(tokenized[k])
                     loss+=(y_policy[0][idx_a_t].float().log())
                 elif R==0:
-                    loss +=  - (y_value.float().log()).reshape(1)
-            loss = - loss
+                    loss +=  ( (1 -  y_value.float()) + eps ).log().reshape(1)
+            loss = - loss #Since the maximized loss should be minimized, according to the paper
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            total_avg_loss += loss
+        total_avg_loss = torch.div(total_avg_loss,len(IOs))
+        train_losses.append(total_avg_loss.item())
+        print("Loss at epoch {} is {}".format(epoch+1, total_avg_loss[0]))
+        print("Current Train Losses: ", train_losses)
 
-    
+        
 if __name__=='__main__':
     emb_model = Embedding(token_dim=15,value_dim=40, type=BitVector16)
     model = Network(emb_model.emb_dim,len(BitVectorLang.tokens))
-    epochs = 10
+    epochs = 2
     programs, IOs = DataLoader(10,5)
-    
+
     PreTrain(emb_model, model, programs, IOs ,epochs)
     Train(emb_model, model, IOs, epochs)
 
