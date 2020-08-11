@@ -230,8 +230,7 @@ if __name__=='__main__':
     emb_model = Embedding(token_dim=15,value_dim=40, type=BitVector16)
     model = Network(emb_model.emb_dim,len(BitVectorLang.tokens))
     epochs = 2
-    programs, IOs = DataLoader(10,5)
-
+    programs, IOs = DataLoader(10,10)
     PreTrain(emb_model, model, programs, IOs ,epochs)
     Train(emb_model, model, IOs, epochs)
 
