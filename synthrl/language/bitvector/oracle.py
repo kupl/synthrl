@@ -83,6 +83,4 @@ def generate_program(max_move=100,seed=None):
 
 if __name__ == '__main__':
     dataset = OracleSampler(100,5,seed=None)
-    # for data in dataset.elements:
-    #     for io in data.ioset:
-    #         print(io)
+    dataset.to_json("./dataset.json")
