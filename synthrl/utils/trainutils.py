@@ -85,5 +85,38 @@ class Dataset:
 
   def __str__(self):
     return repr(self)
+  
   def length(self):
     return len(self.elements)
+  
+  def to_json(self, file):
+	  # file: path for saving data.json
+    # save self.elements as json
+    with open(file, 'w') as f:
+      print("{", file=f)
+      print("  \"data\": [", file=f)
+      # for each program & ioset
+      for e in self.elements:
+        program = e.program
+        ioset = e.ioset
+        print("    {", file=f)
+        print("      \"pgm\": \"{}\",".format(program), file=f)
+        print("      \"io\": [", file=f)
+        print("        {}".format(",\n        ".join(
+          ["\"{}\"".format(a) for a in ioset])), file=f)
+        print("      ]", file=f)
+        print("    }" if e == self.elements[-1] else "    },", file=f)
+      print("  ]", file=f)
+      print("}", file=f)
+  
+  def from_json(self, file):
+	  # file: path to data.json
+    res = []
+    with open(file, 'r') as f:
+      raw_json = json.load(f)
+      for e in raw_json['data']:
+        program = e['pgm']
+        ioset = [literal_eval(a) for a in e['io']]
+        res.append((program, ioset))
+    return self.__class__(res)
+
