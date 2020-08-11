@@ -35,7 +35,7 @@ def OracleSampler(sample_size=5, io_number=5, seed=None):
                 raise ValueError
         except ValueError:
             continue
-        sample_ios = generate_io(prog, io_number=5, bit_length=VECTOR_LENGTH, seed=seed)
+        sample_ios = generate_io(prog, io_number=io_number, bit_length=VECTOR_LENGTH, seed=seed)
         dataset.add(prog, sample_ios)
     return dataset
 
