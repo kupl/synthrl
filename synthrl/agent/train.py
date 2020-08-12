@@ -240,11 +240,11 @@ def Train(emb_model, model, IOs, epochs):
         print("Loss at epoch {} is {}".format(epoch+1, total_avg_loss[0]))
         print("Current Train Losses: ", train_losses)
 
-        print("FINAL RESULT::" , train_losses)
-        path = "./saved_models/model_maintrain" + ".tar"
-        torch.save({'model_state_dict': model.state_dict() , 'emb_model_state_dict': emb_model.state_dict() }, path)
-        print("Model Saved!!")
-        
+    print("FINAL RESULT::" , train_losses)
+    path = "./saved_models/model_maintrain" + ".tar"
+    torch.save({'model_state_dict': model.state_dict() , 'emb_model_state_dict': emb_model.state_dict() }, path)
+    print("Main Training Model Saved!!")
+
 if __name__=='__main__':
     emb_model = Embedding(token_dim=15,value_dim=40, type=BitVector16)
     model = Network(emb_model.emb_dim,len(BitVectorLang.tokens))
