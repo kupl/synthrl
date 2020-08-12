@@ -96,7 +96,6 @@ def PreTrain(emb_model, model,programs, IOs, epochs=100):
     pre_train_losses = []
 
     for epoch in range(epochs):
-        print(epoch)
         loss = torch.zeros(1)
         loss = loss.to(device)
         for idx, prog in enumerate(programs):
@@ -234,7 +233,7 @@ def Train(emb_model, model, IOs, epochs):
             optimizer.step()
             total_avg_loss  += loss
             success_rollout += 1
-
+            print("The Given Reward value was {}".format(R))
         total_avg_loss = torch.div(total_avg_loss, success_rollout)
         train_losses.append(total_avg_loss.item())
         print("Loss at epoch {} is {}".format(epoch+1, total_avg_loss[0]))
@@ -248,8 +247,8 @@ def Train(emb_model, model, IOs, epochs):
 if __name__=='__main__':
     emb_model = Embedding(token_dim=15,value_dim=40, type=BitVector16)
     model = Network(emb_model.emb_dim,len(BitVectorLang.tokens))
-    epochs = 2
-    programs, IOs = DataLoader(10,10)
+    epochs = 80
+    programs, IOs = DataLoader(80,20)
     PreTrain(emb_model, model, programs, IOs ,epochs)
     Train(emb_model, model, IOs, epochs)
     print("Training finished.")
