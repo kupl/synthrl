@@ -176,7 +176,7 @@ class ExprNode(Node):
       return ParamNode.parse(exp)
     elif exp in [str(i) for i in range(16)]: # const
       return ConstNode.parse(exp)
-    elif exp.startswith('-'): # neg
+    elif exp.startswith('¬'): # neg
       # set operator
       op = 'neg'
       # get leftmost '('
@@ -185,7 +185,7 @@ class ExprNode(Node):
       e = exp.rfind(')')
       # no parentheses
       if (s==-1 and e==-1):
-        op_i = exp.find('-')
+        op_i = exp.find('¬')
         subexp = exp[op_i+1:].strip()
       # valid parentheses
       elif (s!=-1 and e!=-1):
@@ -197,7 +197,7 @@ class ExprNode(Node):
       children = {
         'NEG': ExprNode.parse(subexp)
       }
-    elif exp.startswith('¬'): # arith-neg
+    elif exp.startswith('-'): # arith-neg
       # set operator
       op = 'arith-neg'
       # get leftmost '('
@@ -206,7 +206,7 @@ class ExprNode(Node):
       e = exp.rfind(')')
       # no parentheses
       if (s==-1 and e==-1):
-        op_i = exp.find('¬')
+        op_i = exp.find('-')
         subexp = exp[op_i+1:].strip()
       # valid parentheses
       elif (s!=-1 and e!=-1):
@@ -485,10 +485,10 @@ class BOPNode(Node):
     def splitBop(exp):
       stack = 0
       cur = 0
-      while True: 
-        if exp[cur] == '(': 
+      while cur < len(exp):
+        if exp[cur] == '(':
           stack += 1
-        elif exp[cur] == ')': 
+        elif exp[cur] == ')':
           stack -= 1
         elif exp[cur] in ['+', '-', '*', '/', '%', '&', '^']:
           if stack == 0: 
@@ -502,8 +502,12 @@ class BOPNode(Node):
         else:
           pass
         cur += 1
+      return exp, None, None
     
     leftExp, bop, rightExp = splitBop(exp)
+    if bop==None and rightExp==None:
+      # delete outermost parentheses
+      leftExp, bop, rightExp = splitBop(exp[1:-1])
     children = {
       'LeftEXPR': ExprNode.parse(leftExp),
       'RightEXPR': ExprNode.parse(rightExp)
