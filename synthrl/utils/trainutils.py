@@ -152,5 +152,92 @@ class Dataset:
 
   def __str__(self):
     return repr(self)
+  
   def length(self):
     return len(self.elements)
+  
+  def to_json(self, file):
+	  # file: path for saving data.json
+    # save self.elements as json    
+
+    def replace_ops(program):
+      program = program.replace("ARITH-NEG", "-")
+      program = program.replace("NEG", "¬")
+      return program
+    
+    with open(file, 'w', encoding="utf-8") as f:
+      print("{", file=f)
+      print("  \"data\": [", file=f)
+      # for each program & ioset
+      for e in self.elements:
+        program = e.program
+        if isinstance(program, ListLang):
+          pgm_type = "List"
+          with StringIO() as buf, redirect_stdout(buf):
+            program.pretty_print(file=buf)
+            program = buf.getvalue()
+          program = program.replace('\n', ' ').strip()
+        elif isinstance(program, BitVectorLang):
+          pgm_type = "Bitvector"
+          with StringIO() as buf, redirect_stdout(buf):
+            program.pretty_print(file=buf)
+            program = buf.getvalue()
+          program = replace_ops(program)
+          program = program.replace('\n', '').strip()
+        else:
+          raise ValueError("Invalid program tree is given")
+        ioset = e.ioset
+        print("    {", file=f)
+        print("      \"program_type\": \"{}\",".format(pgm_type), file=f)
+        print("      \"pgm\": \"{}\",".format(program), file=f)
+        print("      \"io\": [", file=f)
+        print("        {}".format(",\n        ".join(
+          ["\"{}\"".format(a) for a in ioset])), file=f)
+        print("      ]", file=f)
+        print("    }" if e == self.elements[-1] else "    },", file=f)
+      print("  ]", file=f)
+      print("}", file=f)
+  
+  @classmethod
+  def from_json(self, file):
+	  # file: path to data.json
+    res = Dataset()
+    with open(file, 'r', encoding="utf-8") as f:
+      raw_json = json.load(f)
+      for e in raw_json['data']:
+        pgm_type = e['program_type']
+        program = e['pgm']
+        if pgm_type == "List":
+          parser = ListLang.parse
+        elif pgm_type == "Bitvector":
+          parser = BitVectorLang.parse
+        else:
+          return SyntaxError("Invalid program type {} for {}".format(pgm_type, program))
+        program = parser(program)
+        ioset = [literal_eval(a) for a in e['io']]
+        res.add(program, ioset)
+    return res
+
+  def __repr__(self):
+    
+    # make string using StingIO
+    stream = StringIO()
+
+    # for each element
+    for element in self.elements:
+
+      # print program
+      print('--program--', file=stream)
+      element.program.pretty_print(file=stream)
+      
+      # print io pairs
+      print('--io set--', file=stream)
+      for pair in element.ioset:
+        print(pair, file=stream)
+
+      print(file=stream)
+
+    # get string and return
+    string = stream.getvalue()
+    stream.close()
+    return string

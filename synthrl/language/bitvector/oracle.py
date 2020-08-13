@@ -35,7 +35,7 @@ def OracleSampler(sample_size=5, io_number=5, seed=None):
                 raise ValueError
         except ValueError:
             continue
-        sample_ios = generate_io(prog, io_number=5, bit_length=16, seed=seed)
+        sample_ios = generate_io(prog, io_number=io_number, bit_length=VECTOR_LENGTH, seed=seed)
         dataset.add(prog, sample_ios)
     return dataset
 
@@ -81,9 +81,6 @@ def generate_program(max_move=100,seed=None):
         ind+=1
     return prog
 
-if __name__ == '__main__':
-    dataset = OracleSampler(100,5,seed=None)
-    # for data in dataset.elements:
-        # data.program.pretty_print()
-        # print(data.program.is_complete())
-
+# if __name__ == '__main__':
+#     dataset = OracleSampler(100,5,seed=None)
+#     dataset.to_json("./dataset.json")

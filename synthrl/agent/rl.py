@@ -55,8 +55,9 @@ class Network(nn.Module):
     value = self.value(pooled)
 
     policy = F.softmax(policy, dim=-1)
-    value = -F.softplus(value) + self.eta
-
+    # value = -F.softplus(value) + self.eta
+    #Only for testing, we constraint value to be v \in [0,1]
+    value = F.sigmoid(value)
     return policy, value, query, hidden
 
 class RLAgent(Agent):

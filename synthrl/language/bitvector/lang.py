@@ -15,7 +15,7 @@ from synthrl.utils.decoratorutils import classproperty
 #     | Ite N_B N_z N_Z  => ite
 
 #[16,32,64]
-VECTOR_LENGTH = 32 
+VECTOR_LENGTH = 16
 
 class BitVectorLang(Tree):
   def __init__(self):
@@ -60,11 +60,22 @@ class BitVectorLang(Tree):
   @classmethod
   def tokens(cls):
     return ExprNode.tokens + BOPNode.tokens + ConstNode.tokens + ParamNode.tokens
+  
+  @classmethod
+  def parse(cls, program):
+    # check if program is string
+    if not isinstance(program, str):
+      raise ValueError("Program {} is not a string.".format(program))
+    
+    program = program.strip()[1:-1].strip()
+    pgm = cls()
+    pgm.start_node = ExprNode.parse(program)
+    return pgm
 #N_z
 class ExprNode(Node):
   # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
   # expr_productions = ['var','const','bop','neg']
-  expr_productions = ['bop','const','var', 'neg']
+  expr_productions = ['bop','const','var', 'neg','arith-neg']
   # expr_productions += ['ite']
   def production_space(self):
     if self.data =='HOLE': 
@@ -147,11 +158,11 @@ class ExprNode(Node):
     elif self.data=='bop':
       self.children['BOP'].pretty_print(file=file)
     elif self.data=='neg':
-      print("NEG ( ",end='')
+      print("¬ ( ",end='')
       self.children['NEG'].pretty_print(file=file)
       print(" ) ",end='')
     elif self.data == 'arith-neg':
-      print("ARITH-NEG ( ",end='')
+      print(" - ( ",end='')
       self.children['ARITH-NEG'].pretty_print(file=file)
       print(" ) ",end='')
     # elif self.data=="ite":
@@ -247,6 +258,72 @@ class ExprNode(Node):
         tokenized.append(self.data)
         tokenized = tokenized + self.children['ARITH-NEG'].tokenize()
       return tokenized
+  
+  @classmethod
+  def parse(cls, exp):
+    # check if expression is string
+    if not isinstance(exp, str):
+      raise ValueError("Given expression {} is not a string".format(exp))
+    if exp in ['param0', 'param1']: # var
+      return ParamNode.parse(exp)
+    elif exp in [str(i) for i in range(16+1)]: # const
+      return ConstNode.parse(exp)
+    elif exp.startswith('¬'): # neg
+      # set operator
+      op = 'neg'
+      # get leftmost '('
+      s = exp.find('(')
+      # get rightmost ')'
+      e = exp.rfind(')')
+      # no parentheses
+      if (s==-1 and e==-1):
+        op_i = exp.find('¬')
+        subexp = exp[op_i+1:].strip()
+      # valid parentheses
+      elif (s!=-1 and e!=-1):
+        subexp = exp[s+1:e].strip()
+      # invalid parentheses
+      else:
+        raise SyntaxError("Expression {} has invalid syntax.".format(exp))
+      # set children
+      children = {
+        'NEG': ExprNode.parse(subexp)
+      }
+    elif exp.startswith('-'): # arith-neg
+      # set operator
+      op = 'arith-neg'
+      # get leftmost '('
+      s = exp.find('(')
+      # get rightmost ')'
+      e = exp.rfind(')')
+      # no parentheses
+      if (s==-1 and e==-1):
+        op_i = exp.find('-')
+        subexp = exp[op_i+1:].strip()
+      # valid parentheses
+      elif (s!=-1 and e!=-1):
+        subexp = exp[s+1:e].strip()
+      # invalid parentheses
+      else:
+        raise SyntaxError("Expression {} has invalid syntax.".format(exp))
+      children = {
+        'ARITH-NEG': ExprNode.parse(subexp)
+      }
+    else: # bop or error
+      # set operator
+      op = 'bop'
+      subexp = exp
+      children = {
+        'BOP': BOPNode.parse(subexp.strip())
+      }
+    
+    # create expression node
+    node = cls(data=op)
+    for key in children.keys():
+      children[key].parent = node
+    node.children = children
+    return node
+
 
   @classproperty
   @classmethod
@@ -395,6 +472,56 @@ class BOOLNode(Node):
     node.children = children
     return node
 
+  @classmethod
+  def parse(cls, bexp):
+    if not isinstance(bexp, str):
+      raise ValueError("Boolean expression {} is not a string".format(bexp))
+    
+    if bexp=='true' or bexp=='false':
+      return cls(data=bexp)
+    
+    def splitBool(bexp):
+      stack = 0
+      cur = 0
+      while True: 
+        if bexp[cur] == '(': 
+          stack += 1
+        elif bexp[cur] == ')': 
+          stack -= 1
+        elif bexp[cur] == '=':
+          if stack == 0: 
+            return (bexp[:cur].strip(), bexp[cur], bexp[cur + 1:].strip())
+        elif bexp[cur:cur+2] in ['lo']: 
+          if stack == 0: 
+            return (bexp[:cur].strip(), bexp[cur:cur + 3], bexp[cur + 3:].strip())
+        elif bexp[cur:cur+2] in ['la', 'ln']: 
+          if stack == 0: 
+            return (bexp[:cur].strip(), bexp[cur:cur + 4], bexp[cur + 4:].strip())
+        else:
+          pass
+        cur += 1
+    
+    leftExpr, op, rightExpr = splitBool(bexp)
+    if not op in ['=', 'land', 'lor', 'lnot']:
+      raise SyntaxError("Invalid boolean operator {} is given.".format(op))
+    
+    if op=='=':
+      op = 'equal' # for compatibility
+      children = {
+        'LeftEXPR': ExprNode.parse(leftExpr),
+        'RightEXPR': ExprNode.parse(rightExpr)
+      }
+    elif op in ['land', 'lor', 'lnot']:
+      children = {
+        'LeftEXPR': BOOLNode.parse(leftExpr),
+        'RightEXPR': BOOLNode.parse(rightExpr)
+      }
+    node = cls(data=op)
+    for key in children.keys():
+      children[key].parent = node
+    node.children = children
+    return node  
+
 # Bop -> {bitwise-logical opts} | {airthmetic opts}
 # bitwise logical operators = {|, &, \oplus(XOR), singed>>, unsigned >>}
 # airthmetic operators = {+, -. x , /, %} 
@@ -535,6 +662,48 @@ class BOPNode(Node):
     else: 
       return True and (self.children['LeftEXPR'].is_complete()) and (self.children['RightEXPR'].is_complete())
 
+  @classmethod
+  def parse(cls, exp):
+    # remove outermost parentheses
+    exp = exp[1:-1].strip()
+    # check if bop expression is string
+    if not isinstance(exp, str):
+      raise ValueError("Binary expression {} is not a string".format(exp))
+    
+    def splitBop(exp):
+      stack = 0
+      cur = 0
+      while cur < len(exp):
+        if exp[cur] == '(':
+          stack += 1
+        elif exp[cur] == ')':
+          stack -= 1
+        elif exp[cur] in ['+', '-', 'x', '/', '%', '&', '^']:
+          if stack == 0: 
+            return (exp[:cur].strip(), exp[cur], exp[cur + 1:].strip())
+        elif exp[cur] == '|': 
+          if stack == 0: 
+            return (exp[:cur].strip(), exp[cur:cur + 2], exp[cur + 2:].strip())
+        elif exp[cur] == '>': 
+          if stack == 0: 
+            return (exp[:cur].strip(), exp[cur:cur + 4], exp[cur + 4:].strip())
+        else:
+          pass
+        cur += 1
+      return exp, None, None
+    
+    leftExp, bop, rightExp = splitBop(exp)
+    children = {
+      'LeftEXPR': ExprNode.parse(leftExp),
+      'RightEXPR': ExprNode.parse(rightExp)
+    }
+    # create binary expression node
+    node = cls(data=bop)
+    for key in children.keys():
+      children[key].parent = node
+    node.children = children
+    return node
+
 #Const_z -> ...
 class ConstNode(Node):
   '''
@@ -599,7 +768,7 @@ class ConstNode(Node):
     if self.data=="HOLE" or self.data=="hole":
       return []
     else:
-      return [self.data]
+      return [str(self.data)]
 
   @classproperty
   @classmethod
@@ -611,6 +780,17 @@ class ConstNode(Node):
       return False
     else: 
       return True
+ 
+  @classmethod
+  def parse(cls, const):
+    # check if token is string
+    if not isinstance(const, str):
+      raise ValueError("Constant value {} is not a string.".format(const))
+    # check if const is in [0,16]
+    if not const in str(cls.constants):
+      raise ValueError("Constant Value must be between 1 and 16, but {} is given.".format(const))
+
+    return cls(const)
 
 #Var_z -> param1 | param2 ...
 class ParamNode(Node):
@@ -671,6 +851,19 @@ class ParamNode(Node):
       return False
     else: 
       return True
+  
+  @classmethod
+  def parse(cls, token):
+    # check if token is string
+    if not isinstance(token, str):
+      raise ValueError("Parameter token {} is not a string".format(token))
+
+    # check if token is in ['param0', 'param1']
+    if not token in cls.param_space:
+      raise SyntaxError("Invalid parameter token {} is given.".format(token))
+
+    return cls(token)
+
 
 ######test######
 #if __name__ == '__main__':
