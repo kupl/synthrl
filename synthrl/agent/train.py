@@ -34,8 +34,10 @@ class RollOutError(Exception):
 
 
 
-def DataLoader(sample_size=10, io_number=5 , seed=None):
-    dataset = OracleSampler(sample_size =sample_size, io_number=io_number,seed=seed)
+def DataLoader(dataset=None, sample_size=10, io_number=5 , seed=None):
+    if dataset == None:
+        dataset = OracleSampler(sample_size =sample_size, io_number=io_number,seed=seed)
+    
     programs = []
     IOs      = []
     for data in dataset:
@@ -247,8 +249,10 @@ def Train(emb_model, model, IOs, epochs):
 if __name__=='__main__':
     emb_model = Embedding(token_dim=15,value_dim=40, type=BitVector16)
     model = Network(emb_model.emb_dim,len(BitVectorLang.tokens))
-    epochs = 80
-    programs, IOs = DataLoader(80,20)
+    epochs = 20
+
+    dataset = Dataset.from_json("./dataset.json")
+    programs, IOs = DataLoader(dataset=dataset, sample_size = 80, io_number =20)
     PreTrain(emb_model, model, programs, IOs ,epochs)
     Train(emb_model, model, IOs, epochs)
     print("Training finished.")

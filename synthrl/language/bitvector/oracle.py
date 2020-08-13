@@ -81,6 +81,6 @@ def generate_program(max_move=100,seed=None):
         ind+=1
     return prog
 
-if __name__ == '__main__':
-    dataset = OracleSampler(100,5,seed=None)
-    dataset.to_json("./dataset.json")
+# if __name__ == '__main__':
+#     dataset = OracleSampler(100,5,seed=None)
+#     dataset.to_json("./dataset.json")

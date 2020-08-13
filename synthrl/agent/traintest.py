@@ -25,10 +25,6 @@ io_outputs = [ BitVector16(15),
             BitVector16(14) ]
 
 
-
-
-
-
 emb_model = Embedding(token_dim=15,value_dim=40, type=BitVector16)
 model = Network(emb_model.emb_dim,len(BitVectorLang.tokens))
 hidden, outputs = RnnInit(10,1,4)

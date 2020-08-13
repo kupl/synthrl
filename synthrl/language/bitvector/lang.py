@@ -56,7 +56,11 @@ class BitVectorLang(Tree):
     # check if program is string
     if not isinstance(program, str):
       raise ValueError("Program {} is not a string.".format(program))
-    return ExprNode.parse(program.strip())
+    
+    program = program.strip()[1:-1].strip()
+    pgm = cls()
+    pgm.start_node = ExprNode.parse(program)
+    return pgm
 #N_z
 class ExprNode(Node):
   # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
@@ -180,19 +184,14 @@ class ExprNode(Node):
         tokenized = tokenized + self.children['ARITH-NEG'].tokenize()
       return tokenized
   
-  @classmethod    
+  @classmethod
   def parse(cls, exp):
     # check if expression is string
     if not isinstance(exp, str):
       raise ValueError("Given expression {} is not a string".format(exp))
-
-    # remove outermost parentheses
-    if exp.startswith('(') and exp.endswith(')') and exp.find(')') == len(exp)-1:
-      exp = exp[1:-1]
-
     if exp in ['param0', 'param1']: # var
       return ParamNode.parse(exp)
-    elif exp in [str(i) for i in range(16)]: # const
+    elif exp in [str(i) for i in range(16+1)]: # const
       return ConstNode.parse(exp)
     elif exp.startswith('¬'): # neg
       # set operator
@@ -240,15 +239,16 @@ class ExprNode(Node):
       op = 'bop'
       subexp = exp
       children = {
-        'BOP': BOPNode.parse(subexp)
+        'BOP': BOPNode.parse(subexp.strip())
       }
-
+    
     # create expression node
     node = cls(data=op)
     for key in children.keys():
       children[key].parent = node
     node.children = children
     return node
+
 
   @classproperty
   @classmethod
@@ -351,10 +351,10 @@ class BOOLNode(Node):
   def parse(cls, bexp):
     if not isinstance(bexp, str):
       raise ValueError("Boolean expression {} is not a string".format(bexp))
-
+    
     if bexp=='true' or bexp=='false':
       return cls(data=bexp)
-
+    
     def splitBool(bexp):
       stack = 0
       cur = 0
@@ -375,11 +375,11 @@ class BOOLNode(Node):
         else:
           pass
         cur += 1
-
+    
     leftExpr, op, rightExpr = splitBool(bexp)
     if not op in ['=', 'land', 'lor', 'lnot']:
       raise SyntaxError("Invalid boolean operator {} is given.".format(op))
-
+    
     if op=='=':
       op = 'equal' # for compatibility
       children = {
@@ -395,7 +395,7 @@ class BOOLNode(Node):
     for key in children.keys():
       children[key].parent = node
     node.children = children
-    return node      
+    return node  
 
 # Bop -> {bitwise-logical opts} | {airthmetic opts}
 # bitwise logical operators = {|, &, \oplus(XOR), singed>>, unsigned >>}
@@ -497,19 +497,21 @@ class BOPNode(Node):
 
   @classmethod
   def parse(cls, exp):
+    # remove outermost parentheses
+    exp = exp[1:-1].strip()
     # check if bop expression is string
     if not isinstance(exp, str):
       raise ValueError("Binary expression {} is not a string".format(exp))
-
+    
     def splitBop(exp):
       stack = 0
       cur = 0
-      while True: 
-        if exp[cur] == '(': 
+      while cur < len(exp):
+        if exp[cur] == '(':
           stack += 1
-        elif exp[cur] == ')': 
+        elif exp[cur] == ')':
           stack -= 1
-        elif exp[cur] in ['+', '-', '*', '/', '%', '&', '^']:
+        elif exp[cur] in ['+', '-', 'x', '/', '%', '&', '^']:
           if stack == 0: 
             return (exp[:cur].strip(), exp[cur], exp[cur + 1:].strip())
         elif exp[cur] == '|': 
@@ -521,7 +523,8 @@ class BOPNode(Node):
         else:
           pass
         cur += 1
-
+      return exp, None, None
+    
     leftExp, bop, rightExp = splitBop(exp)
     children = {
       'LeftEXPR': ExprNode.parse(leftExp),
