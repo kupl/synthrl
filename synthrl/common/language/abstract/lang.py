@@ -1,9 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
 
-class SyntaxError(Exception):
-  pass
-
 class Program(ABC):
 
   def __init__(self):
