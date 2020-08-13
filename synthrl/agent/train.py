@@ -4,6 +4,7 @@ import torch.optim as optim
 import torch
 import numpy as np
 from random import choices
+from tqdm import tqdm
 
 from synthrl.utils.trainutils import Dataset
 from synthrl.utils.trainutils import IOSet
@@ -97,10 +98,11 @@ def PreTrain(emb_model, model,programs, IOs, epochs=100):
 
     pre_train_losses = []
 
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs)):
         loss = torch.zeros(1)
         loss = loss.to(device)
         for idx, prog in enumerate(programs):
+            optimizer.zero_grad()
             batch_size = 1
             n_example = len(IOs[idx][0])
             tokenized = prog.tokenize()
@@ -130,6 +132,7 @@ def PreTrain(emb_model, model,programs, IOs, epochs=100):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        print("Epoch Prod. {} finished".format(epoch))
 
     print("FINAL RESULT::" , pre_train_losses)
     path = "./saved_models/model_pretrain" + ".tar"
@@ -210,6 +213,9 @@ def Train(emb_model, model, IOs, epochs):
             tokenized = prog.tokenize()
             R = reward(io_spec, prog)
             io_inputs, io_outputs = io_spec
+
+            optimizer.zero_grad()
+
             for k in range(len(tokenized)):#iterating each partial programs
                 #Handling the first state, "HOLE" state:
                 if k == 0:
@@ -230,7 +236,7 @@ def Train(emb_model, model, IOs, epochs):
                 elif R==0:
                     loss +=  ( (1 -  y_value.float()) + eps ).log().reshape(1)
             loss = - loss #Since the maximized loss should be minimized, according to the paper
-            optimizer.zero_grad()
+            
             loss.backward()
             optimizer.step()
             total_avg_loss  += loss
@@ -249,7 +255,7 @@ def Train(emb_model, model, IOs, epochs):
 if __name__=='__main__':
     emb_model = Embedding(token_dim=15,value_dim=40, type=BitVector16)
     model = Network(emb_model.emb_dim,len(BitVectorLang.tokens))
-    epochs = 20
+    epochs = 100
 
     dataset = Dataset.from_json("./dataset.json")
     programs, IOs = DataLoader(dataset=dataset, sample_size = 80, io_number =20)
