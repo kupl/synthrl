@@ -39,6 +39,16 @@ class BitVectorLang(Tree):
 
   def interprete(self, inputs):
     return self.start_node.interprete(inputs)
+  
+  @classmethod
+  def parse(cls, program):
+    # check if program is string
+    if not isinstance(program, str):
+      raise ValueError("Program {} is not a string.".format(program))
+    
+    # remove outermost parentheses
+    program = program.strip()[1:-1].strip()
+    return ExprNode.parse(program)
 
   def tokenize(self):
     return self.start_node.tokenize()
@@ -153,6 +163,71 @@ class ExprNode(Node):
     #   print(" ELSE ",end='') 
     #   self.children["ELSE_EXPR"].pretty_print(file=file)
     #   print(' ) ',end='')
+
+  @classmethod
+  def parse(cls, exp):
+    # check if expression is string
+    if not isinstance(exp, str):
+      raise ValueError("Given expression {} is not a string".format(exp))
+    if exp in ['param0', 'param1']: # var
+      return ParamNode.parse(exp)
+    elif exp in [str(i) for i in range(16+1)]: # const
+      return ConstNode.parse(exp)
+    elif exp.startswith('¬'): # neg
+      # set operator
+      op = 'neg'
+      # get leftmost '('
+      s = exp.find('(')
+      # get rightmost ')'
+      e = exp.rfind(')')
+      # no parentheses
+      if (s==-1 and e==-1):
+        op_i = exp.find('¬')
+        subexp = exp[op_i+1:].strip()
+      # valid parentheses
+      elif (s!=-1 and e!=-1):
+        subexp = exp[s+1:e].strip()
+      # invalid parentheses
+      else:
+        raise SyntaxError("Expression {} has invalid syntax.".format(exp))
+      # set children
+      children = {
+        'NEG': ExprNode.parse(subexp)
+      }
+    elif exp.startswith('-'): # arith-neg
+      # set operator
+      op = 'arith-neg'
+      # get leftmost '('
+      s = exp.find('(')
+      # get rightmost ')'
+      e = exp.rfind(')')
+      # no parentheses
+      if (s==-1 and e==-1):
+        op_i = exp.find('-')
+        subexp = exp[op_i+1:].strip()
+      # valid parentheses
+      elif (s!=-1 and e!=-1):
+        subexp = exp[s+1:e].strip()
+      # invalid parentheses
+      else:
+        raise SyntaxError("Expression {} has invalid syntax.".format(exp))
+      children = {
+        'ARITH-NEG': ExprNode.parse(subexp)
+      }
+    else: # bop or error
+      # set operator
+      op = 'bop'
+      subexp = exp
+      children = {
+        'BOP': BOPNode.parse(subexp.strip())
+      }
+    
+    # create expression node
+    node = cls(data=op)
+    for key in children.keys():
+      children[key].parent = node
+    node.children = children
+    return node
 
   def tokenize(self):
     if self.data=="HOLE" or self.data=='hole':
@@ -269,6 +344,56 @@ class BOOLNode(Node):
         print(' {} '.format(self.data), end='')
         self.children["RightBool"].pretty_print(file=file)
       print(' ) ',end='')
+      
+  @classmethod
+  def parse(cls, bexp):
+    if not isinstance(bexp, str):
+      raise ValueError("Boolean expression {} is not a string".format(bexp))
+    
+    if bexp=='true' or bexp=='false':
+      return cls(data=bexp)
+    
+    def splitBool(bexp):
+      stack = 0
+      cur = 0
+      while True: 
+        if bexp[cur] == '(': 
+          stack += 1
+        elif bexp[cur] == ')': 
+          stack -= 1
+        elif bexp[cur] == '=':
+          if stack == 0: 
+            return (bexp[:cur].strip(), bexp[cur], bexp[cur + 1:].strip())
+        elif bexp[cur:cur+2] in ['lo']: 
+          if stack == 0: 
+            return (bexp[:cur].strip(), bexp[cur:cur + 3], bexp[cur + 3:].strip())
+        elif bexp[cur:cur+2] in ['la', 'ln']: 
+          if stack == 0: 
+            return (bexp[:cur].strip(), bexp[cur:cur + 4], bexp[cur + 4:].strip())
+        else:
+          pass
+        cur += 1
+    
+    leftExpr, op, rightExpr = splitBool(bexp)
+    if not op in ['=', 'land', 'lor', 'lnot']:
+      raise SyntaxError("Invalid boolean operator {} is given.".format(op))
+    
+    if op=='=':
+      op = 'equal' # for compatibility
+      children = {
+        'LeftEXPR': ExprNode.parse(leftExpr),
+        'RightEXPR': ExprNode.parse(rightExpr)
+      }
+    elif op in ['land', 'lor', 'lnot']:
+      children = {
+        'LeftEXPR': BOOLNode.parse(leftExpr),
+        'RightEXPR': BOOLNode.parse(rightExpr)
+      }
+    node = cls(data=op)
+    for key in children.keys():
+      children[key].parent = node
+    node.children = children
+    return node
 
 # Bop -> {bitwise-logical opts} | {airthmetic opts}
 # bitwise logical operators = {|, &, \oplus(XOR), singed>>, unsigned >>}
@@ -348,6 +473,48 @@ class BOPNode(Node):
       self.children['RightEXPR'].pretty_print(file=file)
       print(' ) ', end='') 
     
+  @classmethod
+  def parse(cls, exp):
+    # remove outermost parentheses
+    exp = exp[1:-1].strip()
+    # check if bop expression is string
+    if not isinstance(exp, str):
+      raise ValueError("Binary expression {} is not a string".format(exp))
+    
+    def splitBop(exp):
+      stack = 0
+      cur = 0
+      while cur < len(exp):
+        if exp[cur] == '(':
+          stack += 1
+        elif exp[cur] == ')':
+          stack -= 1
+        elif exp[cur] in ['+', '-', 'x', '/', '%', '&', '^']:
+          if stack == 0: 
+            return (exp[:cur].strip(), exp[cur], exp[cur + 1:].strip())
+        elif exp[cur] == '|': 
+          if stack == 0: 
+            return (exp[:cur].strip(), exp[cur:cur + 2], exp[cur + 2:].strip())
+        elif exp[cur] == '>': 
+          if stack == 0: 
+            return (exp[:cur].strip(), exp[cur:cur + 4], exp[cur + 4:].strip())
+        else:
+          pass
+        cur += 1
+      return exp, None, None
+    
+    leftExp, bop, rightExp = splitBop(exp)
+    children = {
+      'LeftEXPR': ExprNode.parse(leftExp),
+      'RightEXPR': ExprNode.parse(rightExp)
+    }
+    # create binary expression node
+    node = cls(data=bop)
+    for key in children.keys():
+      children[key].parent = node
+    node.children = children
+    return node
+  
   def tokenize(self):
     if self.data=="HOLE" or self.data=='hole':
       return []
@@ -417,6 +584,17 @@ class ConstNode(Node):
     else:
       print(' {} '.format(self.data),end='')
 
+  @classmethod
+  def parse(cls, const):
+    # check if token is string
+    if not isinstance(const, str):
+      raise ValueError("Constant value {} is not a string.".format(const))
+    # check if const is in [0,16]
+    if not const in str(cls.constants):
+      raise ValueError("Constant Value must be between 1 and 16, but {} is given.".format(const))
+    
+    return cls(const)
+
   def tokenize(self):
     if self.data=="HOLE" or self.data=="hole":
       return []
@@ -464,6 +642,18 @@ class ParamNode(Node):
       print(' (HOLE) ', end ='')
     else:
       print(' {} '.format(self.data), end='')
+      
+  @classmethod
+  def parse(cls, token):
+    # check if token is string
+    if not isinstance(token, str):
+      raise ValueError("Parameter token {} is not a string".format(token))
+    
+    # check if token is in ['param0', 'param1']
+    if not token in cls.param_space:
+      raise SyntaxError("Invalid parameter token {} is given.".format(token))
+    
+    return cls(token)
   
   def tokenize(self):
     if self.data=="HOLE" or self.data=="hole":
@@ -483,23 +673,24 @@ class ParamNode(Node):
       return True
 
 ######test######
-# if __name__ == '__main__':
-#   print("--test--")
-#   vec_program = BitVectorLang()
-#   poss = vec_program.production_space()
-#   print(poss)
-#   vec_program.production('bop')
-#   poss = vec_program.production_space()
-#   print(poss)
-#   vec_program.production('+')
-#   vec_program.pretty_print()
-#   print(vec_program.production_space())
-#   vec_program.production('const')
-#   vec_program.pretty_print()
-#   print(vec_program.production_space())
-#   vec_program.production(10)
-#   vec_program.pretty_print()
-#   print(vec_program.production_space())
-#   vec_program.production('neg')
-#   vec_program.pretty_print()
-#   print(vec_program.production_space())
+#if __name__ == '__main__':
+  #print("--test--")
+  #vec_program = BitVectorLang()
+  #print(vec_program.production_space())
+  #vec_program.production('bop')
+  #print(vec_program.production_space())
+  #vec_program.production('+')
+  #vec_program.pretty_print()
+  #print(vec_program.production_space())
+  #vec_program.production('const')
+  #vec_program.pretty_print()
+  #print(vec_program.production_space())
+  #vec_program.production(10)
+  #vec_program.pretty_print()
+  #print(vec_program.production_space())
+  #vec_program.production('neg')
+  #vec_program.pretty_print()
+  #print(vec_program.production_space())
+  #vec_program.production('var')
+  #vec_program.pretty_print()
+  #print(vec_program.production_space())
