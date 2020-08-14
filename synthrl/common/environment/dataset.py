@@ -75,7 +75,7 @@ class Dataset:
       # Get program as string.
       with StringIO() as stream:
         oracle.pretty_print(file=stream)
-        oracle = stream.getvalue()
+        oracle = stream.getvalue().strip()
 
       # Get ioset as string.
       ioset = [str(io) for io in ioset]
@@ -98,7 +98,6 @@ class Dataset:
     
     res = cls(dataset['language'])
     language_class = getattr(language, dataset['language'])
-    print(language_class)
 
     for element in dataset['data']:
       oracle = language_class.parse(element['oracle'])
