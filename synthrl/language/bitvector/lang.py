@@ -33,9 +33,9 @@ class BitVectorLang(Tree):
       raise WrongProductionException('Invalid production rule "{}" is given.'.format(action))
       
   def pretty_print(self,file=None):
-    print('(',end='')
+    print('(',end='', file=file)
     self.start_node.pretty_print(file=file)
-    print(')')
+    print(')', file=file)
 
   def interprete(self, inputs):
     return self.start_node.interprete(inputs)
@@ -140,7 +140,7 @@ class ExprNode(Node):
 
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=='hole':
-      print(" (HOLE) ", end='')
+      print(" (HOLE) ", end='', file=file)
     elif self.data == 'var':
       self.children['VAR_Z'].pretty_print(file=file)
     elif self.data=='const':
@@ -148,13 +148,13 @@ class ExprNode(Node):
     elif self.data=='bop':
       self.children['BOP'].pretty_print(file=file)
     elif self.data=='neg':
-      print("¬ ( ",end='')
+      print("¬ ( ",end='', file=file)
       self.children['NEG'].pretty_print(file=file)
-      print(" ) ",end='')
+      print(" ) ",end='', file=file)
     elif self.data == 'arith-neg':
-      print(" - ( ",end='')
+      print(" - ( ",end='', file=file)
       self.children['ARITH-NEG'].pretty_print(file=file)
-      print(" ) ",end='')
+      print(" ) ",end='', file=file)
     # elif self.data=="ite":
     #   print(' ( ',end='')
     #   print(" IF ",end='')
@@ -327,25 +327,25 @@ class BOOLNode(Node):
 
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=="hole":
-      print(" (HOLE) ", end="")
+      print(" (HOLE) ", end="", file=file)
     elif self.data == "true" or self.data == "false":
-      print(" {} ".format(self.data),end='')
+      print(" {} ".format(self.data),end='', file=file)
     elif self.data == "lnot":
-      print(" ~ " ,end='')
-      print(' ( ', end='')
+      print(" ~ " ,end='', file=file)
+      print(' ( ', end='', file=file)
       self.children["BOOL"].pretty_print(file)
-      print(' ) ', end='')
+      print(' ) ', end='', file=file)
     else:
-      print(' ( ',end='')
+      print(' ( ',end='', file=file)
       if self.data == "equal":
         self.children["LeftExpr"].pretty_print(file=file)
-        print(' {} '.format(self.data), end='')
+        print(' {} '.format(self.data), end='', file=file)
         self.children["RightExpr"].pretty_print(file=file)
       else:
         self.children["LeftBool"].pretty_print(file=file)
-        print(' {} '.format(self.data), end='')
+        print(' {} '.format(self.data), end='', file=file)
         self.children["RightBool"].pretty_print(file=file)
-      print(' ) ',end='')
+      print(' ) ',end='', file=file)
 
   @classmethod
   def parse(cls, bexp):
@@ -467,13 +467,13 @@ class BOPNode(Node):
   
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=="hole":
-      print(' ( {} ) '.format(self.data))
+      print(' ( {} ) '.format(self.data), file=file)
     else:
-      print(' ( ', end='') 
+      print(' ( ', end='', file=file) 
       self.children['LeftEXPR'].pretty_print(file=file)
-      print(' {} '.format(self.data), end='')
+      print(' {} '.format(self.data), end='', file=file)
       self.children['RightEXPR'].pretty_print(file=file)
-      print(' ) ', end='') 
+      print(' ) ', end='', file=file) 
     
   def tokenize(self):
     if self.data=="HOLE" or self.data=='hole':
@@ -582,9 +582,9 @@ class ConstNode(Node):
 
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=="hole":
-      print(' (HOLE) ', end ='')
+      print(' (HOLE) ', end ='', file=file)
     else:
-      print(' {} '.format(self.data),end='')
+      print(' {} '.format(self.data),end='', file=file)
 
   def tokenize(self):
     if self.data=="HOLE" or self.data=="hole":
@@ -641,9 +641,9 @@ class ParamNode(Node):
 
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=="hole":
-      print(' (HOLE) ', end ='')
+      print(' (HOLE) ', end ='', file=file)
     else:
-      print(' {} '.format(self.data), end='')
+      print(' {} '.format(self.data), end='', file=file)
   
   def tokenize(self):
     if self.data=="HOLE" or self.data=="hole":
