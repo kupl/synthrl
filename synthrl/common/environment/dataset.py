@@ -1,12 +1,14 @@
 from ast import literal_eval
 from contextlib import redirect_stdout
 from io import StringIO
+import importlib
 import json
 
 from synthrl.common.environment.ioset import IOSet
 from synthrl.language.bitvector.lang import BitVectorLang
 from synthrl.language.listlang.lang import ListLang
 from synthrl.language.bitvector import ExprNode
+import synthrl.language as language
 
 class Element:
 
@@ -24,7 +26,8 @@ class Element:
 
 class Dataset:
 
-  def __init__(self):
+  def __init__(self, language):
+    self.language = language
     self.elements = []
 
   def __getitem__(self, idx):
@@ -58,63 +61,54 @@ class Dataset:
   def length(self):
     return len(self.elements)
 
-  def to_json(self, file):
+  def to_json(self, file, indent=2):
 	  # file: path for saving data.json
     # save self.elements as json    
+
+    dataset = {
+      'language': self.language,
+      'data': [],
+    }
+
+    for oracle, ioset in self.elements:
+
+      # Get program as string.
+      with StringIO() as stream:
+        oracle.pretty_print(file=stream)
+        oracle = stream.getvalue()
+
+      # Get ioset as string.
+      ioset = [str(io) for io in ioset]
+
+      # Add to dataset.
+      dataset['data'].append({
+        'oracle': oracle,
+        'ioset': ioset
+      })
     
-    def replace_ops(program):
-      program = program.replace("ARITH-NEG", "-")
-      program = program.replace("NEG", "¬")
-      return program
-    
-    with open(file, 'w', encoding="utf-8") as f:
-      print("{", file=f)
-      print("  \"data\": [", file=f)
-      # for each program & ioset
-      for e in self.elements:
-        program = e.program
-        if isinstance(program, ListLang):
-          pgm_type = "List"
-          with StringIO() as buf, redirect_stdout(buf):
-            program.pretty_print(file=buf)
-            program = buf.getvalue()
-          program = program.replace('\n', ' ').strip()
-        elif isinstance(program, ExprNode):
-          pgm_type = "Bitvector"
-          with StringIO() as buf, redirect_stdout(buf):
-            program.pretty_print(file=buf)
-            program = buf.getvalue()
-          program = replace_ops(program)
-        else:
-          raise ValueError("Invalid program tree is given")
-        ioset = e.ioset
-        print("    {", file=f)
-        print("      \"program_type\": \"{}\",".format(pgm_type), file=f)
-        print("      \"pgm\": \"{}\",".format(program), file=f)
-        print("      \"io\": [", file=f)
-        print("        {}".format(",\n        ".join(
-          ["\"{}\"".format(a) for a in ioset])), file=f)
-        print("      ]", file=f)
-        print("    }" if e == self.elements[-1] else "    },", file=f)
-      print("  ]", file=f)
-      print("}", file=f)
+    with open(file, 'w', encoding='utf-8') as f:
+      json.dump(dataset, f, indent=indent)
   
   @classmethod
-  def from_json(self, file):
+  def from_json(cls, file):
 	  # file: path to data.json
-    res = Dataset()
-    with open(file, 'r', encoding="utf-8") as f:
-      raw_json = json.load(f)
-      for e in raw_json['data']:
-        pgm_type = e['program_type']
-        program = e['pgm']
-        if pgm_type == "List":
-          parser = ListLang.parse
-        elif pgm_type == "Bitvector":
-          parser = BitVectorLang.parse
-        else:
-          return SyntaxError("Invalid program type {} for {}".format(pgm_type, program))
-        program = parser(program)
-        ioset = [literal_eval(a) for a in e['io']]
-        res.add(program, ioset)
+
+    with open(file, 'r', encoding='utf-8') as f:
+      dataset = json.load(f)
+    
+    res = cls(dataset['language'])
+    language_class = getattr(language, dataset['language'])
+    print(language_class)
+
+    for element in dataset['data']:
+      oracle = language_class.parse(element['oracle'])
+      ioset = [literal_eval(io) for io in element['ioset']]
+      res.add(oracle, ioset)
+
     return res
+
+  def to_txt(self, file):
+    pass
+
+  def from_txt(self, file):
+    pass

@@ -11,7 +11,8 @@ def main(parser, argv):
   print(args)
 
   # Load dataset.
-  dataset = Dataset.from_json(args.dataset)
+  dataset = Dataset.from_json(args.setting)
+  language = dataset.language
 
   # For each data in dataset.
   for oracle, ioset in dataset:

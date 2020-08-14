@@ -9,8 +9,7 @@ def add_arguments(parser):
   add_help(parser)
   
   # Environment arguments.
-  required_positional.add_argument('--language', required=True, type=str, choices=['bitvec'], help='DSL to use.')
-  required_positional.add_argument('--dataset', required=True, type=regex(r'.*\.json'), metavar='{*.json}', help='Source of oracle.')
+  required_positional.add_argument('--setting', required=True, type=regex(r'.*\.json'), metavar='{*.json}', help='Test settings.')
   
   # Synthesizer arguments.
   parser.add_argument('--synth', choices=['rand'], default='rand', type=str, help='Choose synthesizer agent.')
