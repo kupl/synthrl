@@ -4,14 +4,10 @@ from abc import abstractmethod
 class Value(ABC):
 
   def __init__(self, value):
-    self.__value = value
+    self.value = value
 
-  @property
-  def value(self):
-    return self.__value
-
-  @abstractmethod
   @classmethod
+  @abstractmethod
   def sample(cls):
     pass
 
