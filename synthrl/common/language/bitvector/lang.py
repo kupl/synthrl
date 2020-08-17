@@ -1,7 +1,11 @@
 #    P -> Expr
 # Expr -> Var
 #       | Cnst
-#       | Expr + Expr
+#       | Bop
+#       | - Expr
+#       | ¬ Expr
+#       | if Bool then Expr else Expr
+#  Bop -> Expr + Expr
 #       | Expr - Expr
 #       | Expr * Expr
 #       | Expr / Expr
@@ -9,12 +13,9 @@
 #       | Expr | Expr
 #       | Expr & Expr
 #       | Expr ^ Expr
-#       | Expr >>s Expr
-#       | Expr >>u Expr
+#       | Expr >>_s Expr
+#       | Expr >>_u Expr
 #       | Expr << Expr
-#       | - Expr
-#       | ~ Expr
-#       | if Bool then Expr else Expr
 # Bool -> true
 #       | false
 #       | Expr = Expr
@@ -80,8 +81,9 @@ class BitVectorLang(Program):
     self.node.production(action)
 
   def pretty_print(self, file=None):
+    print('(', end='', file=file)
     self.start_node.pretty_print(file=file)
-    print(file=file)
+    print(')', file=file)
 
   def interprete(self, inputs):
     # pylint: disable=too-many-function-args
@@ -89,366 +91,634 @@ class BitVectorLang(Program):
 
   @classmethod
   def parse(cls, program):
-    program = program.strip()
+    # remove outermost parentheses
+    program = program.strip()[1:-1].strip()
     return cls(ExprNode.parse(program))
 
   def copy(self):
     return BitVectorLang(self.start_node.copy())
 
+  def tokenize(self):
+    return self.start_node.tokenize()
+  
+  def is_complete(self):
+    return self.start_node.is_complete()
+
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return ExprNode.tokens + BOPNode.tokens + ConstNode.tokens + ParamNode.tokens
+
+
 class ExprNode(Tree):
-
-  EXPR_TOKENS = ['var', 'const', '+', '-', '*', '/', '%', '|', '&', '^', '>>s', '>>u', '<<', '~', 'arith-neg']
-  TRAVERSE_ORDER = {
-    'var': ['VAR'],
-    'const': ['CONST'],
-    '+': ['LEFT', 'RIGHT'],
-    '-': ['LEFT', 'RIGHT'],
-    '*': ['LEFT', 'RIGHT'],
-    '/': ['LEFT', 'RIGHT'],
-    '%': ['LEFT', 'RIGHT'],
-    '|': ['LEFT', 'RIGHT'],
-    '&': ['LEFT', 'RIGHT'],
-    '^': ['LEFT', 'RIGHT'],
-    '>>s': ['LEFT', 'RIGHT'],
-    '>>u': ['LEFT', 'RIGHT'],
-    '<<': ['LEFT', 'RIGHT'],
-    '~': ['CHILD'],
-    'arith-neg': ['CHILD'],
-    'ite': ['COND', 'THEN', 'ELSE']
-  }
-  BOP = {
-    '+': lambda left, right: left + right,
-    '-': lambda left, right: left - right,
-    '*': lambda left, right: left * right,
-    '/': lambda left, right: left / right,
-    '%': lambda left, right: left % right,
-    '|': lambda left, right: left | right,
-    '&': lambda left, right: left & right,
-    '^': lambda left, right: left ^ right,
-    '>>s': lambda left, right: left >> right,
-    '>>u': lambda left, right: left.unsigned_rshift(right),
-    '<<': lambda left, right: left << right
-  }
-  UOP = {
-    '~': lambda child: ~child,
-    'arith-neg': lambda child: -child
-  }
-
+  # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
+  # expr_productions = ['var','const','bop','neg']
+  expr_productions = ['bop','const','var', 'neg','arith-neg']
+  # expr_productions += ['ite']
   def production_space(self):
-    if self.data == HOLE:
-      return self, self.EXPR_TOKENS
+    if self.data =='HOLE': 
+      return self, self.expr_productions
     else:
-      for key in self.TRAVERSE_ORDER[self.data]:
+      children=[]
+      if self.data=="var":
+        children=["VAR_Z"]
+      elif self.data=="const":
+        children=["CONST_Z"]
+      elif self.data=="bop":
+        children=["BOP"]
+      elif self.data=="neg":
+        children=["NEG"]
+      elif self.data=="ite":
+        children=['IF_BOOL', 'THEN_EXPR','ELSE_EXPR']
+      for key in children:
         node, space = self.children[key].production_space()
         if len(space) > 0:
           return node, space
-      else:
-        return self, []
-
-  def production(self, action):
-    self.data = action
-    if action == 'var':
-      self.children.update(VAR=VarNode())
-    elif action == 'const':
-      self.children.update(CONST=CnstNode())
-    elif action in ['+', '-', '*', '/', '%', '|', '&', '^', '>>s', '>>u', '<<']:
-      self.children.update(LEFT=ExprNode(), RIGHT=ExprNode())
-    elif action in ['~', 'arith-neg']:
-      self.children.update(CHILD=ExprNode())
-    else: # action == 'ite'
-      self.children.update(COND=BoolNode(), THEN=ExprNode(), ELSE=ExprNode())
+      return self, []
+      
+  def production(self, rule=None):
+    if rule =="var":
+      self.data="var"
+      self.children = {
+          'VAR_Z' : ParamNode()
+      }
+    if rule=="const":
+      self.data="const"
+      self.children ={
+          'CONST_Z' : ConstNode()
+      }
+    if rule=="bop":
+      self.data="bop"
+      self.children={
+          'BOP' : BOPNode()
+      }
+    if rule=="neg":
+      self.data="neg"
+      self.children={
+        'NEG' : ExprNode()
+      }
+    if rule =="arith-neg":
+      self.data=="arith-neg"
+      self.children={
+        'ARITH-NEG' : ExprNode()
+      }
+    
+    # if rule=="ite":
+    #   self.data="ite"
+    #   self.children={
+    #     "IF_BOOL" : BOOLNode(),
+    #     "THEN_EXPR" : ExprNode(),
+    #     "ELSE_EXPR" : ExprNode()
+    #   }
 
   def interprete(self, inputs):
-    if self.data == 'var':
-      return self.children['VAR'].interprete(inputs)
-    elif self.data == 'const':
-      return self.children['CONST'].interprete()
-    elif self.data in ['+', '-', '*', '/', '%', '|', '&', '^', '>>s', '>>u', '<<']:
-      left = self.children['LEFT'].interprete(inputs)
-      right = self.children['RIGHT'].interprete(inputs)
-      return self.BOP[self.data](left, right)
-    elif self.data in ['~', 'arith-neg']:
-      child = self.children['CHILD'].interprete(inputs)
-      return self.UOP[self.data](child)
-    else: # self.data == 'ite'
-      cond = self.children['COND'].interprete(inputs)
-      return self.children['THEN'].interprete(inputs) if cond else self.children['ELSE'].interprete(inputs)
+    if self.data =="var":
+      return self.children['VAR_Z'].interprete(inputs)
+    if self.data =="const":
+      return self.children['CONST_Z'].interprete(inputs)
+    if self.data =="bop":
+      return self.children['BOP'].interprete(inputs)
+    if self.data=="arith-neg":
+      sub=self.children['ARITH-NEG'].interprete(inputs)
+      return -sub
+    if self.data =="neg": #logical neg
+      return self.children['NEG'].interprete(inputs).logical_neg()
+    # if self.data =="ite":
+    #   pass
 
-  def pretty_print(self, file=None):
-    if self.data == HOLE:
-      print(f' ({self.data}) ', end='', file=file)
+  def pretty_print(self,file=None):
+    if self.data=="HOLE" or self.data=='hole':
+      print(" (HOLE) ", end='', file=file)
+
     elif self.data == 'var':
-      self.children['VAR'].pretty_print(file=file)
-    elif self.data == 'const':
-      self.children['CONST'].pretty_print(file=file)
-    elif self.data in ['+', '-', '*', '/', '%', '|', '&', '^', '>>s', '>>u', '<<']:
-      print('( ', end='', file=file)
-      self.children['LEFT'].pretty_print(file=file)
-      print(f' {self.data} ', end='', file=file)
-      self.children['RIGHT'].pretty_print(file=file)
-      print(' ) ', end='', file=file)
-    elif self.data == '~':
-      print('~ (', end='', file=file)
-      self.children['CHILD'].pretty_print(file=file)
-      print(')', end='', file=file)
+      self.children['VAR_Z'].pretty_print(file=file)
+
+    elif self.data=='const':
+      self.children['CONST_Z'].pretty_print(file=file)
+
+    elif self.data=='bop':
+      self.children['BOP'].pretty_print(file=file)
+
+    elif self.data=='neg':
+      print("¬ ( ",end='', file=file)
+      self.children['NEG'].pretty_print(file=file)
+
+      print(" ) ",end='', file=file)
+      
     elif self.data == 'arith-neg':
-      print('- (', end='', file=file)
-      self.children['CHILD'].pretty_print(file=file)
-      print(')', end='', file=file)
-    else: # self.data == 'ite'
-      print('if ( ', end='', file=file)
-      self.children['COND'].pretty_print(file=file)
-      print(' ) then ( ', end='', file=file)
-      self.children['THEN'].pretty_print(file=file)
-      print(' ) else ( ', end='', file=file)
-      self.children['ELSE'].pretty_print(file=file)
-      print(' )', end='', file=file)
+      print(" - ( ",end='', file=file)
+      self.children['ARITH-NEG'].pretty_print(file=file)
+      print(" ) ",end='', file=file)
+    # elif self.data=="ite":
+    #   print(' ( ',end='')
+    #   print(" IF ",end='')
+    #   self.children["IF_BOOL"].pretty_print(file=file)
+    #   print(" THEN ",end='') 
+    #   self.children["THEN_EXPR"].pretty_print(file=file)
+    #   print(" ELSE ",end='') 
+    #   self.children["ELSE_EXPR"].pretty_print(file=file)
+    #   print(' ) ',end='')
 
   @classmethod
-  def parse(cls, expr):
-    # Strip out whitespace and parentheses.
-    expr = expr.strip()
-    while expr[0] == '(' and expr[-1] == ')':
-      expr = expr[1:-1].strip()
-
-    # Var node.
-    if expr in VarNode.VAR_TOKENS:
-      return ExprNode('var', {'VAR': VarNode.parse(expr)})
-
-    # Const node.
-    elif expr.startswith('0x'):
-      return ExprNode('const', {'CONST': CnstNode.parse(expr)})
-
-    # ite.
-    elif expr.startswith('if'):
-      # Utility function.
-      def split_if_then_else(expr):
-        cur = 2 # Skip 'if'.
-        stack = 0
-        cond = None
-        while cur < len(expr):
-          if expr(cur) == '(':
-            stack += 1
-          elif expr[cur] == ')':
-            stack -= 1
-            if stack < 0:
-              raise SyntaxError('Invalid syntax.')
-          elif stack == 0:
-            if not cond:
-              if expr[cur:cur + 4] == 'then':
-                cond = cur
-            else: # not then
-              if expr[cur:cur + 4] == 'else':
-                return expr[:cond], expr[cond + 4:cur], expr[cur + 4:] 
-          cur += 1
-
-      # Split condition, then, and else.
-      cond, then, els = split_if_then_else(expr)
-      return ExprNode('ite', {'COND': BoolNode.parse(cond), 'THEN': ExprNode.parse(then), 'ELSE': ExprNode.parse(els)})
-
-    # UOPs.
-    elif expr[0] in ['-', '~']:
-      op = expr[0]
-      return ExprNode(op if op == '~' else 'arith-neg', {'CHILD': ExprNode.parse(expr[1:])})
-
-    # BOPs.
-    else:
-      # Utility function.
-      def split_left_op_right(expr):
-        stack = 0
-        cur = 0
-        while cur < len(expr):
-          if expr[cur] == '(':
-            stack += 1
-          elif expr[cur] == ')':
-            stack -= 1
-            if stack < 0:
-              raise SyntaxError('Invalid syntax.')
-          elif stack == 0:
-            if expr[cur] in ['+', '-', '*', '/', '%', '|', '&', '^']:
-              return expr[:cur], expr[cur], expr[cur + 1:]
-            elif expr[cur:cur + 3] in ['>>s', '>>u']:
-              return expr[:cur], expr[cur:cur + 3], expr[cur + 3:]
-            elif expr[cur:cur + 2] in ['<<']:
-              return expr[:cur], expr[cur:cur + 2], expr[cur + 2:]
-          cur += 1
-        raise SyntaxError('Invalid syntax.')
-      
-      # Split expression into left, operator, and right.
-      left, op, right = split_left_op_right(expr)
-
-      # Create and return a node
-      return ExprNode(op, {'LEFT': ExprNode.parse(left), 'RIGHT': ExprNode.parse(right)})
+  def parse(cls, exp):
+    # check if expression is string
+    if not isinstance(exp, str):
+      raise ValueError("Given expression {} is not a string".format(exp))
+    if exp in ['param0', 'param1']: # var
+      return ParamNode.parse(exp)
+    elif exp in [str(i) for i in range(16+1)]: # const
+      return ConstNode.parse(exp)
+    elif exp.startswith('¬'): # neg
+      # set operator
+      op = 'neg'
+      # get leftmost '('
+      s = exp.find('(')
+      # get rightmost ')'
+      e = exp.rfind(')')
+      # no parentheses
+      if (s==-1 and e==-1):
+        op_i = exp.find('¬')
+        subexp = exp[op_i+1:].strip()
+      # valid parentheses
+      elif (s!=-1 and e!=-1):
+        subexp = exp[s+1:e].strip()
+      # invalid parentheses
+      else:
+        raise SyntaxError("Expression {} has invalid syntax.".format(exp))
+      # set children
+      children = {
+        'NEG': ExprNode.parse(subexp)
+      }
+    elif exp.startswith('-'): # arith-neg
+      # set operator
+      op = 'arith-neg'
+      # get leftmost '('
+      s = exp.find('(')
+      # get rightmost ')'
+      e = exp.rfind(')')
+      # no parentheses
+      if (s==-1 and e==-1):
+        op_i = exp.find('-')
+        subexp = exp[op_i+1:].strip()
+      # valid parentheses
+      elif (s!=-1 and e!=-1):
+        subexp = exp[s+1:e].strip()
+      # invalid parentheses
+      else:
+        raise SyntaxError("Expression {} has invalid syntax.".format(exp))
+      children = {
+        'ARITH-NEG': ExprNode.parse(subexp)
+      }
+    else: # bop or error
+      # set operator
+      op = 'bop'
+      subexp = exp
+      children = {
+        'BOP': BOPNode.parse(subexp.strip())
+      }
     
+    # create expression node
+    node = cls(data=op)
+    for key in children.keys():
+      children[key].parent = node
+    node.children = children
+    return node
 
-class BoolNode(Tree):
+  def tokenize(self):
+    if self.data=="HOLE" or self.data=='hole':
+      return []
+    else:
+      tokenized = []
+      if self.data=='var':
+        tokenized = tokenized + self.children['VAR_Z'].tokenize()
+      elif self.data=='const':
+        tokenized = tokenized + self.children['CONST_Z'].tokenize()
+      elif self.data=='bop':
+        tokenized = tokenized + self.children['BOP'].tokenize()
+      elif self.data=='neg':
+        tokenized.append(self.data)
+        tokenized = tokenized + self.children['NEG'].tokenize()
+      elif self.data=='arith-neg':
+        tokenized.append(self.data)
+        tokenized = tokenized + self.children['ARITH-NEG'].tokenize()
+      return tokenized
 
-  BOOL_TOKENS = ['true', 'false', '=', 'and', 'or', 'not']
-  TRAVERSE_ORDER = {
-    'true': [],
-    'false': [],
-    '=': ['LEFT', 'RIGHT'],
-    'and': ['LEFT', 'RIGHT'],
-    'or': ['LEFT', 'RIGHT'],
-    'not': ['CHILD']
-  }
-  BOOL = {
-    'true': True,
-    'false': False
-  }
-  BOP = {
-    '=': lambda left, right: left == right,
-    'and': lambda left, right: left and right,
-    'or': lambda left, right: left or right,
-  }
-  UOP = {
-    'not': lambda child: not child
-  }
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return ["arith-neg","neg"]
+  
+  def is_complete(self):
+    if self.data=="HOLE" or self.data=="hole":
+      return False
+    else:
+      is_comp= True
+      for key in list(self.children.keys()):
+        is_comp = True and (self.children[key].is_complete())
+      return is_comp
+
+#N_B -> true|false
+#         | Nz=Nz | N_B land N_B |N_B lor N_B| N_B lnot N_B
+#Add Later: <=_u
+class BOOLNode(Tree):
+  bool_operations = ["true", "false", "equal","land","lor","lnot"]
 
   def production_space(self):
-    if self.data == HOLE:
-      return self, self.BOOL_TOKENS
+    if self.data=='HOLE':
+      return self, self.bool_operations
     else:
-      for key in self.TRAVERSE_ORDER[self.data]:
-        node, space = self.children[key].production_space()
-        if len(space) > 0:
-          return node, space
+      if self.data == "true" or self.data=="false":
+        return self, []
       else:
+        for child in self.children:
+          child_node = self.children[child]
+          node, space = child_node.production_space()
+          if len(space) > 0:
+            return node, space
         return self, []
 
-  def production(self, action):
-    self.data = action
-    if action == '=':
-      self.children.update(LEFT=ExprNode(), RIGHT=ExprNode())
-    elif action in ['and', 'or']:
-      self.children.update(LEFT=BoolNode(), RIGHT=BoolNode())
-    else: # action == 'not'
-      self.children.update(CHILD=BoolNode())
+  def production(self,rule=None):
+    if rule == "true" or rule == "false":
+      self.data==rule
+    if rule == "equal":
+      self.data==rule
+      self.children={
+        "LeftExpr"  : ExprNode() ,
+        "RightExpr" : ExprNode() 
+      }
+    if rule =="land" or rule =="lor":
+      self.data=rule
+      self.children={
+        "LeftBool"  : BOOLNode() ,
+        "RightBool" : BOOLNode() 
+      }
+    if rule=="lnot":
+      self.data=rule
+      self.children={
+        "BOOL" : BOOLNode()
+      }
 
   def interprete(self, inputs):
-    if self.data in ['true', 'false']:
-      return self.BOOL[self.data]
-    elif self.data in ['=', 'and', 'or']:
-      left = self.data['LEFT'].interprete(inputs)
-      right = self.data['RIGHT'].interprete(inputs)
-      return self.BOP[self.data](left, right)
+    if self.data=="true" :
+      return True
+    if self.data=="false":
+      return False 
+    if self.data=="equal":
+      left  =  self.children["LeftExpr"].interprete(inputs)
+      right = self.children["RightExpr"].interprete(inputs)
+      return left==right
+    if self.data=="land" :
+      left  =  self.children["LeftBool"].interprete(inputs)
+      right = self.children["RightBool"].interprete(inputs)
+      return left and right
+    if self.data=="lor" :
+      left  =  self.children["LeftBool"].interprete(inputs)
+      right = self.children["RightBool"].interprete(inputs)
+      return left or right
+    if self.data=="lnot":
+      return not self.children["BOOL"].interprete(inputs)
+
+  def pretty_print(self,file=None):
+    if self.data=="HOLE" or self.data=="hole":
+      print(" (HOLE) ", end="", file=file)
+    elif self.data == "true" or self.data == "false":
+      print(" {} ".format(self.data),end='', file=file)
+    elif self.data == "lnot":
+      print(" ~ " ,end='', file=file)
+      print(' ( ', end='', file=file)
+      self.children["BOOL"].pretty_print(file)
+      print(' ) ', end='', file=file)
     else:
-      child = self.data['CHILD'].interprete(inputs)
-      return self.UOP[self.data](child)
-
-  def pretty_print(self, file=None):
-    if self.data == HOLE:
-      print(' (HOLE) ', end='', file='')
-    elif self.data in ['true', 'false']:
-      print(f' {self.data} ', end='', file='')
-    elif self.data in ['=', 'and', 'or']:
-      print('( ', end='', file='')
-      self.children['LEFT'].pretty_print(file=file)
-      print(f') {self.data} (', end='', file=file)
-      self.children['RIGHT'].pretty_print(file=file)
-      print(')', end='', file=file)
-    else: # self.data == 'not'
-      print('not (', end='', file=file)
-      self.children['CHILD'].pretty_print(file=file)
-      print(')', end='', file=file)
-
+      print(' ( ',end='', file=file)
+      if self.data == "equal":
+        self.children["LeftExpr"].pretty_print(file=file)
+        print(' {} '.format(self.data), end='', file=file)
+        self.children["RightExpr"].pretty_print(file=file)
+      else:
+        self.children["LeftBool"].pretty_print(file=file)
+        print(' {} '.format(self.data), end='', file=file)
+        self.children["RightBool"].pretty_print(file=file)
+      print(' ) ',end='', file=file)
+      
   @classmethod
   def parse(cls, bexp):
-    # Strip out whitespace and parentheses.
-    bexp = bexp.strip()
-    while bexp[0] == '(' and bexp[-1] == ')':
-      bexp = bexp[1:-1].strip()
+    if not isinstance(bexp, str):
+      raise ValueError("Boolean expression {} is not a string".format(bexp))
+    
+    if bexp=='true' or bexp=='false':
+      return cls(data=bexp)
+    
+    def splitBool(bexp):
+      stack = 0
+      cur = 0
+      while True: 
+        if bexp[cur] == '(': 
+          stack += 1
+        elif bexp[cur] == ')': 
+          stack -= 1
+        elif bexp[cur] == '=':
+          if stack == 0: 
+            return (bexp[:cur].strip(), bexp[cur], bexp[cur + 1:].strip())
+        elif bexp[cur:cur+2] in ['lo']: 
+          if stack == 0: 
+            return (bexp[:cur].strip(), bexp[cur:cur + 3], bexp[cur + 3:].strip())
+        elif bexp[cur:cur+2] in ['la', 'ln']: 
+          if stack == 0: 
+            return (bexp[:cur].strip(), bexp[cur:cur + 4], bexp[cur + 4:].strip())
+        else:
+          pass
+        cur += 1
+    
+    leftExpr, op, rightExpr = splitBool(bexp)
+    if not op in ['=', 'land', 'lor', 'lnot']:
+      raise SyntaxError("Invalid boolean operator {} is given.".format(op))
+    
+    if op=='=':
+      op = 'equal' # for compatibility
+      children = {
+        'LeftEXPR': ExprNode.parse(leftExpr),
+        'RightEXPR': ExprNode.parse(rightExpr)
+      }
+    elif op in ['land', 'lor', 'lnot']:
+      children = {
+        'LeftEXPR': BOOLNode.parse(leftExpr),
+        'RightEXPR': BOOLNode.parse(rightExpr)
+      }
+    node = cls(data=op)
+    for key in children.keys():
+      children[key].parent = node
+    node.children = children
+    return node
 
-    # Simple true and false.
-    if bexp in ['true', 'false']:
-      return BoolNode(bexp)
 
-    # UOP not.
-    elif bexp.startswith('not'):
-      return BoolNode('not', {'CHILD': BoolNode.parse(bexp[3:])})
-
-    # Other BOPs.
-    else:
-      # Utility function.
-      def split_left_op_right(bexp):
-        stack = 0
-        cur = 0
-        while cur < len(bexp):
-          if bexp[cur] == '(':
-            stack += 1
-          elif bexp[cur] == ')':
-            stack -= 1
-            if stack < 0:
-              raise SyntaxError('Invalid syntax.')
-          elif stack == 0:
-            if bexp[cur] == '=':
-              return bexp[:cur], bexp[cur], bexp[cur + 1:]
-            elif bexp[cur:cur + 3] == 'and':
-              return bexp[:cur], bexp[cur:cur + 3], bexp[cur + 3:]
-            elif bexp[cur:cur + 2] == 'or':
-              return bexp[:cur], bexp[cur:cur + 2], bexp[cur + 2:]
-          cur += 1
-        raise SyntaxError('Invalid syntax.')
-
-      # Split expression into left, operator, and right.
-      left, op, right = split_left_op_right(bexp)
-      
-      # Create and return a node.
-      if op == '=':
-        children = {
-          'LEFT': ExprNode.parse(left),
-          'RIGHT': ExprNode.parse(right)
-        }
-      else: # op in ['and', 'or']
-        children = {
-          'LEFT': BoolNode.parse(left),
-          'RIGHT': BoolNode.parse(right)
-        }
-      return BoolNode(op, children)
-
-class VarNode(Tree):
-
-  VAR_TOKENS = ['param0', 'param1']
+# Bop -> {bitwise-logical opts} | {airthmetic opts}
+# bitwise logical operators = {|, &, \oplus(XOR), singed>>, unsigned >>}
+# airthmetic operators = {+, -. x , /, %} 
+class BOPNode(Tree):
+  binary_operations = ["+","-","x","/","%"] + ["||","&","^"] + [">>_s",">>_u"]
 
   def production_space(self):
-    return self, (self.VAR_TOKENS if self.data == HOLE else [])
+    if self.data=='HOLE' or self.data=='hole':
+      return self, self.binary_operations
+    else:
+      for key in ['LeftEXPR','RightEXPR']:
+        node, space = self.children[key].production_space()
+        if len(space) > 0:
+          return node, space
+      return self, []
 
-  def production(self, action):
-    self.data = action
+  def production(self, rule=None): #rules should be one of in binary_operations
+    self.data=rule
+    self.children={
+      'LeftEXPR'  :  ExprNode(),
+      'RightEXPR' :  ExprNode()
+    }
 
   def interprete(self, inputs):
-    return inputs[int(self.data[-1])]
-
-  def pretty_print(self, file=None):
-    print(' (HOLE) ' if self.data == HOLE else f' {self.data} ', end='', file=file)
-
+    ##Arithmetics
+    if self.data=="+":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left+right
+    if self.data=="-":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left-right
+    if self.data=="x":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left*right
+    if self.data=="/":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left/right
+    if self.data=="%":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left%right
+    ##bitwise, logic operators
+    if self.data=="||":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left|right
+    if self.data=="&":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left&right
+    if self.data=="^":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left^right
+    ##shifts
+    if self.data==">>_s":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left>>right
+    if self.data==">>_u":
+      left=self.children['LeftEXPR'].interprete(inputs)
+      right=self.children['RightEXPR'].interprete(inputs)
+      return left.uns_rshift(right)
+  
+  def pretty_print(self,file=None):
+    if self.data=="HOLE" or self.data=="hole":
+      print(' ( {} ) '.format(self.data), file=file)
+    else:
+      print(' ( ', end='', file=file) 
+      self.children['LeftEXPR'].pretty_print(file=file)
+      print(' {} '.format(self.data), end='', file=file)
+      self.children['RightEXPR'].pretty_print(file=file)
+      print(' ) ', end='', file=file) 
+    
   @classmethod
-  def parse(cls, var):
-    return VarNode(var)
+  def parse(cls, exp):
+    # remove outermost parentheses
+    exp = exp[1:-1].strip()
+    # check if bop expression is string
+    if not isinstance(exp, str):
+      raise ValueError("Binary expression {} is not a string".format(exp))
+    
+    def splitBop(exp):
+      stack = 0
+      cur = 0
+      while cur < len(exp):
+        if exp[cur] == '(':
+          stack += 1
+        elif exp[cur] == ')':
+          stack -= 1
+        elif exp[cur] in ['+', '-', 'x', '/', '%', '&', '^']:
+          if stack == 0: 
+            return (exp[:cur].strip(), exp[cur], exp[cur + 1:].strip())
+        elif exp[cur] == '|': 
+          if stack == 0: 
+            return (exp[:cur].strip(), exp[cur:cur + 2], exp[cur + 2:].strip())
+        elif exp[cur] == '>': 
+          if stack == 0: 
+            return (exp[:cur].strip(), exp[cur:cur + 4], exp[cur + 4:].strip())
+        else:
+          pass
+        cur += 1
+      return exp, None, None
+    
+    leftExp, bop, rightExp = splitBop(exp)
+    children = {
+      'LeftEXPR': ExprNode.parse(leftExp),
+      'RightEXPR': ExprNode.parse(rightExp)
+    }
+    # create binary expression node
+    node = cls(data=bop)
+    for key in children.keys():
+      children[key].parent = node
+    node.children = children
+    return node
+  
+  def tokenize(self):
+    if self.data=="HOLE" or self.data=='hole':
+      return []
+    else:
+      tokenized = []
+      tokenized.append(self.data)
+      tokenized = tokenized + self.children['LeftEXPR'].tokenize() + self.children['RightEXPR'].tokenize()
+      return tokenized
 
-class CnstNode(Tree):
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return cls.binary_operations
 
-  CNST_TOKENS = ['0x00', '0x01', '0x02', '0x03', '0x04', '0x05', '0x06', '0x07', '0x08', '0x09', '0x0A', '0x0B', '0x0C', '0x0D', '0x0E', '0x0F', '0x10']
+  def is_complete(self):
+    if self.data=="HOLE" or self.data=="hole":
+      return False
+    else: 
+      return True and (self.children['LeftEXPR'].is_complete()) and (self.children['RightEXPR'].is_complete())
+
+#Const_z -> ...
+class ConstNode(Tree):
+  '''
+  Following the standard in https://github.com/wslee/euphony/blob/master/benchmarks/bitvec/test/99_1000.sl,
+  we set constant from 1 to 16, as 64-bitvecor
+  #x0000000000000000
+  #x0000000000000001
+  #x0000000000000002
+  #x0000000000000003
+  #x0000000000000004
+  #x0000000000000005
+  #x0000000000000006
+  #x0000000000000007
+  #x0000000000000008
+  #x0000000000000009
+  #x000000000000000A
+  #x000000000000000B
+  #x000000000000000C
+  #x000000000000000D
+  #x000000000000000E
+  #x000000000000000F
+  #x0000000000000010
+  '''
+  constants = [i for i in range(16+1)]
+  str_constants = [str(i) for i in range(16+1)]
+
 
   def __init__(self, *args, **kwargs):
-    super(CnstNode, self).__init__(*args, **kwargs)
-    # pylint: disable=too-many-function-args
-    self.value = None if self.data == HOLE else BitVectorLang.BitVector(self.data)
-
-  def production_space(self):
-    return self, (self.CNST_TOKENS if self.data == HOLE else [])
-
-  def production(self, action):
-    self.data = action
+    super(ConstNode, self).__init__(*args, **kwargs)
     # pylint: disable=too-many-function-args
     self.value = BitVectorLang.BitVector(self.data)
 
-  def interprete(self):
+  def production_space(self):
+    if self.data == 'HOLE'or self.data=='hole':
+      return self, self.constants
+    else:
+      return self, []
+
+  def production(self,rule):
+    self.data=rule
+
+  def interprete(self, inputs):
+    if self.data=="HOLE" or self.data=='hole':
+      raise ValueError("The Constant Value is invalid as {}".format(self.data))
     return self.value
 
-  def pretty_print(self, file=None):
-    print(' (HOLE) ' if self.data == HOLE else f' {self.data} ', end='', file=file)
+  def pretty_print(self,file=None):
+    if self.data=="HOLE" or self.data=="hole":
+      print(' (HOLE) ', end ='', file=file)
+    else:
+      print(' {} '.format(self.data),end='', file=file)
 
   @classmethod
   def parse(cls, const):
-    return CnstNode(const)
+    # check if token is string
+    if not isinstance(const, str):
+      raise ValueError("Constant value {} is not a string.".format(const))
+    # check if const is in [0,16]
+    if not const in str(cls.constants):
+      raise ValueError("Constant Value must be between 1 and 16, but {} is given.".format(const))
+    
+    return cls(const)
+
+  def tokenize(self):
+    if self.data=="HOLE" or self.data=="hole":
+      return []
+    else:
+      return [str(self.data)]
+
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return cls.str_constants
+
+  def is_complete(self):
+    if self.data=="HOLE" or self.data=="hole":
+      return False
+    else: 
+      return True
+
+#Var_z -> param1 | param2 ...
+class ParamNode(Tree):
+  param_space = ["param{}".format(i) for i in range(2)]
+
+  def production_space(self):
+    if self.data == 'HOLE':
+      return self, self.param_space
+    else:
+      return self,[]
+  
+  def production(self, rule=None):
+    self.data=rule
+  
+  def interprete(self, inputs): ##inputs as list?
+    return inputs[int(self.data[-1])]
+
+  def pretty_print(self,file=None):
+    if self.data=="HOLE" or self.data=="hole":
+      print(' (HOLE) ', end ='', file=file)
+    else:
+      print(' {} '.format(self.data), end='', file=file)
+      
+  @classmethod
+  def parse(cls, token):
+    # check if token is string
+    if not isinstance(token, str):
+      raise ValueError("Parameter token {} is not a string".format(token))
+    
+    # check if token is in ['param0', 'param1']
+    if not token in cls.param_space:
+      raise SyntaxError("Invalid parameter token {} is given.".format(token))
+    
+    return cls(token)
+  
+  def tokenize(self):
+    if self.data=="HOLE" or self.data=="hole":
+      return []
+    else:
+      return [self.data]
+  
+  @classproperty
+  @classmethod
+  def tokens(cls):
+    return cls.param_space
+
+  def is_complete(self):
+    if self.data=="HOLE" or self.data=="hole":
+      return False
+    else: 
+      return True
+  

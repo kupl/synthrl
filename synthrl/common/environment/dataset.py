@@ -5,10 +5,7 @@ import importlib
 import json
 
 from synthrl.common.environment.ioset import IOSet
-from synthrl.language.bitvector.lang import BitVectorLang
-from synthrl.language.listlang.lang import ListLang
-from synthrl.language.bitvector import ExprNode
-import synthrl.language as language
+import synthrl.common.language as language
 
 class Element:
 
