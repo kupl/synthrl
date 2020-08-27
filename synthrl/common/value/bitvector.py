@@ -9,7 +9,7 @@ class BitVector(Value):
 
   @classproperty
   @classmethod
-  def size(cls):
+  def N_VALUE(cls):
     return cls.TYPE().itemsize * 8
 
   def __init__(self, value=0):
@@ -31,6 +31,10 @@ class BitVector(Value):
   def unsigned(self):
     utype = np.dtype(f'uint{self.value.dtype.itemsize * 8}')
     return self.value.view(utype)
+
+  @property
+  def index(self):
+    return self.unsigned
 
   @property
   def signed(self):

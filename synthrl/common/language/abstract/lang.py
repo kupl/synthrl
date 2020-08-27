@@ -1,9 +1,29 @@
 from abc import ABC
 from abc import abstractmethod
 
+from synthrl.common.utils import classproperty
+
 HOLE = 'HOLE'
 
 class Program(ABC):
+
+  @classproperty
+  @classmethod
+  @abstractmethod
+  def VALUE(cls):
+    pass
+
+  @classproperty
+  @classmethod
+  @abstractmethod
+  def N_INPUT(cls):
+    pass
+
+  @classproperty
+  @classmethod
+  @abstractmethod
+  def TOKENS(cls):
+    pass
 
   def __init__(self):
     pass
@@ -29,12 +49,16 @@ class Program(ABC):
     pass
 
   @classmethod
-  @abstractmethod
   def parse(cls, pgm):
     pass
 
   @abstractmethod
   def copy(self):
+    pass
+
+  @property
+  @abstractmethod
+  def sequence(self):
     pass
 
 class Tree:

@@ -1,7 +1,15 @@
 from abc import ABC
 from abc import abstractmethod
 
+from synthrl.common.utils import classproperty
+
 class Value(ABC):
+
+  @classproperty
+  @classmethod
+  @abstractmethod
+  def N_VALUE(cls):
+    pass
 
   def __init__(self, value):
     self.value = value
@@ -23,3 +31,8 @@ class Value(ABC):
 
   def __repr__(self):
     return repr(self.value)
+
+  @property
+  @abstractmethod
+  def index(self):
+    pass

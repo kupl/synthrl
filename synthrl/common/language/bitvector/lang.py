@@ -50,6 +50,7 @@ from synthrl.common.language.abstract.lang import HOLE
 from synthrl.common.language.abstract.lang import Program
 from synthrl.common.language.abstract.lang import Tree
 from synthrl.common.utils import classproperty
+from synthrl.common.value.bitvector import BitVector
 
 
 class BitVectorLang(Program):
@@ -59,7 +60,17 @@ class BitVectorLang(Program):
 
   @classproperty
   @classmethod
-  def BitVector(cls):
+  def VALUE(cls):
+    return cls.BITVECTOR
+
+  @classproperty
+  @classmethod
+  def N_INPUT(cls):
+    return 2
+
+  @classproperty
+  @classmethod
+  def BITVECTOR(cls):
     if not cls.__BitVector or cls.__BitVector.size != cls.VECTOR_SIZE:
       bitvector = importlib.import_module('synthrl.common.value.bitvector')
       cls.__BitVector = getattr(bitvector, f'BitVector{cls.VECTOR_SIZE}')
@@ -87,7 +98,7 @@ class BitVectorLang(Program):
 
   def interprete(self, inputs):
     # pylint: disable=too-many-function-args
-    return self.start_node.interprete([self.BitVector(i) for i in inputs])
+    return self.start_node.interprete([self.BITVECTOR(i) for i in inputs])
 
   @classmethod
   def parse(cls, program):
@@ -98,15 +109,16 @@ class BitVectorLang(Program):
   def copy(self):
     return BitVectorLang(self.start_node.copy())
 
-  def tokenize(self):
-    return self.start_node.tokenize()
+  @property
+  def sequence(self):
+    return self.start_node.sequence
   
   def is_complete(self):
     return self.start_node.is_complete()
 
   @classproperty
   @classmethod
-  def tokens(cls):
+  def TOKENS(cls):
     return ExprNode.tokens + BOPNode.tokens + ConstNode.tokens + ParamNode.tokens
 
 
@@ -284,23 +296,24 @@ class ExprNode(Tree):
     node.children = children
     return node
 
-  def tokenize(self):
+  @property
+  def sequence(self):
     if self.data=="HOLE" or self.data=='hole':
       return []
     else:
       tokenized = []
       if self.data=='var':
-        tokenized = tokenized + self.children['VAR_Z'].tokenize()
+        tokenized = tokenized + self.children['VAR_Z'].sequence
       elif self.data=='const':
-        tokenized = tokenized + self.children['CONST_Z'].tokenize()
+        tokenized = tokenized + self.children['CONST_Z'].sequence
       elif self.data=='bop':
-        tokenized = tokenized + self.children['BOP'].tokenize()
+        tokenized = tokenized + self.children['BOP'].sequence
       elif self.data=='neg':
         tokenized.append(self.data)
-        tokenized = tokenized + self.children['NEG'].tokenize()
+        tokenized = tokenized + self.children['NEG'].sequence
       elif self.data=='arith-neg':
         tokenized.append(self.data)
-        tokenized = tokenized + self.children['ARITH-NEG'].tokenize()
+        tokenized = tokenized + self.children['ARITH-NEG'].sequence
       return tokenized
 
   @classproperty
@@ -571,13 +584,14 @@ class BOPNode(Tree):
     node.children = children
     return node
   
-  def tokenize(self):
+  @property
+  def sequence(self):
     if self.data=="HOLE" or self.data=='hole':
       return []
     else:
       tokenized = []
       tokenized.append(self.data)
-      tokenized = tokenized + self.children['LeftEXPR'].tokenize() + self.children['RightEXPR'].tokenize()
+      tokenized = tokenized + self.children['LeftEXPR'].sequence + self.children['RightEXPR'].sequence
       return tokenized
 
   @classproperty
@@ -589,7 +603,7 @@ class BOPNode(Tree):
     if self.data=="HOLE" or self.data=="hole":
       return False
     else: 
-      return True and (self.children['LeftEXPR'].is_complete()) and (self.children['RightEXPR'].is_complete())
+      return (self.children['LeftEXPR'].is_complete()) and (self.children['RightEXPR'].is_complete())
 
 #Const_z -> ...
 class ConstNode(Tree):
@@ -621,7 +635,7 @@ class ConstNode(Tree):
   def __init__(self, *args, **kwargs):
     super(ConstNode, self).__init__(*args, **kwargs)
     # pylint: disable=too-many-function-args
-    self.value = BitVectorLang.BitVector(self.data)
+    self.value = BitVectorLang.BITVECTOR(self.data)
 
   def production_space(self):
     if self.data == 'HOLE'or self.data=='hole':
@@ -654,7 +668,8 @@ class ConstNode(Tree):
     
     return cls(const)
 
-  def tokenize(self):
+  @property
+  def sequence(self):
     if self.data=="HOLE" or self.data=="hole":
       return []
     else:
@@ -673,7 +688,7 @@ class ConstNode(Tree):
 
 #Var_z -> param1 | param2 ...
 class ParamNode(Tree):
-  param_space = ["param{}".format(i) for i in range(2)]
+  param_space = ["param{}".format(i) for i in range(BitVectorLang.N_INPUT)]
 
   def production_space(self):
     if self.data == 'HOLE':
@@ -705,7 +720,8 @@ class ParamNode(Tree):
     
     return cls(token)
   
-  def tokenize(self):
+  @property
+  def sequence(self):
     if self.data=="HOLE" or self.data=="hole":
       return []
     else:
