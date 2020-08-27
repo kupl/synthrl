@@ -228,7 +228,6 @@ class RNNFunction(Function):
     }
     torch.save(info, path)
 
-
   @classmethod
   def load(cls, path, device='cpu'):
     path = Path(path)
