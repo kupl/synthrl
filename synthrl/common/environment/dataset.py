@@ -1,7 +1,6 @@
 from ast import literal_eval
 from contextlib import redirect_stdout
 from io import StringIO
-import importlib
 import json
 
 from synthrl.common.environment.ioset import IOSet
