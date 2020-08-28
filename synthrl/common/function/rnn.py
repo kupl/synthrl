@@ -27,7 +27,7 @@ class Network(nn.Module):
     self.value = nn.Linear(hidden_size, 1)
 
   def forward(self, inputs, lengths):
-    # inputs: [batch_size, lengths, n_example, input_size]
+    #  inputs: [batch_size, max_len, n_example, input_size]
     # lengths: [batch_size] of length tensor
     batch_size, max_len, n_example, input_size = inputs.shape
 
@@ -49,8 +49,9 @@ class Network(nn.Module):
     # inputs: packed input
     inputs = pack_padded_sequence(inputs, lengths)
 
-    # outputs: packed pad outputs
-    outputs = self.rnn(inputs)
+    #   outputs: packed pad outputs
+    # hidden(_): hidden state
+    outputs, _ = self.rnn(inputs)
 
     # outputs: [batch_size * n_example, max_len, hidden_size] of tensor
     # lengths: [batch_size * n_example] of length tensor
@@ -72,7 +73,7 @@ class Network(nn.Module):
     pooled = pooled.squeeze(-1)
 
     # policy: [batch_size, n_tokens]
-    # value: [batch_size, 1]
+    #  value: [batch_size, 1]
     policy = self.policy(pooled)
     value = self.value(pooled)
 
@@ -128,7 +129,7 @@ class RNNFunction(Function):
     lengths = torch.LongTensor([len(pgm) for pgm in pgms]).to(self.device)
 
     # Find descending order.
-    # lengths: [batch_size] of lengths
+    #    lengths: [batch_size] of lengths
     # sorted_idx: [batch_size] of indices
     lengths, sorted_idx = lengths.sort(descending=True)
     
@@ -187,7 +188,7 @@ class RNNFunction(Function):
     inputs = torch.cat([pgms, iosets], dim=-1)
 
     # policy: [batch_size, n_tokens]
-    # value: [batch_size, 1]
+    #  value: [batch_size, 1]
     policy, value = self.network(inputs, lengths)
 
     return policy, value
