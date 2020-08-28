@@ -42,8 +42,6 @@
 #  Var -> param1
 #       | param2
 
-import importlib
-
 from synthrl.common.language.abstract.exception import SyntaxError
 from synthrl.common.language.abstract.exception import WrongProductionException
 from synthrl.common.language.abstract.lang import HOLE
@@ -51,6 +49,7 @@ from synthrl.common.language.abstract.lang import Program
 from synthrl.common.language.abstract.lang import Tree
 from synthrl.common.utils import classproperty
 from synthrl.common.value.bitvector import BitVector
+import synthrl.common.value.bitvector as bitvector
 
 
 class BitVectorLang(Program):
@@ -72,7 +71,6 @@ class BitVectorLang(Program):
   @classmethod
   def BITVECTOR(cls):
     if not cls.__BitVector or cls.__BitVector.size != cls.VECTOR_SIZE:
-      bitvector = importlib.import_module('synthrl.common.value.bitvector')
       cls.__BitVector = getattr(bitvector, f'BitVector{cls.VECTOR_SIZE}')
     return cls.__BitVector
 
@@ -635,7 +633,7 @@ class ConstNode(Tree):
   def __init__(self, *args, **kwargs):
     super(ConstNode, self).__init__(*args, **kwargs)
     # pylint: disable=too-many-function-args
-    self.value = BitVectorLang.BITVECTOR(self.data)
+    self.value = None if self.data == HOLE else BitVectorLang.BITVECTOR(self.data)
 
   def production_space(self):
     if self.data == 'HOLE'or self.data=='hole':
@@ -645,6 +643,8 @@ class ConstNode(Tree):
 
   def production(self,rule):
     self.data=rule
+    # pylint: disable=too-many-function-args
+    self.value = BitVectorLang.BITVECTOR(self.data)
 
   def interprete(self, inputs):
     if self.data=="HOLE" or self.data=='hole':
