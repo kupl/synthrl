@@ -12,6 +12,11 @@ class BitVector(Value):
   def N_VALUE(cls):
     return cls.TYPE().itemsize * 8
 
+  @classproperty
+  @classmethod
+  def N_BIT(cls):
+    return np.iinfo(cls.TYPE).bits
+
   def __init__(self, value=0):
     if isinstance(value, BitVector):
       value = value.value

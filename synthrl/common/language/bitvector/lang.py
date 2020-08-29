@@ -70,7 +70,7 @@ class BitVectorLang(Program):
   @classproperty
   @classmethod
   def BITVECTOR(cls):
-    if not cls.__BitVector or cls.__BitVector.size != cls.VECTOR_SIZE:
+    if not cls.__BitVector or cls.__BitVector.N_BIT != cls.VECTOR_SIZE:
       cls.__BitVector = getattr(bitvector, f'BitVector{cls.VECTOR_SIZE}')
     return cls.__BitVector
 
