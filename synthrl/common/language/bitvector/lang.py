@@ -49,7 +49,6 @@ from synthrl.common.language.abstract.lang import Program
 from synthrl.common.language.abstract.lang import Tree
 from synthrl.common.utils import classproperty
 from synthrl.common.value.bitvector import BitVector
-from synthrl.common.environment.dataset import Storage
 import synthrl.common.value.bitvector as bitvector
 
 
@@ -163,6 +162,8 @@ class ExprNode(Tree):
         children=["NEG"]
       elif self.data=="ite":
         children=['IF_BOOL', 'THEN_EXPR','ELSE_EXPR']
+      elif self.data=="arith-neg":
+        children=['ARITH-NEG']
       for key in children:
         node, space = self.children[key].production_space()
         if len(space) > 0:
@@ -191,7 +192,7 @@ class ExprNode(Tree):
         'NEG' : ExprNode()
       }
     if rule =="arith-neg":
-      self.data=="arith-neg"
+      self.data="arith-neg"
       self.children={
         'ARITH-NEG' : ExprNode()
       }
@@ -237,7 +238,6 @@ class ExprNode(Tree):
       print("~ ( ",end='', file=file)
       self.children['NEG'].pretty_print(file=file)
       print(" ) ",end='', file=file)
-
     elif self.data == 'arith-neg':
       print("neg ( ",end='', file=file)
       self.children['ARITH-NEG'].pretty_print(file=file)
