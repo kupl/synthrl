@@ -528,7 +528,7 @@ class BOPNode(Tree):
     if self.data==">>_u":
       left=self.children['LeftEXPR'].interprete(inputs)
       right=self.children['RightEXPR'].interprete(inputs)
-      return left.uns_rshift(right)
+      return left.unsigned_rshift(right)
   
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=="hole":
