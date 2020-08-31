@@ -1,5 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
+from itertools import chain
 from pathlib import Path
 from torch.nn.utils.rnn import pad_packed_sequence
 from torch.nn.utils.rnn import pack_padded_sequence
@@ -201,7 +202,7 @@ class RNNFunction(Function):
     return self
 
   def parameters(self):
-    return self.token_emb.parameters() + self.value_emb.parameters() + self.network.parameters()
+    return chain(self.token_emb.parameters(), self.value_emb.parameters(), self.network.parameters())
 
   def state_dict(self):
     return {
