@@ -142,7 +142,7 @@ class RNNFunction(Function):
     pgms = [pgm + [PAD_TOKEN] * (max_len - len(pgm)) for pgm in pgms]
 
     # pgms: [batch_size, max_len] of token index tensor
-    pgms = torch.LongTensor([[self.indices[token] for token in pgm] for pgm in pgm]).to(self.device)
+    pgms = torch.LongTensor([[self.indices[token] for token in pgm] for pgm in pgms]).to(self.device)
 
     # Re-order in descending order.
     # pgms: [batch_size, max_len]
