@@ -2,7 +2,7 @@ from ast import literal_eval
 from contextlib import redirect_stdout
 from io import StringIO
 import json
-
+from torch.utils.data import Dataset
 from synthrl.common.environment.ioset import IOSet
 import synthrl.common.language as language
 
@@ -20,7 +20,7 @@ class Element:
     else:
       raise IndexError('Index 0 for oracle, and index 1 for ioset.')
 
-class Dataset:
+class Storage:
 
   def __init__(self, language):
     self.language = language
@@ -65,7 +65,7 @@ class Dataset:
       'language': self.language,
       'data': [],
     }
-
+    
     for oracle, ioset in self.elements:
 
       # Get program as string.
@@ -75,7 +75,7 @@ class Dataset:
 
       # Get ioset as string.
       ioset = [str(io) for io in ioset]
-
+      
       # Add to dataset.
       dataset['data'].append({
         'oracle': oracle,
@@ -107,3 +107,19 @@ class Dataset:
 
   def from_txt(self, file):
     pass
+
+
+class ProgramDataset(Dataset):
+  def __init__(self, list_IDs, dataset_paths = []):
+        self.labels = labels
+        self.list_IDs = list_IDs
+
+  def __len__(self):
+        #total number of samples in the dataset
+        return len(self.list_IDs)
+
+  def __getitem__(self, index):
+        #Single sample of data
+
+        return X, y
+

@@ -71,6 +71,7 @@ class BitVectorLang(Tree):
     pgm = cls()
     pgm.start_node = ExprNode.parse(program)
     return pgm
+
 #N_z
 class ExprNode(Node):
   # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
@@ -866,24 +867,13 @@ class ParamNode(Node):
 
 
 ######test######
-#if __name__ == '__main__':
-  #print("--test--")
-  #vec_program = BitVectorLang()
-  #print(vec_program.production_space())
-  #vec_program.production('bop')
-  #print(vec_program.production_space())
-  #vec_program.production('+')
-  #vec_program.pretty_print()
-  #print(vec_program.production_space())
-  #vec_program.production('const')
-  #vec_program.pretty_print()
-  #print(vec_program.production_space())
-  #vec_program.production(10)
-  #vec_program.pretty_print()
-  #print(vec_program.production_space())
-  #vec_program.production('neg')
-  #vec_program.pretty_print()
-  #print(vec_program.production_space())
-  #vec_program.production('var')
-  #vec_program.pretty_print()
-  #print(vec_program.production_space())
+if __name__ == '__main__':
+  pgm = BitVectorLang()
+  pgm.production("bop")
+  pgm.production("%")
+  pgm.production("var")
+  pgm.production("param1")
+  pgm.production("const")
+  pgm.production(12)
+  pgm.pretty_print()
+  print(pgm.seq)

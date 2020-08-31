@@ -168,7 +168,7 @@ class RNNFunction(Function):
 
     # iosets: [batch_size, n_example, (n_input + 1) * value_emb_dim]
     iosets = iosets.reshape(batch_size, n_example, -1)
-
+    
     # Expand dimension of token embedding
     # pgms: [batch_size, max_len, 1, token_emb_dim]
     pgms = pgms.unsqueeze(2)

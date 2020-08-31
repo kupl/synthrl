@@ -3,7 +3,7 @@
 #       | Cnst
 #       | Bop
 #       | - Expr
-#       | ¬ Expr
+#       | neg Expr
 #       | if Bool then Expr else Expr
 #  Bop -> Expr + Expr
 #       | Expr - Expr
@@ -49,6 +49,7 @@ from synthrl.common.language.abstract.lang import Program
 from synthrl.common.language.abstract.lang import Tree
 from synthrl.common.utils import classproperty
 from synthrl.common.value.bitvector import BitVector
+from synthrl.common.environment.dataset import Storage
 import synthrl.common.value.bitvector as bitvector
 
 
@@ -85,7 +86,8 @@ class BitVectorLang(Program):
     return self.possible_actions
 
   def product(self, action):
-    if action not in self.possible_actions:
+    possible_space = self.production_space
+    if action not in possible_space:
       raise WrongProductionException(f'"{action}" is not in action space.')
     self.node.production(action)
 
@@ -119,7 +121,25 @@ class BitVectorLang(Program):
   def TOKENS(cls):
     return ExprNode.tokens + BOPNode.tokens + ConstNode.tokens + ParamNode.tokens
 
-
+  @classmethod
+  def tokens2prog(cls, tokens = []):
+    pgm = cls()
+    for action in tokens:
+      if action == 'neg':
+        pgm.product(action)
+      elif action == 'arith-neg':
+        pgm.product(action)
+      elif action in  ["+","-","x","/","%"] + ["||","&","^"]  + [">>_s",">>_u"]:
+        pgm.product("bop")
+        pgm.product(action)
+      elif action in ConstNode.tokens:
+        pgm.product("const")
+        pgm.product(int(action))
+      elif action in ParamNode.tokens:
+        pgm.product("var")
+        pgm.product(action)
+    return pgm
+      
 class ExprNode(Tree):
   # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
   # expr_productions = ['var','const','bop','neg']
@@ -210,7 +230,7 @@ class ExprNode(Tree):
       self.children['BOP'].pretty_print(file=file)
 
     elif self.data=='neg':
-      print("¬ ( ",end='', file=file)
+      print("neg ( ",end='', file=file)
       self.children['NEG'].pretty_print(file=file)
 
       print(" ) ",end='', file=file)
@@ -238,7 +258,7 @@ class ExprNode(Tree):
       return ParamNode.parse(exp)
     elif exp in [str(i) for i in range(16+1)]: # const
       return ConstNode.parse(exp)
-    elif exp.startswith('¬'): # neg
+    elif exp.startswith('neg'): # neg
       # set operator
       op = 'neg'
       # get leftmost '('
@@ -247,7 +267,7 @@ class ExprNode(Tree):
       e = exp.rfind(')')
       # no parentheses
       if (s==-1 and e==-1):
-        op_i = exp.find('¬')
+        op_i = exp.find('neg')
         subexp = exp[op_i+1:].strip()
       # valid parentheses
       elif (s!=-1 and e!=-1):
@@ -528,7 +548,7 @@ class BOPNode(Tree):
     if self.data==">>_u":
       left=self.children['LeftEXPR'].interprete(inputs)
       right=self.children['RightEXPR'].interprete(inputs)
-      return left.uns_rshift(right)
+      return left.unsigned_rshift(right)
   
   def pretty_print(self,file=None):
     if self.data=="HOLE" or self.data=="hole":
@@ -738,3 +758,7 @@ class ParamNode(Tree):
     else: 
       return True
   
+######test######
+if __name__ == '__main__':
+  pgm = BitVectorLang.parse("( (  12  %  11  ) )")
+  BitVectorLang.tokens2prog(pgm.sequence).pretty_print()
