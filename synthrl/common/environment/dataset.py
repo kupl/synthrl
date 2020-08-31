@@ -2,12 +2,14 @@ from ast import literal_eval
 from contextlib import redirect_stdout
 from io import StringIO
 import json
-
+import gc
+from torch.utils.data import Dataset
 from synthrl.common.environment.ioset import IOSet
+from synthrl.common.language.bitvector.lang import BitVectorLang
+
 import synthrl.common.language as language
 
 class Element:
-
   def __init__(self, oracle, ioset):
     self.oracle = oracle
     self.ioset = IOSet(ioset)
@@ -20,7 +22,7 @@ class Element:
     else:
       raise IndexError('Index 0 for oracle, and index 1 for ioset.')
 
-class Dataset:
+class Storage:
 
   def __init__(self, language):
     self.language = language
@@ -31,7 +33,10 @@ class Dataset:
 
   def add(self, program, ioset):
     self.elements.append(Element(program, ioset))
-
+  
+  def join(self, other):
+    self.elements += other.elements
+    
   def __repr__(self):
 
     stream = StringIO()
@@ -65,7 +70,7 @@ class Dataset:
       'language': self.language,
       'data': [],
     }
-
+    
     for oracle, ioset in self.elements:
 
       # Get program as string.
@@ -75,7 +80,7 @@ class Dataset:
 
       # Get ioset as string.
       ioset = [str(io) for io in ioset]
-
+      
       # Add to dataset.
       dataset['data'].append({
         'oracle': oracle,
@@ -107,3 +112,55 @@ class Dataset:
 
   def from_txt(self, file):
     pass
+
+
+class ProgramDataset(Dataset):
+  def __init__(self, dataset_paths = []):
+    self.states = []
+    #states : includes (partial_programs, idx of corresp. io_set)
+    self.labels = []
+    #labels : the right next seuqence of partial program
+
+    self.storage = Storage("BitVectorLang") 
+    for path in dataset_paths:
+      Storage.join(self.storage, Storage.from_json(path))
+
+    for idx, elt in enumerate(self.storage.elements):
+      pgm_seq = (elt.oracle).sequence
+      for i in range(len(pgm_seq)):
+        self.states.append( (pgm_seq[:i], idx) )
+        self.labels.append(pgm_seq[i])
+    gc.collect()
+
+  def __len__(self):
+    return length(self.labels)
+
+  def __getitem__(self, index):
+    partial_pgm = BitVectorLang.tokens2prog(self.states[index][0])
+    io_idx = self.states[index][1]
+    return (partial_pgm, self.storage.elements[io_idx].ioset ), self.labels[index]
+
+
+if __name__ == '__main__':
+  paths = ["../dataset/train/train_dataset_uptolv01.json",
+            "../dataset/train/train_dataset_uptolv2.json",
+            "../dataset/train/train_dataset_uptolv3.json",
+            "../dataset/train/train_dataset_uptolv4.json",
+            "../dataset/train/train_dataset_uptolv5.json"
+          ]
+  dataset = ProgramDataset(dataset_paths=paths)
+  assert len(dataset.states) == len(dataset.labels)
+
+
+  # for state, label in zip(dataset.states ,dataset.labels):
+  #   print(state, label ,end="\n")
+  #   BitVectorLang.tokens2prog(state[0]).pretty_print()
+
+  # paths = ["../dataset/train/temp_io.json"]
+  # dataset = ProgramDataset(dataset_paths=paths)
+  # (pp, io), label = dataset[12]
+  # pp.pretty_print()
+  # print(io)
+  # print(label)
+
+
