@@ -139,6 +139,9 @@ class BitVectorLang(Program):
         pgm.product("var")
         pgm.product(action)
     return pgm
+
+  def is_const_pgm(self):
+    return self.start_node.is_const_pgm()
       
 class ExprNode(Tree):
   # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
@@ -212,7 +215,8 @@ class ExprNode(Tree):
       sub=self.children['ARITH-NEG'].interprete(inputs)
       return -sub
     if self.data =="neg": #logical neg
-      return self.children['NEG'].interprete(inputs).logical_neg()
+      val = self.children['NEG'].interprete(inputs)
+      return ~val
     # if self.data =="ite":
     #   pass
 
@@ -230,13 +234,12 @@ class ExprNode(Tree):
       self.children['BOP'].pretty_print(file=file)
 
     elif self.data=='neg':
-      print("neg ( ",end='', file=file)
+      print("~ ( ",end='', file=file)
       self.children['NEG'].pretty_print(file=file)
-
       print(" ) ",end='', file=file)
-      
+
     elif self.data == 'arith-neg':
-      print(" - ( ",end='', file=file)
+      print("neg ( ",end='', file=file)
       self.children['ARITH-NEG'].pretty_print(file=file)
       print(" ) ",end='', file=file)
     # elif self.data=="ite":
@@ -258,7 +261,7 @@ class ExprNode(Tree):
       return ParamNode.parse(exp)
     elif exp in [str(i) for i in range(16+1)]: # const
       return ConstNode.parse(exp)
-    elif exp.startswith('neg'): # neg
+    elif exp.startswith('~'): # neg
       # set operator
       op = 'neg'
       # get leftmost '('
@@ -279,7 +282,7 @@ class ExprNode(Tree):
       children = {
         'NEG': ExprNode.parse(subexp)
       }
-    elif exp.startswith('-'): # arith-neg
+    elif exp.startswith('neg'): # arith-neg
       # set operator
       op = 'arith-neg'
       # get leftmost '('
@@ -348,6 +351,10 @@ class ExprNode(Tree):
         is_comp = True and (self.children[key].is_complete())
       return is_comp
 
+  def is_const_pgm(self):
+    for key in list(self.children.keys()):
+        is_comp = True and (self.children[key].is_const_pgm())
+    return is_comp
 #N_B -> true|false
 #         | Nz=Nz | N_B land N_B |N_B lor N_B| N_B lnot N_B
 #Add Later: <=_u
@@ -622,6 +629,9 @@ class BOPNode(Tree):
       return False
     else: 
       return (self.children['LeftEXPR'].is_complete()) and (self.children['RightEXPR'].is_complete())
+  
+  def is_const_pgm(self):
+    return True and (self.children['LeftEXPR'].is_const_pgm()) and (self.children['RightEXPR'].is_const_pgm())
 
 #Const_z -> ...
 class ConstNode(Tree):
@@ -706,6 +716,9 @@ class ConstNode(Tree):
     else: 
       return True
 
+  def is_const_pgm(self):
+    return True
+
 #Var_z -> param1 | param2 ...
 class ParamNode(Tree):
   param_space = ["param{}".format(i) for i in range(BitVectorLang.N_INPUT)]
@@ -757,8 +770,11 @@ class ParamNode(Tree):
       return False
     else: 
       return True
-  
+
+  def is_const_pgm(self):
+    return False
+
 ######test######
 if __name__ == '__main__':
-  pgm = BitVectorLang.parse("( (  12  %  11  ) )")
-  BitVectorLang.tokens2prog(pgm.sequence).pretty_print()
+  pgm = BitVectorLang.parse("( (  1 + 2 ) )")
+  pgm.pretty_print()
