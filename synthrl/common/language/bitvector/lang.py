@@ -118,7 +118,7 @@ class BitVectorLang(Program):
   @classproperty
   @classmethod
   def TOKENS(cls):
-    return ExprNode.tokens + BOPNode.tokens + ConstNode.tokens + ParamNode.tokens
+    return sorted(ExprNode.tokens + BOPNode.tokens + ConstNode.tokens + ParamNode.tokens)
 
   @classmethod
   def tokens2prog(cls, tokens = []):
