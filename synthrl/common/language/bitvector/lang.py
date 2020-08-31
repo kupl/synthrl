@@ -118,11 +118,12 @@ class BitVectorLang(Program):
   @classproperty
   @classmethod
   def TOKENS(cls):
-    return sorted(ExprNode.tokens + BOPNode.tokens + ConstNode.tokens + ParamNode.tokens)
+    return sorted(ExprNode.TOKENS + BOPNode.TOKENS + ConstNode.TOKENS + ParamNode.TOKENS)
 
   @classmethod
   def tokens2prog(cls, tokens = []):
     pgm = cls()
+    # pylint: disable=unsupported-membership-test
     for action in tokens:
       if action == 'neg':
         pgm.product(action)
@@ -131,10 +132,10 @@ class BitVectorLang(Program):
       elif action in  ["+","-","x","/","%"] + ["||","&","^"]  + [">>_s",">>_u"]:
         pgm.product("bop")
         pgm.product(action)
-      elif action in ConstNode.tokens:
+      elif action in ConstNode.TOKENS:
         pgm.product("const")
         pgm.product(int(action))
-      elif action in ParamNode.tokens:
+      elif action in ParamNode.TOKENS:
         pgm.product("var")
         pgm.product(action)
     return pgm
@@ -319,27 +320,26 @@ class ExprNode(Tree):
 
   @property
   def sequence(self):
-    if self.data=="HOLE" or self.data=='hole':
-      return []
-    else:
-      tokenized = []
-      if self.data=='var':
-        tokenized = tokenized + self.children['VAR_Z'].sequence
-      elif self.data=='const':
-        tokenized = tokenized + self.children['CONST_Z'].sequence
-      elif self.data=='bop':
-        tokenized = tokenized + self.children['BOP'].sequence
-      elif self.data=='neg':
-        tokenized.append(self.data)
-        tokenized = tokenized + self.children['NEG'].sequence
-      elif self.data=='arith-neg':
-        tokenized.append(self.data)
-        tokenized = tokenized + self.children['ARITH-NEG'].sequence
-      return tokenized
+    seq = []
+    if self.data == HOLE:
+      seq.append(self.data)
+    elif self.data=='var':
+      seq = seq + self.children['VAR_Z'].sequence
+    elif self.data=='const':
+      seq = seq + self.children['CONST_Z'].sequence
+    elif self.data=='bop':
+      seq = seq + self.children['BOP'].sequence
+    elif self.data=='neg':
+      seq.append(self.data)
+      seq = seq + self.children['NEG'].sequence
+    elif self.data=='arith-neg':
+      seq.append(self.data)
+      seq = seq + self.children['ARITH-NEG'].sequence
+    return seq
 
   @classproperty
   @classmethod
-  def tokens(cls):
+  def TOKENS(cls):
     return ["arith-neg","neg"]
   
   def is_complete(self):
@@ -611,17 +611,16 @@ class BOPNode(Tree):
   
   @property
   def sequence(self):
-    if self.data=="HOLE" or self.data=='hole':
-      return []
-    else:
-      tokenized = []
-      tokenized.append(self.data)
-      tokenized = tokenized + self.children['LeftEXPR'].sequence + self.children['RightEXPR'].sequence
-      return tokenized
+    seq = [self.data]
+    if seq[-1] != HOLE:
+      seq = seq + self.children['LeftEXPR'].sequence
+    if seq[-1] != HOLE:
+      seq = seq + self.children['RightEXPR'].sequence
+    return seq
 
   @classproperty
   @classmethod
-  def tokens(cls):
+  def TOKENS(cls):
     return cls.binary_operations
 
   def is_complete(self):
@@ -700,14 +699,11 @@ class ConstNode(Tree):
 
   @property
   def sequence(self):
-    if self.data=="HOLE" or self.data=="hole":
-      return []
-    else:
-      return [str(self.data)]
+    return [self.data]
 
   @classproperty
   @classmethod
-  def tokens(cls):
+  def TOKENS(cls):
     return cls.str_constants
 
   def is_complete(self):
@@ -755,14 +751,11 @@ class ParamNode(Tree):
   
   @property
   def sequence(self):
-    if self.data=="HOLE" or self.data=="hole":
-      return []
-    else:
-      return [self.data]
+    return [self.data]
   
   @classproperty
   @classmethod
-  def tokens(cls):
+  def TOKENS(cls):
     return cls.param_space
 
   def is_complete(self):
