@@ -49,7 +49,7 @@ class Network(nn.Module):
     lengths = lengths.flatten()
 
     # inputs: packed input
-    inputs = pack_padded_sequence(inputs, lengths)
+    inputs = pack_padded_sequence(inputs, lengths, batch_first=True)
 
     #   outputs: packed pad outputs
     # hidden(_): hidden state
