@@ -10,7 +10,8 @@ class BitVector(Value):
   @classproperty
   @classmethod
   def N_VALUE(cls):
-    return cls.TYPE().itemsize * 8
+    iinfo = np.iinfo(cls.TYPE)
+    return iinfo.max - iinfo.min + 1
 
   @classproperty
   @classmethod

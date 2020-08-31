@@ -106,9 +106,9 @@ class RNNFunction(Function):
     self.token_emb = nn.Embedding(self.n_tokens + 2, self.token_emb_dim, padding_idx=self.indices[PAD_TOKEN]).to(device)
 
     # Value embeding.
-    self.n_value_types = self.language.VALUE.N_VALUE
+    self.n_values = self.language.VALUE.N_VALUE
     self.value_emb_dim = value_emb_dim
-    self.value_emb = nn.Embedding(self.n_value_types, self.value_emb_dim).to(device)
+    self.value_emb = nn.Embedding(self.n_values, self.value_emb_dim).to(device)
 
     # Main network.
     self.n_input = self.language.N_INPUT
