@@ -5,8 +5,8 @@ class Function(ABC):
 
   def __init__(self, language):
     self.language = language
-    self.tokens = sorted(self.language.tokens)
-    self.indices = {token: i for i, token in enumerate(self.tokens)}
+    self.TOKENS = sorted(self.language.TOKENS)
+    self.indices = {token: i for i, token in enumerate(self.TOKENS)}
 
   @abstractmethod
   def evaluate(self, state, **info):
