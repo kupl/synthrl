@@ -11,6 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from synthrl.common.function.function import Function
+from synthrl.common.language.abstract.lang import HOLE
 from synthrl.common.utils import classproperty
 import synthrl.common.language as language_module
 
@@ -92,14 +93,17 @@ class RNNFunction(Function):
   def __init__(self, language, token_emb_dim, value_emb_dim, hidden_size, n_layers, device='cpu'):
     super(RNNFunction, self).__init__(language)
     
+    # Number of tokens.
+    self.n_tokens = len(self.tokens)
     # Padding token for RNN.
+    self.tokens.append(HOLE)
+    self.indices[HOLE] = len(self.tokens) - 1
     self.tokens.append(PAD_TOKEN)
     self.indices[PAD_TOKEN] = len(self.tokens) - 1
     
     # Token embeding.
-    self.n_tokens = len(self.tokens)
     self.token_emb_dim = token_emb_dim
-    self.token_emb = nn.Embedding(self.n_tokens, self.token_emb_dim, padding_idx=self.indices[PAD_TOKEN]).to(device)
+    self.token_emb = nn.Embedding(self.n_tokens + 2, self.token_emb_dim, padding_idx=self.indices[PAD_TOKEN]).to(device)
 
     # Value embeding.
     self.n_value_types = self.language.VALUE.N_VALUE
