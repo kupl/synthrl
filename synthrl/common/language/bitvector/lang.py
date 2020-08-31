@@ -118,7 +118,7 @@ class BitVectorLang(Program):
   @classproperty
   @classmethod
   def TOKENS(cls):
-    return sorted(ExprNode.TOKENS + BOPNode.TOKENS + ConstNode.TOKENS + ParamNode.TOKENS)
+    return set(ExprNode.TOKENS + BOPNode.TOKENS + ConstNode.TOKENS + ParamNode.TOKENS).union({HOLE})
 
   @classmethod
   def tokens2prog(cls, tokens = []):
