@@ -5,7 +5,7 @@ class Function(ABC):
 
   def __init__(self, language):
     self.language = language
-    self.TOKENS = sorted(self.language.TOKENS)
+    self.tokens = sorted(self.language.TOKENS)
     self.indices = {token: i for i, token in enumerate(self.TOKENS)}
 
   @abstractmethod
