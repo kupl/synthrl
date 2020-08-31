@@ -183,7 +183,7 @@ class RNNFunction(Function):
 
     # Expand dimension of ioset embedding
     # iosets: [batch_size, 1, n_example, (n_input + 1) * value_emb_dim]
-    iosets = iosets.unsqeeze(1)
+    iosets = iosets.unsqueeze(1)
 
     # iosets: [batch_size, max_len, n_example, (n_input + 1) * value_emb_dim]
     iosets = iosets.repeat(1, max_len, 1, 1)
