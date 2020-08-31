@@ -64,7 +64,7 @@ class Program(ABC):
 class Tree:
 
   def __init__(self, data=HOLE, children=None):
-    self.data = data
+    self.data = str(data)
     self.children = children if children else {}
 
   def copy(self):
