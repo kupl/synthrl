@@ -110,7 +110,11 @@ class BitVectorLang(Program):
 
   @property
   def sequence(self):
-    return self.start_node.sequence
+    seqs = self.start_node.sequence
+    if not seqs:
+      return ["HOLE"]
+    else:
+      return self.start_node.sequence 
   
   def is_complete(self):
     return self.start_node.is_complete()
@@ -699,7 +703,7 @@ class ConstNode(Tree):
 
   @property
   def sequence(self):
-    return [self.data]
+    return [str(self.data)]
 
   @classproperty
   @classmethod

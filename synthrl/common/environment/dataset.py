@@ -103,7 +103,16 @@ class Storage:
     for element in dataset['data']:
       oracle = language_class.parse(element['oracle'])
       ioset = [literal_eval(io) for io in element['ioset']]
-      res.add(oracle, ioset)
+      packed_ioset = IOSet([])
+      for io in ioset:
+        (inputs, output) = io
+        (input1, input2) = inputs
+
+        inputs = (BitVectorLang.BITVECTOR(input1), BitVectorLang.BITVECTOR(input2))
+        output = BitVectorLang.BITVECTOR(output)
+        packed_ioset.add(inputs,output)
+
+      res.add(oracle, packed_ioset)
 
     return res
 
@@ -128,26 +137,27 @@ class ProgramDataset(Dataset):
     for idx, elt in enumerate(self.storage.elements):
       pgm_seq = (elt.oracle).sequence
       for i in range(len(pgm_seq)):
-        self.states.append( (pgm_seq[:i], idx) )
+        partial_pgm = BitVectorLang.tokens2prog(pgm_seq[:i])
+        self.states.append( ( partial_pgm , elt.ioset) )
         self.labels.append(pgm_seq[i])
     gc.collect()
-
+  
   def __len__(self):
-    return length(self.labels)
+    return len(self.labels)
 
-  def __getitem__(self, index):
-    partial_pgm = BitVectorLang.tokens2prog(self.states[index][0])
-    io_idx = self.states[index][1]
-    return (partial_pgm, self.storage.elements[io_idx].ioset ), self.labels[index]
-
-
+  # def __getitem__(self, index):
+  #   partial_pgm = BitVectorLang.tokens2prog(self.states[index][0])
+  #   io_idx = self.states[index][1]
+  #   return (partial_pgm, self.storage.elements[io_idx].ioset ), self.labels[index]
+    
 if __name__ == '__main__':
-  paths = ["../dataset/train/train_dataset_uptolv01.json",
-            "../dataset/train/train_dataset_uptolv2.json",
-            "../dataset/train/train_dataset_uptolv3.json",
-            "../dataset/train/train_dataset_uptolv4.json",
-            "../dataset/train/train_dataset_uptolv5.json"
-          ]
+  # paths = ["../dataset/train/train_dataset_uptolv01.json",
+  #           "../dataset/train/train_dataset_uptolv2.json",
+  #           "../dataset/train/train_dataset_uptolv3.json",
+  #           "../dataset/train/train_dataset_uptolv4.json",
+  #           "../dataset/train/train_dataset_uptolv5.json" ]
+  
+  paths = ["../dataset/train/train_dataset_uptolv01.json" ] 
   dataset = ProgramDataset(dataset_paths=paths)
   assert len(dataset.states) == len(dataset.labels)
 
