@@ -161,16 +161,16 @@ class RNNFunction(Function):
 
     # iosets: [batch_size, n_example, n_input + 1] of value index tensor
     iosets = torch.LongTensor([[[value.index for value in example] for example in ioset] for ioset in iosets]).to(self.device)
-
+    
     # Re-order in descending order.
     # iosets: [batch_size, n_example, n_input + 1]
     iosets = iosets[sorted_idx]
-
+    
     # Embed ioset.
     # iosets: [batch_size, n_example, n_input + 1, value_emb_dim]
     iosets = self.value_emb(iosets)
     n_example = iosets.shape[1]
-
+    
     # iosets: [batch_size, n_example, (n_input + 1) * value_emb_dim]
     iosets = iosets.reshape(batch_size, n_example, -1)
     
@@ -184,7 +184,7 @@ class RNNFunction(Function):
     # Expand dimension of ioset embedding
     # iosets: [batch_size, 1, n_example, (n_input + 1) * value_emb_dim]
     iosets = iosets.unsqueeze(1)
-
+    
     # iosets: [batch_size, max_len, n_example, (n_input + 1) * value_emb_dim]
     iosets = iosets.repeat(1, max_len, 1, 1)
   

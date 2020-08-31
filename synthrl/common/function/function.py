@@ -7,7 +7,6 @@ class Function(ABC):
     self.language = language
     self.tokens = sorted(map(str, self.language.TOKENS))
     self.indices = {token: i for i, token in enumerate(self.tokens)}
-
   @abstractmethod
   def evaluate(self, state, **info):
     pass

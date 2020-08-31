@@ -1,5 +1,4 @@
 import numpy as np
-
 from synthrl.common.value.value import Value
 from synthrl.common.utils import classproperty
 
