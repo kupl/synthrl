@@ -103,18 +103,18 @@ class RNNFunction(Function):
     
     # Token embeding.
     self.token_emb_dim = token_emb_dim
-    self.token_emb = nn.Embedding(self.n_tokens + 2, self.token_emb_dim, padding_idx=self.indices[PAD_TOKEN]).to(device)
+    self.token_emb = nn.Embedding(self.n_tokens + 2, self.token_emb_dim, padding_idx=self.indices[PAD_TOKEN]).to(self.device)
 
     # Value embeding.
     self.n_values = self.language.VALUE.N_VALUE
     self.value_emb_dim = value_emb_dim
-    self.value_emb = nn.Embedding(self.n_values, self.value_emb_dim).to(device)
+    self.value_emb = nn.Embedding(self.n_values, self.value_emb_dim).to(self.device)
 
     # Main network.
     self.n_input = self.language.N_INPUT
     self.hidden_size = hidden_size
     self.n_layers = n_layers
-    self.network = Network(token_emb_dim + (self.n_input + 1) * value_emb_dim, self.hidden_size, self.n_layers, self.n_tokens)
+    self.network = Network(token_emb_dim + (self.n_input + 1) * value_emb_dim, self.hidden_size, self.n_layers, self.n_tokens).to(self.device)
 
     # Other settings.
     self.device = device
