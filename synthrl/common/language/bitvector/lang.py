@@ -44,7 +44,6 @@
 
 from synthrl.common.language.abstract.exception import SyntaxError
 from synthrl.common.language.abstract.exception import WrongProductionException
-from synthrl.common.language.abstract.lang import HOLE
 from synthrl.common.language.abstract.lang import Program
 from synthrl.common.language.bitvector.grammar import BOPNode
 from synthrl.common.language.bitvector.grammar import ConstNode
@@ -112,11 +111,7 @@ class BitVectorLang(Program):
 
   @property
   def sequence(self):
-    seqs = self.start_node.sequence
-    if not seqs:
-      return ["HOLE"]
-    else:
-      return self.start_node.sequence 
+    return self.start_node.sequence
   
   def is_complete(self):
     return self.start_node.is_complete()
