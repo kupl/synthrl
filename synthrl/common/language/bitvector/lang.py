@@ -46,6 +46,11 @@ from synthrl.common.language.abstract.exception import SyntaxError
 from synthrl.common.language.abstract.exception import WrongProductionException
 from synthrl.common.language.abstract.lang import HOLE
 from synthrl.common.language.abstract.lang import Program
+from synthrl.common.language.bitvector.grammar import BOPNode
+from synthrl.common.language.bitvector.grammar import ConstNode
+from synthrl.common.language.bitvector.grammar import ExprNode
+from synthrl.common.language.bitvector.grammar import ParamNode
+from synthrl.common.language.bitvector.grammar import parse
 from synthrl.common.utils import classproperty
 from synthrl.common.value.bitvector import BitVector
 import synthrl.common.value.bitvector as bitvector
@@ -100,8 +105,7 @@ class BitVectorLang(Program):
 
   @classmethod
   def parse(cls, program):
-    from synthrl.common.language.bitvector.tree import parser
-    return parser(program)
+    return parse(program)
 
   def copy(self):
     return BitVectorLang(self.start_node.copy())

@@ -1,6 +1,6 @@
-import os
 from lark import Lark
 from lark import Transformer
+from pathlib import Path
 
 from synthrl.common.language.abstract.lang import Tree
 from synthrl.common.language.abstract.lang import HOLE
@@ -506,7 +506,7 @@ class BitVectorTransformer(Transformer):
       left, op, right = bexp
       return BOOLNode(data='l'+op, children={"LeftBool": left, "RightBool": right})
     
-grammar = "grammar.lark"
-bitvector_parser = Lark.open(grammar, start='program', parser='lalr', transformer=BitVectorTransformer())
-def parser(program):
-  return bitvector_parser.parse(program)
+GRAMMER = Path("grammar.lark")
+PARSER = Lark.open(GRAMMER, start='program', parser='lalr', transformer=BitVectorTransformer())
+def parse(program):
+  return PARSER.parse(program)
