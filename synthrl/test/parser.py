@@ -12,7 +12,11 @@ def add_arguments(parser):
   required_positional.add_argument('--setting', required=True, type=regex(r'.*\.json'), metavar='{*.json}', help='Test settings.')
   
   # Synthesizer arguments.
-  parser.add_argument('--synth', choices=['rand'], default='rand', type=str, help='Choose synthesizer agent.')
+  required_positional.add_argument('--synth', required=True, type=str, help='Choose synthesizer agent.')
+  parser.add_argument('--synth-args', nargs='*', default=[], metavar='param=arg', type=str, help='Synthesizer specific arguments.')
+  required_positional.add_argument('--synth-func', required=True, type=str, help='Choose a function to use.')
+  parser.add_argument('--synth-func-args', nargs='*', default=[], metavar='param=arg', type=str, help='Function sepecific arguments.')
+  required_positional.add_argument('--synth-max-move', required=True, type=int, help='Max move for synthesizer.')
 
   # Verifier arguments.
   parser.add_argument('--veri', choices=['rand'], default='rand', type=str, help='Choose verifier agent.')

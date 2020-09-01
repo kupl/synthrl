@@ -19,6 +19,9 @@ class Element:
     else:
       raise IndexError('Index 0 for oracle, and index 1 for ioset.')
 
+  def __len__(self):
+    return len(self.ioset)
+
 class Dataset:
 
   def __init__(self, language):
@@ -54,6 +57,9 @@ class Dataset:
 
   def __str__(self):
     return repr(self)
+
+  def __len__(self):
+    return len(self.elements)
 
   @property
   def length(self):
