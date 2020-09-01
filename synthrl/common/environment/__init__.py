@@ -1,1 +1,1 @@
-from synthrl.common.environment.dataset import Storage
+from synthrl.common.environment.dataset import Dataset
