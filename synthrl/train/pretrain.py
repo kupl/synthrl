@@ -78,7 +78,7 @@ if __name__=='__main__':
     dataset = ProgramDataset(dataset_paths=["../common/dataset/train/train_dataset_uptolv01.json"])
     PreTrain(synth, dataset, batch_size, epochs)
 
-      # paths = ["../dataset/train/train_dataset_uptolv01.json",
+  # paths = ["../dataset/train/train_dataset_uptolv01.json",
   #           "../dataset/train/train_dataset_uptolv2.json",
   #           "../dataset/train/train_dataset_uptolv3.json",
   #           "../dataset/train/train_dataset_uptolv4.json",
