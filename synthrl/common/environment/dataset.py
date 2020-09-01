@@ -3,10 +3,11 @@ from contextlib import redirect_stdout
 from io import StringIO
 import json
 import gc
+import numpy as np
 from torch.utils.data import Dataset
 from synthrl.common.environment.ioset import IOSet
 from synthrl.common.language.bitvector.lang import BitVectorLang
-
+import random
 import synthrl.common.language as language
 
 class Element:
@@ -134,43 +135,48 @@ class ProgramDataset(Dataset):
     for path in dataset_paths:
       Storage.join(self.storage, Storage.from_json(path))
 
-    for elt in self.storage.elements:
+    for idx, elt in enumerate(self.storage.elements):
       pgm_seq = (elt.oracle).sequence
+      if "HOLE" in pgm_seq:
+        pgm_seq.remove("HOLE")
       for i in range(len(pgm_seq)):
-        partial_pgm = BitVectorLang.tokens2prog(pgm_seq[:i])
-        self.states.append( ( partial_pgm , elt.ioset) )
+        # partial_pgm = BitVectorLang.tokens2prog(pgm_seq[:i])
+        partial_pgm = pgm_seq[:i]
+        ioset = idx
+        self.states.append( ( partial_pgm , ioset) )
         self.labels.append(pgm_seq[i])
+    
     gc.collect()
-  
+    assert len(self.states)==len(self.labels)
+
   def __len__(self):
     return len(self.labels)
 
-  # def __getitem__(self, index):
-  #   partial_pgm = BitVectorLang.tokens2prog(self.states[index][0])
-  #   io_idx = self.states[index][1]
-  #   return (partial_pgm, self.storage.elements[io_idx].ioset ), self.labels[index]
+  def __getitem__(self, index):
+    partial_pgm = BitVectorLang.tokens2prog(self.states[index][0])
+    io_idx = self.states[index][1]
+    return (partial_pgm, self.storage.elements[io_idx].ioset), self.labels[index]
+
+
+def iterate_minibatches(dataset, batch_size, shuffle=True):
+  '''
+  Source: https://stackoverflow.com/questions/38157972
+  '''
+  if shuffle:
+    indices = list(range(len(dataset)))
+    random.shuffle(indices)
+  for start_idx in range(0, len(dataset), batch_size):
+    if shuffle:
+      excerpt = indices[start_idx:start_idx + batch_size]
+      res = [dataset[idx] for idx in  excerpt]
+      res = [list(t) for t in zip(*res)]
+      yield res[0], res[1]
+    else:
+      excerpt = list(range(start_idx, start_idx + batch_size))
+      res = [dataset[idx] for idx in  excerpt]
+      res = [list(t) for t in zip(*res)]
+      yield res[0], res[1]
+      
     
-if __name__ == '__main__':
-  # paths = ["../dataset/train/train_dataset_uptolv01.json",
-  #           "../dataset/train/train_dataset_uptolv2.json",
-  #           "../dataset/train/train_dataset_uptolv3.json",
-  #           "../dataset/train/train_dataset_uptolv4.json",
-  #           "../dataset/train/train_dataset_uptolv5.json" ]
-  
-  paths = ["../dataset/train/train_dataset_uptolv01.json" ] 
-  dataset = ProgramDataset(dataset_paths=paths)
-  assert len(dataset.states) == len(dataset.labels)
-
-
-  # for state, label in zip(dataset.states ,dataset.labels):
-  #   print(state, label ,end="\n")
-  #   BitVectorLang.tokens2prog(state[0]).pretty_print()
-
-  # paths = ["../dataset/train/temp_io.json"]
-  # dataset = ProgramDataset(dataset_paths=paths)
-  # (pp, io), label = dataset[12]
-  # pp.pretty_print()
-  # print(io)
-  # print(label)
 
 
