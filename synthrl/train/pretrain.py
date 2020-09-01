@@ -6,7 +6,6 @@ import numpy as np
 from random import choices
 from tqdm import tqdm
 from math import ceil
-from synthrl.common.environment.dataset import Dataset
 from synthrl.common.language.bitvector.lang import BitVectorLang
 from synthrl.common.value.bitvector import BitVector
 from synthrl.common.value.bitvector import BitVector16

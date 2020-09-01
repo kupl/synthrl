@@ -241,7 +241,7 @@ class ExprNode(Tree):
       self.children['NEG'].pretty_print(file=file)
       print(" ) ",end='', file=file)
     elif self.data == 'arith-neg':
-      print("neg ( ",end='', file=file)
+      print("- ( ",end='', file=file)
       self.children['ARITH-NEG'].pretty_print(file=file)
       print(" ) ",end='', file=file)
     # elif self.data=="ite":
