@@ -642,8 +642,8 @@ class BitVectorTransformer(Transformer):
       left, op, right = bexp
       return BOOLNode(data='l'+op, children={"LeftBool": left, "RightBool": right})
 
-GRAMMER = Path("grammar.lark")
-PARSER = Lark.open(GRAMMER, start='program', parser='lalr', transformer=BitVectorTransformer())
+GRAMMER_FILE = Path(__file__).parent / 'grammar.lark'
+PARSER = Lark.open(GRAMMER_FILE, start='program', parser='lalr', transformer=BitVectorTransformer())
 
 ######test######
 if __name__ == '__main__':
