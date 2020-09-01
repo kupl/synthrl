@@ -13,8 +13,8 @@ from synthrl.common.value.bitvector import BitVector16
 from synthrl.common.value.bitvector import BitVector32
 from synthrl.common.value.bitvector import BitVector64
 from synthrl.common.function.rnn import RNNFunction
-from synthrl.common.environment.dataset import ProgramDataset
-from synthrl.common.environment.dataset import iterate_minibatches
+from synthrl.common.environment.programdataset import ProgramDataset
+from synthrl.common.environment.programdataset import iterate_minibatches
 from torch.utils.data import DataLoader
 
 def labels2idx(agent, labels):

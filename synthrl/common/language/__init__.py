@@ -1,1 +1,1 @@
-from synthrl.common.language.bitvector.lang import BitVectorLang
+from synthrl.common.language.bitvector import BitVectorLang
