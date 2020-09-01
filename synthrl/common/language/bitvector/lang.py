@@ -54,63 +54,6 @@ from synthrl.common.utils import classproperty
 from synthrl.common.value.bitvector import BitVector
 import synthrl.common.value.bitvector as bitvector
 
-GRAMMER = Path("grammar.lark")
-
-# Transformer for lark-tree to bitvectorlang
-class BitVectorTransformer(Transformer):
-  def program(self, pgm):
-    return BitVectorLang(start_node=pgm[0])
-  def expr(self, exp):
-    # parentheses handling
-    if isinstance(exp[0], ExprNode):
-      return exp[0]
-    # 1. const
-    if isinstance(exp[0], ConstNode):
-      return ExprNode(data="const", children={"CONST_Z": exp[0]})
-    # 2. param
-    elif isinstance(exp[0], ParamNode):
-      return ExprNode(data="var", children={"VAR_Z": exp[0]})
-    # 3. bop
-    elif isinstance(exp[0], BOPNode):
-      return ExprNode(data="bop", children={"BOP": exp[0]})
-    # 4. ite
-    elif isinstance(exp[0], BOOLNode):
-      cond, b_true, b_false = exp
-      return ExprNode(data="ite", children={'IF_BOOL': cond, 'THEN_EXPR': b_true,'ELSE_EXPR': b_false})
-    # 5. neg or arith-neg
-    else:
-      op, exp = exp
-      op = 'arith-neg' if op=='-' else 'neg'
-      return ExprNode(data=op, children={op.upper(): exp})
-  def bop(self, op):
-    # parentheses handling
-    if isinstance(op[0], BOPNode):
-      return op[0]
-    leftExpr, op, rightExpr = op[0], op[1], op[2]
-    return BOPNode(data=op, children={"LeftEXPR": leftExpr, "RightEXPR": rightExpr})
-  def const(self, const):
-    return ConstNode(data=int(const[0].value))
-  def var(self, param):
-    return ParamNode(data=param[0].value)
-  def bexpr(self, bexp):
-    # parentheses handling
-    if isinstance(bexp[0], BOOLNode) and len(bexp)==1:
-      return bexp[0]
-    # atomic values
-    if bexp[0] in ['true', 'false']:
-      return BOOLNode(data=bexp[0])
-    # logical not
-    elif isinstance(bexp[1], BOOLNode):
-      return BOOLNode(data='lnot', children={"BOOL": bexp[1]})      
-    # equality
-    elif isinstance(bexp[0], ExprNode):
-      return BOOLNode(data="equal", children={"LeftExpr": bexp[0], "RightExpr": bexp[2]})
-    # boolean operations
-    else:
-      left, op, right = bexp
-      return BOOLNode(data='l'+op, children={"LeftBool": left, "RightBool": right})
-
-PARSER = Lark.open(GRAMMER, start='program', parser='lalr', transformer=BitVectorTransformer())
 
 class BitVectorLang(Program):
 
@@ -645,6 +588,62 @@ class ParamNode(Tree):
   def is_const_pgm(self):
     return False
 
+# Transformer for lark-tree to bitvectorlang
+class BitVectorTransformer(Transformer):
+  def program(self, pgm):
+    return BitVectorLang(start_node=pgm[0])
+  def expr(self, exp):
+    # parentheses handling
+    if isinstance(exp[0], ExprNode):
+      return exp[0]
+    # 1. const
+    if isinstance(exp[0], ConstNode):
+      return ExprNode(data="const", children={"CONST_Z": exp[0]})
+    # 2. param
+    elif isinstance(exp[0], ParamNode):
+      return ExprNode(data="var", children={"VAR_Z": exp[0]})
+    # 3. bop
+    elif isinstance(exp[0], BOPNode):
+      return ExprNode(data="bop", children={"BOP": exp[0]})
+    # 4. ite
+    elif isinstance(exp[0], BOOLNode):
+      cond, b_true, b_false = exp
+      return ExprNode(data="ite", children={'IF_BOOL': cond, 'THEN_EXPR': b_true,'ELSE_EXPR': b_false})
+    # 5. neg or arith-neg
+    else:
+      op, exp = exp
+      op = 'arith-neg' if op=='-' else 'neg'
+      return ExprNode(data=op, children={op.upper(): exp})
+  def bop(self, op):
+    # parentheses handling
+    if isinstance(op[0], BOPNode):
+      return op[0]
+    leftExpr, op, rightExpr = op[0], op[1], op[2]
+    return BOPNode(data=op, children={"LeftEXPR": leftExpr, "RightEXPR": rightExpr})
+  def const(self, const):
+    return ConstNode(data=int(const[0].value))
+  def var(self, param):
+    return ParamNode(data=param[0].value)
+  def bexpr(self, bexp):
+    # parentheses handling
+    if isinstance(bexp[0], BOOLNode) and len(bexp)==1:
+      return bexp[0]
+    # atomic values
+    if bexp[0] in ['true', 'false']:
+      return BOOLNode(data=bexp[0])
+    # logical not
+    elif isinstance(bexp[1], BOOLNode):
+      return BOOLNode(data='lnot', children={"BOOL": bexp[1]})      
+    # equality
+    elif isinstance(bexp[0], ExprNode):
+      return BOOLNode(data="equal", children={"LeftExpr": bexp[0], "RightExpr": bexp[2]})
+    # boolean operations
+    else:
+      left, op, right = bexp
+      return BOOLNode(data='l'+op, children={"LeftBool": left, "RightBool": right})
+
+GRAMMER = Path("grammar.lark")
+PARSER = Lark.open(GRAMMER, start='program', parser='lalr', transformer=BitVectorTransformer())
 
 ######test######
 if __name__ == '__main__':
