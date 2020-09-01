@@ -76,7 +76,7 @@ class Dataset:
         oracle = stream.getvalue().strip()
 
       # Get ioset as string.
-      ioset = [str(io) for io in ioset]
+      ioset = [ str(  ((int(io[0][0]),int(io[0][1])) ,  int(io[1]) ) )    for io in ioset]
       
       # Add to dataset.
       dataset['data'].append({
