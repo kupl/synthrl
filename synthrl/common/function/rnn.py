@@ -93,6 +93,10 @@ class RNNFunction(Function):
   def __init__(self, language, token_emb_dim, value_emb_dim, hidden_size, n_layers, device='cpu'):
     super(RNNFunction, self).__init__(language)
     
+    # Other settings.
+    self.device = device
+
+
     # Number of tokens.
     self.n_tokens = len(self.tokens)
     # Padding token for RNN.
@@ -116,8 +120,7 @@ class RNNFunction(Function):
     self.n_layers = n_layers
     self.network = Network(token_emb_dim + (self.n_input + 1) * value_emb_dim, self.hidden_size, self.n_layers, self.n_tokens).to(self.device)
 
-    # Other settings.
-    self.device = device
+
 
   def evaluate(self, states, **info):
     # states: [batch_size] of tuple of (program, ioset)
