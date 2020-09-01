@@ -107,7 +107,7 @@ class Storage:
       for io in ioset:
         (inputs, output) = io
         (input1, input2) = inputs
-
+        # pylint: disable=too-many-function-args
         inputs = (BitVectorLang.BITVECTOR(input1), BitVectorLang.BITVECTOR(input2))
         output = BitVectorLang.BITVECTOR(output)
         packed_ioset.add(inputs,output)
@@ -134,7 +134,7 @@ class ProgramDataset(Dataset):
     for path in dataset_paths:
       Storage.join(self.storage, Storage.from_json(path))
 
-    for idx, elt in enumerate(self.storage.elements):
+    for elt in self.storage.elements:
       pgm_seq = (elt.oracle).sequence
       for i in range(len(pgm_seq)):
         partial_pgm = BitVectorLang.tokens2prog(pgm_seq[:i])
