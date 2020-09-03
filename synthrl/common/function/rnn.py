@@ -118,13 +118,13 @@ class RNNFunction(Function):
     self.n_layers = n_layers
     self.network = Network(token_emb_dim + (self.n_input + 1) * value_emb_dim, self.hidden_size, self.n_layers, self.n_tokens).to(self.device)
 
-  def evaluate(self, states, **info):
-    # states: [batch_size] of tuple of (program, ioset)
-    batch_size = len(states)
+  def evaluate(self, state, **info):
+    # state: [batch_size] of tuple of (program, ioset)
+    batch_size = len(state)
 
     #   pgms: [batch_size] of program
     # iosets: [batch_size] of ioset
-    pgms, iosets = tuple(zip(*states))
+    pgms, iosets = tuple(zip(*state))
 
     # pgms: [batch_size] of token sequence
     pgms = [pgm.sequence for pgm in pgms]
@@ -248,7 +248,7 @@ class RNNFunction(Function):
   @classmethod
   def load(cls, path, device='cpu'):
     path = Path(path)
-    info = torch.load(path,map_location=device)
+    info = torch.load(path, map_location=device)
     language = getattr(language_module, info['language'])
     function = cls(language, info['token_emb_dim'], info['value_emb_dim'], info['hidden_size'], info['n_layers'], device)
     function.load_state_dict(info['state_dict'])
