@@ -1,5 +1,12 @@
+from abc import ABC
+from abc import abstractmethod
 
-class Synthesizer:
+class Synthesizer(ABC):
 
-  def __init__(self, ):
+  def __init__(self, language, function):
+    self.language = language
+    self.function = function
+
+  @abstractmethod
+  def synthesize(self, ioset):
     pass

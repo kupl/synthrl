@@ -45,11 +45,14 @@ class BitVector(Value):
   def signed(self):
     return self.value
 
+  def binary_repr(self):
+    return np.binary_repr(self.value, width=self.value.dtype.itemsize * 8)
+
   def __int__(self):
     return int(self.value)
 
   def __repr__(self):
-    return np.binary_repr(self.value, width=self.value.dtype.itemsize * 8)
+    return repr(self.value)
 
   def __neg__(self):
     return self.__class__(-self.value)

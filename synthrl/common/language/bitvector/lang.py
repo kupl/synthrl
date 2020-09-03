@@ -88,10 +88,12 @@ class BitVectorLang(Program):
     return self.possible_actions
 
   def product(self, action):
-    possible_space = self.production_space
-    if action not in possible_space:
+    if not self.production_space:
+      _ = self.production_space
+    if action not in self.possible_actions:
       raise WrongProductionException(f'"{action}" is not in action space.')
     self.node.production(action)
+    self.possible_actions = None
 
   def pretty_print(self, file=None):
     print('(', end='', file=file)
@@ -153,7 +155,7 @@ class ExprNode(Tree):
   # expr_productions += ['ite']
   def production_space(self):
     if self.data =='HOLE': 
-      return self, self.expr_productions
+      return self, self.TOKENS + BOPNode.TOKENS + ConstNode.TOKENS + ParamNode.TOKENS
     else:
       children=[]
       if self.data=="var":
@@ -175,21 +177,25 @@ class ExprNode(Tree):
       return self, []
       
   def production(self, rule=None):
-    if rule =="var":
+    # pylint: disable=unsupported-membership-test
+    if rule in ParamNode.TOKENS:
       self.data="var"
       self.children = {
           'VAR_Z' : ParamNode()
       }
-    if rule=="const":
+      self.children['VAR_Z'].production(rule)
+    if rule in ConstNode.TOKENS:
       self.data="const"
       self.children ={
           'CONST_Z' : ConstNode()
       }
-    if rule=="bop":
+      self.children['CONST_Z'].production(rule)
+    if rule in BOPNode.TOKENS:
       self.data="bop"
       self.children={
           'BOP' : BOPNode()
       }
+      self.children['BOP'].production(rule)
     if rule=="neg":
       self.data="neg"
       self.children={
@@ -519,7 +525,6 @@ class ConstNode(Tree):
   #x000000000000000F
   #x0000000000000010
   '''
-  constants = [i for i in range(16+1)]
   str_constants = [str(i) for i in range(16+1)]
 
 
@@ -530,7 +535,7 @@ class ConstNode(Tree):
 
   def production_space(self):
     if self.data == 'HOLE'or self.data=='hole':
-      return self, self.constants
+      return self, self.str_constants
     else:
       return self, []
 

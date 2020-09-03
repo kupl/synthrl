@@ -1,5 +1,3 @@
-from abc import ABC
-from abc import abstractmethod
 from itertools import chain
 from pathlib import Path
 from torch.nn.utils.rnn import pad_packed_sequence
@@ -120,8 +118,6 @@ class RNNFunction(Function):
     self.n_layers = n_layers
     self.network = Network(token_emb_dim + (self.n_input + 1) * value_emb_dim, self.hidden_size, self.n_layers, self.n_tokens).to(self.device)
 
-
-
   def evaluate(self, states, **info):
     # states: [batch_size] of tuple of (program, ioset)
     batch_size = len(states)
@@ -222,6 +218,18 @@ class RNNFunction(Function):
     self.token_emb.load_state_dict(state_dict['token_emb_state_dict'])
     self.value_emb.load_state_dict(state_dict['value_emb_state_dict'])
     self.network.load_state_dict(state_dict['network_state_dict'])
+    return self
+
+  def train(self):
+    self.token_emb.train()
+    self.value_emb.train()
+    self.network.train()
+    return self
+
+  def eval(self):
+    self.token_emb.eval()
+    self.value_emb.eval()
+    self.network.eval()
     return self
   
   def save(self, path):

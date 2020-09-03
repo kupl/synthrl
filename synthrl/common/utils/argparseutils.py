@@ -12,3 +12,6 @@ class regex:
     if not self.pat.match(arg):
       raise argparse.ArgumentTypeError
     return self.type(arg)
+
+def mkdict(args):
+  return {key: value for key, value in map(lambda arg: arg.split('='), args)}

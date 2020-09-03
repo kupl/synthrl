@@ -1,0 +1,3 @@
+
+class SynthesisFailed(Exception):
+  pass
