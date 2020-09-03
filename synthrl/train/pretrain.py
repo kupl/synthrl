@@ -12,8 +12,8 @@ from synthrl.common.value.bitvector import BitVector16
 from synthrl.common.value.bitvector import BitVector32
 from synthrl.common.value.bitvector import BitVector64
 from synthrl.common.function.rnn import RNNFunction
-from synthrl.common.environment.programdataset import ProgramDataset
-from synthrl.common.environment.programdataset import iterate_minibatches
+from synthrl.common.environment.dataset import ProgramDataset
+from synthrl.common.environment.dataset import iterate_minibatches
 from torch.utils.data import DataLoader
 
 def labels2idx(agent, labels):
@@ -77,12 +77,12 @@ if __name__=='__main__':
     dataset = ProgramDataset(dataset_paths=["../common/dataset/train/train_dataset_uptolv01.json"])
     PreTrain(synth, dataset, batch_size, epochs)
 
-  # paths = ["../dataset/train/train_dataset_uptolv01.json",
-  #           "../dataset/train/train_dataset_uptolv2.json",
-  #           "../dataset/train/train_dataset_uptolv3.json",
-  #           "../dataset/train/train_dataset_uptolv4.json",
-  #           "../dataset/train/train_dataset_uptolv5.json" ]
-  # paths = ["../dataset/train/train_dataset_uptolv01.json" ] 
+    # paths = ["../dataset/train/train_dataset_uptolv01.json",
+    #           "../dataset/train/train_dataset_uptolv2.json",
+    #           "../dataset/train/train_dataset_uptolv3.json",
+    #           "../dataset/train/train_dataset_uptolv4.json",
+    #           "../dataset/train/train_dataset_uptolv5.json" ]
+    # paths = ["../dataset/train/train_dataset_uptolv01.json" ] 
 
 
 
