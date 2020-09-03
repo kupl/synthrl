@@ -57,7 +57,7 @@ def main(parser, argv):
   veri_class = getattr(verifier_module, args.veri)
   veri_args = mkdict(args.veri_args)
   print(f'Verifier: {Color.YELLOW}{args.veri}{Color.END}({", ".join([f"language={dataset.language}", f"function={Color.UNDERLINE}Function{Color.END}", f"testing={Color.UNDERLINE}Testing{Color.END}"] + args.veri_args)})')
-  verifier = veri_class(language=language, function=veri_func, testing=testing)
+  verifier = veri_class(language=language, function=veri_func, testing=testing, **veri_args)
 
   print(f'{Color.BOLD}{Color.BLUE}Verifier succesfully created.{Color.END}')
   print()
