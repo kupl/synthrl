@@ -11,7 +11,7 @@ def main(argv):
 
   # Main parser.
   parser = argparse.ArgumentParser(prog='python synthrl.py')
-  parser.add_argument('--disable-color', action='store_true', help='Disable color.')
+  parser.add_argument('--no-color', action='store_true', help='Disable color.')
   # Add mode
   mode = parser.add_subparsers(title='mode', dest='mode', help='Choose one of the followings.')
   train_parser = mode.add_parser(name='train', help='Train mode.', add_help=False)
@@ -19,7 +19,7 @@ def main(argv):
 
   # Parse mode argument.
   args, unknown = parser.parse_known_args(argv)
-  if args.disable_color:
+  if args.no_color:
     Color.disable()
 
   print(f'{Color.BOLD}{Color.GREEN}SynthRL{Color.END} ver.{synthrl.__version__}')
