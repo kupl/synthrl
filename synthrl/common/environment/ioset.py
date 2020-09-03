@@ -1,5 +1,7 @@
 import numpy as np
 
+from synthrl.common.utils.terminalutils import mktable
+
 class IOSet:
 
   def __init__(self, ioset):
@@ -16,6 +18,9 @@ class IOSet:
   def __getitem__(self, idx):
     return self.ioset[idx]
 
-  def add(self, input, output):
-    self.ioset.append((input, output))
+  def add(self, inputs, output):
+    self.ioset.append((inputs, output))
     self.n_example += 1
+
+  def __repr__(self):
+    return mktable(self.ioset, header=['Input', 'Output'], align='>', index=True)
