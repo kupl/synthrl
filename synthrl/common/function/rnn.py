@@ -240,7 +240,7 @@ class RNNFunction(Function):
   @classmethod
   def load(cls, path, device='cpu'):
     path = Path(path)
-    info = torch.load(path)
+    info = torch.load(path,map_location=device)
     language = getattr(language_module, info['language'])
     function = cls(language, info['token_emb_dim'], info['value_emb_dim'], info['hidden_size'], info['n_layers'], device)
     function.load_state_dict(info['state_dict'])
