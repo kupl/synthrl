@@ -16,7 +16,7 @@ class Function(ABC):
     pass
 
   def __call__(self, state, **info):
-    return self.evaluate(state=state, **info)
+    return self.evaluate(states=state, **info)
 
   def policy(self, state, **info):
     return self.evaluate(state, **info)[0]
