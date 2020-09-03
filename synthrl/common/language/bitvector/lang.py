@@ -143,7 +143,9 @@ class BitVectorLang(Program):
 
   def is_const_pgm(self):
     return self.start_node.is_const_pgm()
-      
+    
+  def __len__(self):
+    return len(self.start_node)
 class ExprNode(Tree):
   # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
   # expr_productions = ['var','const','bop','neg']
@@ -291,6 +293,13 @@ class ExprNode(Tree):
     for key in list(self.children.keys()):
         is_comp = True and (self.children[key].is_const_pgm())
     return is_comp
+
+  def __len__(self):
+    max_depth = 0
+    for child in self.children.values():
+      max_depth = max(max_depth, len(child))
+    return max_depth + (0 if self.data in ['HOLE', 'var', 'const'] else 1)
+
 #N_B -> true|false
 #         | Nz=Nz | N_B land N_B |N_B lor N_B| N_B lnot N_B
 #Add Later: <=_u
@@ -374,6 +383,11 @@ class BOOLNode(Tree):
         self.children["RightBool"].pretty_print(file=file)
       print(' ) ',end='', file=file)
       
+  def __len__(self):
+    max_depth = 0
+    for child in self.children.values():
+      max_depth = max(max_depth, len(child))
+    return max_depth + 1
 
 # Bop -> {bitwise-logical opts} | {airthmetic opts}
 # bitwise logical operators = {|, &, \oplus(XOR), singed>>, unsigned >>}
@@ -476,6 +490,12 @@ class BOPNode(Tree):
   def is_const_pgm(self):
     return True and (self.children['LeftEXPR'].is_const_pgm()) and (self.children['RightEXPR'].is_const_pgm())
 
+  def __len__(self):
+    max_depth = 0
+    for child in self.children.values():
+      max_depth = max(max_depth, len(child))
+    return max_depth
+
 #Const_z -> ...
 class ConstNode(Tree):
   '''
@@ -548,6 +568,9 @@ class ConstNode(Tree):
   def is_const_pgm(self):
     return True
 
+  def __len__(self):
+    return 0
+
 #Var_z -> param1 | param2 ...
 class ParamNode(Tree):
   param_space = ["param{}".format(i) for i in range(BitVectorLang.N_INPUT)]
@@ -587,6 +610,10 @@ class ParamNode(Tree):
 
   def is_const_pgm(self):
     return False
+
+  def __len__(self):
+    return 0
+
 
 # Transformer for lark-tree to bitvectorlang
 class BitVectorTransformer(Transformer):
