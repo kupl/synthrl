@@ -1,5 +1,3 @@
-import argparse
-
 from synthrl.common.environment import Dataset
 from synthrl.common.synthesizer.exception import SynthesisFailed
 from synthrl.common.utils import mkdict
