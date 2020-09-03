@@ -9,6 +9,17 @@ class Color:
   BOLD = '\033[1m'
   UNDERLINE = '\033[4m'
 
+  @classmethod
+  def disable(cls):
+    cls.PURPLE = ''
+    cls.BLUE = ''
+    cls.GREEN = ''
+    cls.YELLOW = ''
+    cls.RED = ''
+    cls.END = ''
+    cls.BOLD = ''
+    cls.UNDERLINE = ''
+
 def mktable(rows, header=None, align='<', index=False):
   table = [(['Index'] if index else []) + header]
   col_length = list(map(len, table[0]))
