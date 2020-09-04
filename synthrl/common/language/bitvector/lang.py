@@ -184,24 +184,24 @@ class ExprNode(Tree):
           'VAR_Z' : ParamNode()
       }
       self.children['VAR_Z'].production(rule)
-    if rule in ConstNode.TOKENS:
+    elif rule in ConstNode.TOKENS:
       self.data="const"
       self.children ={
           'CONST_Z' : ConstNode()
       }
       self.children['CONST_Z'].production(rule)
-    if rule in BOPNode.TOKENS:
+    elif rule in BOPNode.TOKENS:
       self.data="bop"
       self.children={
           'BOP' : BOPNode()
       }
       self.children['BOP'].production(rule)
-    if rule=="neg":
+    elif rule=="neg":
       self.data="neg"
       self.children={
         'NEG' : ExprNode()
       }
-    if rule =="arith-neg":
+    elif rule =="arith-neg":
       self.data="arith-neg"
       self.children={
         'ARITH-NEG' : ExprNode()
@@ -540,7 +540,7 @@ class ConstNode(Tree):
       return self, []
 
   def production(self,rule):
-    self.data=rule
+    self.data = rule
     # pylint: disable=too-many-function-args
     self.value = BitVectorLang.BITVECTOR(self.data)
 
@@ -619,7 +619,6 @@ class ParamNode(Tree):
   def __len__(self):
     return 0
 
-
 # Transformer for lark-tree to bitvectorlang
 class BitVectorTransformer(Transformer):
   def program(self, pgm):
@@ -653,7 +652,7 @@ class BitVectorTransformer(Transformer):
     leftExpr, op, rightExpr = op[0], op[1], op[2]
     return BOPNode(data=op, children={"LeftEXPR": leftExpr, "RightEXPR": rightExpr})
   def const(self, const):
-    return ConstNode(data=int(const[0].value))
+    return ConstNode(data=const[0].value)
   def var(self, param):
     return ParamNode(data=param[0].value)
   def bexpr(self, bexp):

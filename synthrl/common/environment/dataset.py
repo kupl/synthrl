@@ -91,14 +91,15 @@ class Dataset:
       json.dump(dataset, f, indent=indent)
   
   @classmethod
-  def from_json(cls, file):
+  def from_json(cls, file, language=None):
 	  # file: path to data.json
 
     with open(file, 'r', encoding='utf-8') as f:
       dataset = json.load(f)
     
     res = cls(dataset['language'])
-    language = getattr(language_module, dataset['language'])
+    if not language:
+      language = getattr(language_module, dataset['language'])
 
     for element in dataset['data']:
       oracle = language.parse(element['oracle'])
