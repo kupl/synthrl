@@ -30,7 +30,7 @@ EQUAL: /=/
 
 BOOLOP: /equal|and|or/
 
-NOT: /not/
+NOT: /!/
 
 %import common.WS
 %ignore WS
