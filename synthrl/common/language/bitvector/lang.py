@@ -78,7 +78,7 @@ class BitVectorLang(Program):
     return cls.__BitVector
 
   def __init__(self, start_node=None):
-    self.start_node = start_node if start_node else ExprNode()
+    self.start_node = start_node if start_node is not None else ExprNode()
     self.node = None
     self.possible_actions = []
 
@@ -678,5 +678,5 @@ PARSER = Lark.open(GRAMMER_FILE, start='program', parser='lalr', transformer=Bit
 
 ######test######
 if __name__ == '__main__':
-  pgm = BitVectorLang.parse("( (  1 + 2 ) )")
+  pgm = BitVectorLang.parse("( (  16 ) )")
   pgm.pretty_print()
