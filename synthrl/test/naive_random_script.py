@@ -2,7 +2,7 @@ import numpy as np
 import sys
 
 from synthrl.utils.trainutils import Dataset
-from synthrl.language.bitvector.lang import BitVectorLang
+from synthrl.common.language.bitvector.lang import BitVectorLang
 
 GREEN = '\033[92m'
 RED = '\033[91m'
@@ -33,7 +33,7 @@ def main(argv):
 
       # Take action
       action = np.random.choice(space)
-      pgm.production(action)
+      pgm.product(action)
 
       # Check if complete
       space = pgm.production_space()
@@ -56,15 +56,15 @@ def main(argv):
       success += 1
     else:
       failed += 1
-    print('-- oracle --')
+    print('— oracle —')
     oracle.pretty_print()
-    print('-- program --')
+    print('— program —')
     if not pgm:
       pgm = BitVectorLang()
     pgm.pretty_print()
-    print('------------')
+    print('——————')
     print(f'Result: {f"{GREEN}success{ENDC}" if found else f"{RED}failed{ENDC}"}')
-    print('------------')
+    print('——————')
     print()
 
   print(f'{GREEN}Success:{ENDC} {success}')
