@@ -56,15 +56,15 @@ def main(argv):
       success += 1
     else:
       failed += 1
-    print('— oracle —')
+    print('-- oracle --')
     oracle.pretty_print()
-    print('— program —')
+    print('-- program --')
     if not pgm:
       pgm = BitVectorLang()
     pgm.pretty_print()
-    print('——————')
+    print('------------')
     print(f'Result: {f"{GREEN}success{ENDC}" if found else f"{RED}failed{ENDC}"}')
-    print('——————')
+    print('------------')
     print()
 
   print(f'{GREEN}Success:{ENDC} {success}')
