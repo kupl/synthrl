@@ -21,7 +21,7 @@
 #       | Expr = Expr
 #       | Bool and Bool
 #       | Bool or Bool
-#       | not Bool
+#       | !Bool (logical not)
 # Cnst -> 0x00
 #       | 0x01
 #       | 0x02
@@ -128,11 +128,9 @@ class BitVectorLang(Program):
     pgm = cls()
     # pylint: disable=unsupported-membership-test
     for action in tokens:
-      if action == 'neg':
+      if action in ExprNode.TOKENS:
         pgm.product(action)
-      elif action == 'arith-neg':
-        pgm.product(action)
-      elif action in  ["+","-","x","/","%"] + ["||","&","^"]  + [">>_s",">>_u"]:
+      elif action in BOPNode.TOKENS:
         pgm.product("bop")
         pgm.product(action)
       elif action in ConstNode.TOKENS:
@@ -149,10 +147,8 @@ class BitVectorLang(Program):
   def __len__(self):
     return len(self.start_node)
 class ExprNode(Tree):
-  # expr_productions = ['VAR_Z', 'CONST_Z', 'BOP', 'NEG', 'ITE']
-  # expr_productions = ['var','const','bop','neg']
-  expr_productions = ['bop','const','var', 'neg','arith-neg']
-  # expr_productions += ['ite']
+  expr_productions = ['neg','arith-neg']
+  
   def production_space(self):
     if self.data =='HOLE': 
       return self, self.TOKENS + BOPNode.TOKENS + ConstNode.TOKENS + ParamNode.TOKENS
@@ -284,8 +280,8 @@ class ExprNode(Tree):
   @classproperty
   @classmethod
   def TOKENS(cls):
-    return ["arith-neg","neg"]
-  
+    return cls.expr_productions
+
   def is_complete(self):
     if self.data=="HOLE" or self.data=="hole":
       return False
