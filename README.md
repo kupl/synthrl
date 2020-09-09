@@ -15,14 +15,16 @@ $ docker build . -t synthrl
 ### Run
 The following command will execute short example.
 ```bash
-$ docker run -t --rm synthrl python synthrl.py test \ 
+$ docker run -t --rm synthrl synthrl test \ 
           --setting bench/bitvector/small.json \
           --synth SimpleSynthesizer --synth-func RandomFunction --synth-max-move 1000 \ 
           --veri SimpleVerifier --veri-func RandomFunction --testing RandomTesting --testing-args max_attempt=100 --veri-max-move 10000
 ```
 To see more usage, type in the following command.
 ```bash
-$ docker run -t --rm synthrl python synthrl.py -h
+$ docker run --rm synthrl synthrl -h
+# Or
+$ docker run --rm synthrl
 ``` 
 
 ## Install SynthRL Locally

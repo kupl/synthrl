@@ -10,7 +10,7 @@ import synthrl
 def main(argv):
 
   # Main parser.
-  parser = argparse.ArgumentParser(prog='python synthrl.py')
+  parser = argparse.ArgumentParser()
   parser.add_argument('--no-color', action='store_true', help='Disable color.')
   # Add mode
   mode = parser.add_subparsers(title='mode', dest='mode', help='Choose one of the followings.')
