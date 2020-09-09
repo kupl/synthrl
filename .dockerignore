@@ -1,5 +1,4 @@
 .git
 .gitignore
-example
 Dockerfile
-README.md
+*.md
