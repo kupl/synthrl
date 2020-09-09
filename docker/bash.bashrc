@@ -1,5 +1,3 @@
-export PYTHONPATH=/src
-
 # If not running interactively, do nothing
 if [ -z "$PS1" ] ; then
   return 

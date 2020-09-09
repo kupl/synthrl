@@ -1,0 +1,36 @@
+program: expr
+
+expr: "(" expr ")"
+    | var
+    | const
+    | bop
+    | NEG expr
+    | "if" bexpr "then" expr "else" expr
+
+bop: "(" bop ")"
+   | expr OP expr
+
+const: /1[0-6]|\d/    
+
+var: /param[01]/
+
+bexpr: "(" bexpr ")"
+     | ATOM
+     | expr EQUAL expr
+     | bexpr BOOLOP bexpr
+     | NOT bexpr
+
+ATOM: /true|false/
+
+NEG: /[-~]/
+
+OP: /\+|\-|x|\/|\%|\|\||\&|\^|\>\>\_s|\>\>\_u|\<\</
+
+EQUAL: /=/
+
+BOOLOP: /equal|and|or/
+
+NOT: /!/
+
+%import common.WS
+%ignore WS
